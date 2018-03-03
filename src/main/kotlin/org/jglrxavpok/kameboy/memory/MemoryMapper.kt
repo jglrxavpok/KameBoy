@@ -3,7 +3,6 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.memory.specialRegs.DMARegister
 import org.jglrxavpok.kameboy.memory.specialRegs.LYRegister
 import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
-
 class MemoryMapper(val cartridgeData: Cartridge): MemoryComponent {
 
     companion object {
@@ -139,7 +138,7 @@ class MemoryMapper(val cartridgeData: Cartridge): MemoryComponent {
         in 0 until 0x8000 -> cartridgeData
         in 0x8000 until 0xA000 -> videoRAM
         in 0xA000 until 0xC000 -> cartridgeData.currentRAMBank
-        in 0xC000 .. 0xDFFF, in 0xE000 .. 0xEFFF -> internalRAM
+        in 0xC000..0xDFFF, in 0xE000..0xFDFF -> internalRAM
         in 0xFE00 until 0xFEA0 -> spriteAttributeTable
         in 0xFEA0 until 0xFF00 -> empty0
         in 0xFF00 until 0xFF4C -> ioPorts[address-0xFF00]
@@ -150,6 +149,9 @@ class MemoryMapper(val cartridgeData: Cartridge): MemoryComponent {
         else -> error("Invalid address ${Integer.toHexString(address)}")
     }
 
-    override fun write(address: Int, value: Int) = map(address).write(address, value)
+    override fun write(address: Int, value: Int) {
+        map(address).write(address, value)
+    }
     override fun read(address: Int) = map(address).read(address)
 }
+

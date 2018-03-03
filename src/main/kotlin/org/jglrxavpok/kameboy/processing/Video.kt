@@ -2,7 +2,6 @@ package org.jglrxavpok.kameboy.processing
 
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.memory.InterruptManager
-import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 
@@ -24,7 +23,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     val scrollY = MemoryRegister("ScrollY", memory, 0xFF42)
     val windowTileMapAddress get()= if(windowTileMapSelect) 0x9C00 else 0x9800
     val backgroundTileMapAddress get()= if(bgTileMapSelect) 0x9C00 else 0x9800
-    val tileDataAddress get()= if(dataSelect) 0x8000 else 0x8800
+    val tileDataAddress get()= if(dataSelect) 0x8000 else 0x9000
     val pixelData = IntArray(256*256)
     val tileDataTable = TileDataTable(this, memory)
 
@@ -43,8 +42,18 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     var mode2OamInterrupt by lcdStatus.bitVar(5)
     var mode1VBlankInterrupt by lcdStatus.bitVar(4)
     var mode0HBlankInterrupt by lcdStatus.bitVar(3)
-    val coincidenceFlag by lcdStatus.bitVar(2)
+    var coincidenceFlag by lcdStatus.bitVar(2)
     val modeFlag get() = lcdStatus.getValue() and 0b11
+
+    var currentClockCycles = 0
+    var mode: VideoMode = VideoMode.HBlank
+
+    enum class VideoMode(val durationInCycles: Int) {
+        HBlank(205),
+        VBlank(4560),
+        Mode2(80),
+        Mode3(170)
+    }
 
     fun drawTileRow(x: Int, row: Int, tileAddress: Int, palette: MemoryRegister) {
         val isBackground = palette.address == bgPaletteData.address
@@ -68,7 +77,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             val pixelColorIndex = (highColor shl 1) + lowColor
             if(pixelColorIndex == 0 && !isBackground) // transparent pixel
                 continue
-            pixelData[screenY+screenX*256] = pixelColor(pixelColorIndex, palette)
+            pixelData[screenY*256+screenX] = pixelColor(pixelColorIndex, palette)
         }
     }
 
@@ -85,36 +94,78 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     fun scanLine() {
         val line = lcdcY.getValue()
-        if(line == VBlankStartLine) {
-            if(mode1VBlankInterrupt)
-                interruptManager.fireVBlank()
-        }
         if(line == lyCompare.getValue()) {
             if(coincidenceInterrupt)
                 interruptManager.fireLCDC()
         }
 
-        if(line < VBlankStartLine) {
+        if(line < VBlankStartLine && lcdDisplayEnable) {
+            // TODO: scroll
             if(bgDisplay) {
                 for(x in 0 until 32) {
                     val tileNumber = memory.read(backgroundTileMapAddress + (line/32)*32 + x)
-                    println(tileNumber)
                     val tileAddress = tileDataAddress
-                    val offset = if(bgTileMapSelect) tileNumber else tileNumber.asSigned8()
+                    val offset = if(!dataSelect) tileNumber else tileNumber.asSigned8()
                     drawTileRow(x * 32, line, tileAddress + offset, bgPaletteData)
                 }
             }
             if(windowDisplayEnable) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(windowTileMapAddress + line/32 + x)
+                    val tileNumber = memory.read(windowTileMapAddress + (line/32)*32 + x)
                     val tileAddress = windowTileMapAddress
-                    val offset = if(windowTileMapSelect) tileNumber else tileNumber.asSigned8()
+                    val offset = if(!dataSelect) tileNumber else tileNumber.asSigned8()
                     drawTileRow(x * 32, line, tileAddress + offset, bgPaletteData)
                 }
             }
-
             // TODO: Sprites
         }
-        lcdcY.setValue(line+1)
+    }
+
+    fun step(clockCycles: Int) {
+        currentClockCycles += clockCycles
+
+        if(currentClockCycles >= mode.durationInCycles) {
+            when(mode) {
+                VideoMode.Mode2 -> {
+                    currentClockCycles %= mode.durationInCycles
+                    mode = VideoMode.Mode3
+                }
+                VideoMode.Mode3 -> {
+                    currentClockCycles %= mode.durationInCycles
+                    mode = VideoMode.HBlank
+                    if(mode0HBlankInterrupt) {
+                        interruptManager.fireLCDC()
+                    }
+                }
+                VideoMode.HBlank -> { // H-Blank
+                    currentClockCycles %= mode.durationInCycles
+                    scanLine() // might override mode to VBlank (V-Blank
+                    val line = lcdcY.getValue()
+                    mode = if(line+1 == VBlankStartLine) {
+                        if(mode1VBlankInterrupt)
+                            interruptManager.fireVBlank()
+                        VideoMode.VBlank
+                    } else {
+                        if(mode2OamInterrupt) {
+                            interruptManager.fireLCDC()
+                        }
+                        VideoMode.Mode2
+                    }
+                    lcdcY.setValue(line+1)
+                }
+                VideoMode.VBlank -> { // V-Blank
+                    currentClockCycles %= mode.durationInCycles
+                    val line = lcdcY.getValue()
+                    if(line+1 == 154) {
+                        lcdcY.setValue(0)
+                        mode = VideoMode.Mode3
+                    } else {
+                        lcdcY.setValue(line+1)
+                    }
+                }
+            }
+        }
+
+        coincidenceFlag = lyCompare.getValue() == lcdcY.getValue()
     }
 }

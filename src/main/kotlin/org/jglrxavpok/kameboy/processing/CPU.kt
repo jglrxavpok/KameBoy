@@ -82,8 +82,6 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
      * Returns clock cycles consumed
      */
     fun step(): Int {
-        if(halted || stopped)
-            return 0
         val shouldChangeInterruptState = requestedInterruptChange
         if(interruptManager.interruptsEnabled) {
             val interruptFlag = memory.read(0xFF0F)
@@ -91,14 +89,19 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             if(interruptFlag and interruptEnable != 0) {
                 interruptManager.interruptsEnabled = false
                 when {
-                    interruptManager.hasVBlank() -> interrupt(0)
-                    interruptManager.hasLCDC() -> interrupt(1)
-                    interruptManager.hasTimerOverflow() -> interrupt(2)
-                    interruptManager.hasSerial() -> interrupt(3)
-                    interruptManager.hasPinReleased() -> interrupt(4)
+                    !stopped && interruptManager.hasVBlank() -> interrupt(0)
+                    !stopped && interruptManager.hasLCDC() -> interrupt(1)
+                    !stopped && interruptManager.hasTimerOverflow() -> interrupt(2)
+                    !stopped && interruptManager.hasSerial() -> interrupt(3)
+                    interruptManager.hasPinReleased() -> {
+                        stopped = false
+                        interrupt(4)
+                    }
                 }
             }
         }
+        if(halted || stopped)
+            return 4
         val position = programCounter.getValue()
         val opcode = nextByte()
         try {
@@ -107,6 +110,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
                 requestedInterruptChange = false
                 interruptManager.interruptsEnabled = desiredInterruptState
             }
+            return clockCycles
         } catch (e: Exception) {
             println("Found error in opcode ${Integer.toHexString(opcode)} at PC ${Integer.toHexString(position)}")
             e.printStackTrace()
@@ -115,6 +119,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun interrupt(interruptIndex: Int) {
+        halted = false
         interruptManager.reset(interruptIndex)
         call(0x40 + interruptIndex * 8)
     }
@@ -217,8 +222,8 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0x2A -> { ld(A, HL.atPointed(memory)); HL++; 8}
             0x22 -> { ld_address(HL.getValue(), A.getValue()); HL++; 8}
 
-            0xE0 -> { ld(A, memory.read(0xFF00 + nextByte())); 12}
-            0xF0 -> { ld_address(0xFF00 + nextByte(), A.getValue()); 12}
+            0xF0 -> { ld(A, memory.read(0xFF00 + nextByte())); 12}
+            0xE0 -> { ld_address(0xFF00 + nextByte(), A.getValue()); 12}
 
             0x01 -> { ld(BC, nextAddress()); 12}
             0x11 -> { ld(DE, nextAddress()); 12}

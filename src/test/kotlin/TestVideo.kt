@@ -1,3 +1,4 @@
+import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.processing.CPU
@@ -8,34 +9,32 @@ import java.awt.image.BufferedImage
 import javax.swing.ImageIcon
 import javax.swing.JFrame
 import javax.swing.JLabel
+import javax.swing.SwingUtilities
 
 class TestVideo {
 
     @Test
     fun test0() {
         val cartridge = Cartridge(rom("Tetris.gb"))
-        val mapper = MemoryMapper(cartridge)
-        val cpu = CPU(mapper, mapper.interruptManager)
-        val video = Video(mapper, mapper.interruptManager)
-        cpu.reset()
-        repeat(1000*1000) {
-            cpu.step()
-        }
-        repeat(150) {
-            video.scanLine()
-        }
+        var frameCount = 0
+        val core = EmulatorCore(cartridge) { rgb ->
+            frameCount++
+            if(frameCount > 60) {
+                val result = BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB)
+                result.setRGB(0, 0, 256, 256, rgb, 0, 256)
+                val frame = JFrame("Video Result")
+                frame.add(JLabel(ImageIcon(result)))
+                frame.pack()
+                frame.setLocationRelativeTo(null)
+                frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
+                frame.isVisible = true
 
-        val result = BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB)
-        val rgb = video.pixelData
-        result.setRGB(0, 0, 256, 256, rgb, 0, 256)
+                this.stop()
+            }
+        }
+        core.loop()
 
-        val frame = JFrame("Video Result")
-        frame.add(JLabel(ImageIcon(result)))
-        frame.pack()
-        frame.setLocationRelativeTo(null)
-        frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
-        frame.isVisible = true
-        Thread.sleep(500)
+        Thread.sleep(50000)
     }
 
     private fun rom(name: String) = javaClass.getResourceAsStream("/roms/$name").use { it.readBytes() }
