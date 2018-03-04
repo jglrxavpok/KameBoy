@@ -19,13 +19,17 @@ class EmulatorCore(val cartridge: Cartridge, val renderRoutine: EmulatorCore.(In
     val cpu = CPU(mapper, mapper.interruptManager)
     val video = Video(mapper, mapper.interruptManager)
 
-    fun step() {
+    fun frame() {
         var totalClockCycles = 0
         while(totalClockCycles < ClockCyclesPerFrame) {
-            val clockCycles = cpu.step()
-            totalClockCycles += clockCycles
-            video.step(clockCycles)
+            totalClockCycles += step()
         }
+    }
+
+    fun step(): Int {
+        val clockCycles = cpu.step()
+        video.step(clockCycles)
+        return clockCycles
     }
 
     private lateinit var task: TimerTask
@@ -34,7 +38,7 @@ class EmulatorCore(val cartridge: Cartridge, val renderRoutine: EmulatorCore.(In
         cpu.reset()
         val timer = Timer()
         task = timer.scheduleAtFixedRate(0, 16) {
-            step()
+            frame()
             renderRoutine(video.pixelData)
         }
     }

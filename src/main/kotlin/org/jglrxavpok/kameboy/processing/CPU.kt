@@ -67,6 +67,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         memory.write(0xFF25, 0xF3)   // NR51
         memory.write(0xFF26, 0xF1)   // NR52 (GB only)
         memory.write(0xFF40, 0x91)   // LCDC
+        memory.write(0xFF41, 0x85)   // STAT
         memory.write(0xFF42, 0x00)   // SCY
         memory.write(0xFF43, 0x00)   // SCX
         memory.write(0xFF45, 0x00)   // LYC
@@ -816,7 +817,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     private fun inc(register: SingleValueMemoryComponent) {
         val result = register.getValue() + 1
         flagZ = (result and 0xFF) == 0
-        flagH = register.getValue() and 0xF == 0xF
+        flagH = result and 0xF == 0xF
         flagN = false
         register.setValue(result)
     }

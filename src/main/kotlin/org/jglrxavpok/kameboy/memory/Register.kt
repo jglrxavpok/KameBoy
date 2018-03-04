@@ -6,6 +6,7 @@ import org.jglrxavpok.kameboy.helpful.setBits
 open class Register(override val name: String, private var value: Int = 0x0, val sizeInBits: Int = 8): SingleValueMemoryComponent {
 
     val maxBit = (1 shl sizeInBits)
+    val mask = maxBit-1
 
     override fun write(address: Int, value: Int) {
         setValue(value)
@@ -35,9 +36,7 @@ open class Register(override val name: String, private var value: Int = 0x0, val
     }
 
     private fun fitValueInBounds() {
-        if(value < 0)
-            value = sizeInBits + (-value % maxBit)
-        value %= maxBit
+        value = value and mask
     }
 
     operator fun plusAssign(value: Int) {

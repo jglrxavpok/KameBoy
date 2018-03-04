@@ -45,7 +45,7 @@ interface SingleValueMemoryComponent: MemoryComponent {
 
         var value: Boolean
             get() = (memory.getValue() and (1 shl bitIndex)) != 0
-            set(va) { memory.setValue(memory.getValue().setBits(if(value) 1 else 0, bitIndex..bitIndex))}
+            set(va) { memory.setValue(memory.getValue().setBits(if(va) 1 else 0, bitIndex..bitIndex))}
 
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = value
         operator fun setValue(thisRef: Any?, property: KProperty<*>, newVal: Boolean) {

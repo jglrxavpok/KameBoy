@@ -5,9 +5,10 @@ fun Int.asUnsigned16() = this and 0xFFFF
 fun Int.asUnsigned8() = this and 0xFF
 fun Int.asAddress() = asUnsigned16()
 fun Int.asSigned8(): Int {
-    val value = this and 0b01111111
     val sign = this and 0b10000000
-    return value + (-(1 shl 15))*sign
+    if(sign != 0)
+        return (this-1 - 255)
+    return this
 }
 
 fun Byte.asAddress() = asUnsigned().asAddress()

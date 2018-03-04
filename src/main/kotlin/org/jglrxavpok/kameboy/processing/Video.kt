@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.processing
 
 import org.jglrxavpok.kameboy.helpful.asSigned8
+import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.InterruptManager
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
@@ -46,10 +47,10 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     val modeFlag get() = lcdStatus.getValue() and 0b11
 
     var currentClockCycles = 0
-    var mode: VideoMode = VideoMode.HBlank
+    var mode: VideoMode = VideoMode.VBlank
 
     enum class VideoMode(val durationInCycles: Int) {
-        HBlank(205),
+        HBlank(200),
         VBlank(4560),
         Mode2(80),
         Mode3(170)
@@ -123,6 +124,8 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     fun step(clockCycles: Int) {
         currentClockCycles += clockCycles
+
+        lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
 
         if(currentClockCycles >= mode.durationInCycles) {
             when(mode) {
