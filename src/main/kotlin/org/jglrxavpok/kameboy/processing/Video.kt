@@ -25,7 +25,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     val scrollY = MemoryRegister("ScrollY", memory, 0xFF42)
     val windowTileMapAddress get()= if(windowTileMapSelect) 0x9C00 else 0x9800
     val backgroundTileMapAddress get()= if(bgTileMapSelect) 0x9C00 else 0x9800
-    val tileDataAddress get()= if(dataSelect) 0x8000 else 0x9000
+    val tileDataAddress get()= if(dataSelect) 0x8000 else 0x9000 // 0x8800
     val pixelData = IntArray(256*256)
     val tileDataTable = TileDataTable(this, memory)
 
@@ -65,7 +65,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         } else if(screenY >= 256) {
             return
         }
-        val tileRow = row % 32
+        val tileRow = row % 8
         val lineDataLS = memory.read(tileAddress + tileRow*2)
         val lineDataMS = memory.read(tileAddress + tileRow*2 +1)
         for(i in 0..7) {
@@ -111,18 +111,18 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             // TODO: scroll
             if(bgDisplay) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(backgroundTileMapAddress + (line/32)*32 + x)
+                    val tileNumber = memory.read(backgroundTileMapAddress + (line/8)*8 + x)
                     val tileAddress = tileDataAddress
                     val offset = if(!dataSelect) tileNumber else tileNumber.asSigned8()
-                    drawTileRow(x * 32, line, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8, line, tileAddress + offset, bgPaletteData)
                 }
             }
             if(windowDisplayEnable) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(windowTileMapAddress + (line/32)*32 + x)
-                    val tileAddress = windowTileMapAddress
+                    val tileNumber = memory.read(windowTileMapAddress + (line/8)*8 + x)
+                    val tileAddress = tileDataAddress
                     val offset = if(!dataSelect) tileNumber else tileNumber.asSigned8()
-                    drawTileRow(x * 32, line, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8, line, tileAddress + offset, bgPaletteData)
                 }
             }
             // TODO: Sprites
