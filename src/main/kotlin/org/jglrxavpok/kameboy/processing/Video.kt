@@ -5,6 +5,7 @@ import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.InterruptManager
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import java.util.*
 
 class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
@@ -51,7 +52,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     enum class VideoMode(val durationInCycles: Int) {
         HBlank(200),
-        VBlank(4560),
+        VBlank(100000),
         Mode2(80),
         Mode3(170)
     }
@@ -93,12 +94,17 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         }
     }
 
+    val WIDTH = 256
+    val HEIGHT = 256
+
     fun scanLine() {
         val line = lcdcY.getValue()
         if(line == lyCompare.getValue()) {
             if(coincidenceInterrupt)
                 interruptManager.fireLCDC()
         }
+
+        Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, 0xFFFF0000.toInt())
 
         if(line < VBlankStartLine && lcdDisplayEnable) {
             // TODO: scroll
@@ -125,9 +131,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     fun step(clockCycles: Int) {
         currentClockCycles += clockCycles
 
-        lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
-
-        if(currentClockCycles >= mode.durationInCycles) {
+      /*  if(currentClockCycles >= mode.durationInCycles) {
             when(mode) {
                 VideoMode.Mode2 -> {
                     currentClockCycles %= mode.durationInCycles
@@ -167,7 +171,55 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     }
                 }
             }
+        }*/
+        if(!lcdDisplayEnable) {
+            mode = VideoMode.HBlank
+            lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
+            lcdcY.setValue(0)
+            return
         }
+        val line = lcdcY.getValue()
+        if(coincidenceInterrupt && line == lyCompare.getValue()) {
+            interruptManager.fireLCDC()
+        }
+
+        if(line <= VBlankStartLine) {
+            mode = VideoMode.VBlank
+            mode = when {
+                currentClockCycles >= 80 -> {
+                    if(mode != VideoMode.Mode2 && mode2OamInterrupt) {
+                        interruptManager.fireLCDC()
+                    }
+                    VideoMode.Mode2
+                }
+                currentClockCycles >= 172 + 80 -> VideoMode.Mode3
+                else -> {
+                    if(mode != VideoMode.HBlank && mode0HBlankInterrupt) {
+                        interruptManager.fireLCDC()
+                    }
+                    VideoMode.HBlank
+                }
+            }
+        } else {
+            if(mode != VideoMode.VBlank && mode1VBlankInterrupt && line == VBlankStartLine) {
+                interruptManager.fireLCDC()
+            }
+            mode = VideoMode.VBlank
+        }
+
+        if(currentClockCycles >= 456) {
+            currentClockCycles %= 456
+            if(line < VBlankStartLine) {
+                scanLine()
+            }
+
+            lcdcY.setValue(line+1)
+
+            if(line >= 154) {
+                lcdcY.setValue(0)
+            }
+        }
+        lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
 
         coincidenceFlag = lyCompare.getValue() == lcdcY.getValue()
     }

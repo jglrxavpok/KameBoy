@@ -21,7 +21,7 @@ open class Register(override val name: String, private var value: Int = 0x0, val
         return value
     }
 
-    override fun read(address: Int) = value
+    override fun read(address: Int) = getValue()
 
     operator fun inc(): Register {
         value++

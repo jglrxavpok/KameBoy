@@ -112,7 +112,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
                 interruptManager.interruptsEnabled = desiredInterruptState
             }
             return clockCycles
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             println("Found error in opcode ${Integer.toHexString(opcode)} at PC ${Integer.toHexString(position)}")
             e.printStackTrace()
         }
@@ -142,6 +142,10 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0x7C -> { ld(A, H.getValue()); 4}
             0x7D -> { ld(A, L.getValue()); 4}
             0x7E -> { ld(A, HL.atPointed(memory)); 8}
+
+            0x0A -> { ld(A, BC.atPointed(memory)); 8}
+            0x1A -> { ld(A, DE.atPointed(memory)); 8}
+
 
             0x40 -> { ld(B, B.getValue()); 4}
             0x41 -> { ld(B, C.getValue()); 4}
@@ -202,12 +206,12 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0xFA -> { ld(A, memory.read(nextAddress())); 16}
             0x3E -> { ld(A, nextByte()); 16}
 
-            0x47 -> { ld(A, B.getValue()); 4}
-            0x4F -> { ld(A, C.getValue()); 4}
-            0x57 -> { ld(A, D.getValue()); 4}
-            0x5F -> { ld(A, E.getValue()); 4}
-            0x67 -> { ld(A, H.getValue()); 4}
-            0x6F -> { ld(A, L.getValue()); 4}
+            0x47 -> { ld(B, A.getValue()); 4}
+            0x4F -> { ld(C, A.getValue()); 4}
+            0x57 -> { ld(D, A.getValue()); 4}
+            0x5F -> { ld(E, A.getValue()); 4}
+            0x67 -> { ld(H, A.getValue()); 4}
+            0x6F -> { ld(L, A.getValue()); 4}
 
             0x02 -> { ld_address(BC.getValue(), A.getValue()); 8}
             0x12 -> { ld_address(DE.getValue(), A.getValue()); 8}
@@ -489,7 +493,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             }
 
             0xE9 -> {
-                jp(atHL.getValue())
+                jp(HL.getValue())
                 4
             }
 
@@ -800,7 +804,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun addToRegister(register: SingleValueMemoryComponent, value: Int) {
-        flagN = true
+        flagN = false
         val result = register.getValue() + value
         flagC = result > 0xFFFF
         flagH = ((register.getValue() and 0x0FFF) + (value and 0x0FFF)) > 0x0FFF
@@ -872,10 +876,10 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun pop(): Int {
+        stackPointer++
+        stackPointer++
         val high = memory.read(stackPointer.getValue())
         val low = memory.read(stackPointer.getValue()+1)
-        stackPointer++
-        stackPointer++
         return (high shl 8) or low
     }
 
