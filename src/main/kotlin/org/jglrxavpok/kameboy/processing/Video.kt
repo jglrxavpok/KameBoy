@@ -65,8 +65,9 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         } else if(screenY >= 256) {
             return
         }
-        val lineDataLS = memory.read(tileAddress + row*2)
-        val lineDataMS = memory.read(tileAddress + row*2 +1)
+        val tileRow = row % 32
+        val lineDataLS = memory.read(tileAddress + tileRow*2)
+        val lineDataMS = memory.read(tileAddress + tileRow*2 +1)
         for(i in 0..7) {
             var screenX = x + i
             if(isBackground) { // background wraps
