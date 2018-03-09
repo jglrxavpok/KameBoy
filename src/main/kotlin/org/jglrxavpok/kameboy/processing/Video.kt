@@ -57,7 +57,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         Mode3(170)
     }
 
-    fun drawTileRow(x: Int, row: Int, tileAddress: Int, palette: MemoryRegister) {
+    fun drawTileRow(x: Int, row: Int, tileAddress: Int, palette: MemoryRegister, target: IntArray = pixelData) {
         val isBackground = palette.address == bgPaletteData.address
         var screenY = row
         if(isBackground) { // background wraps
@@ -75,12 +75,12 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             } else if(screenX >= 256) {
                 break
             }
-            val highColor = if(lineDataMS and (1 shl i) != 0) 1 else 0
-            val lowColor = if(lineDataLS and (1 shl i) != 0) 1 else 0
+            val highColor = if(lineDataMS and (1 shl (7-i)) != 0) 1 else 0
+            val lowColor = if(lineDataLS and (1 shl (7-i)) != 0) 1 else 0
             val pixelColorIndex = (highColor shl 1) + lowColor
             if(pixelColorIndex == 0 && !isBackground) // transparent pixel
                 continue
-            pixelData[screenY*256+screenX] = pixelColor(pixelColorIndex, palette)
+            target[screenY*256+screenX] = pixelColor(pixelColorIndex, palette)
         }
     }
 
@@ -101,8 +101,11 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     fun scanLine() {
         val line = lcdcY.getValue()
         if(line == lyCompare.getValue()) {
+            coincidenceFlag = true
             if(coincidenceInterrupt)
                 interruptManager.fireLCDC()
+        } else {
+            coincidenceFlag = false
         }
 
         Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, 0xFFFF0000.toInt())
@@ -111,17 +114,17 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             // TODO: scroll
             if(bgDisplay) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(backgroundTileMapAddress + (line/8)*8 + x)
+                    val tileNumber = memory.read(backgroundTileMapAddress + (line/8)*32 + x)
                     val tileAddress = tileDataAddress
-                    val offset = if(!dataSelect) tileNumber else tileNumber.asSigned8()
+                    val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
                     drawTileRow(x * 8, line, tileAddress + offset, bgPaletteData)
                 }
             }
             if(windowDisplayEnable) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(windowTileMapAddress + (line/8)*8 + x)
+                    val tileNumber = memory.read(windowTileMapAddress + (line/8)*32 + x)
                     val tileAddress = tileDataAddress
-                    val offset = if(!dataSelect) tileNumber else tileNumber.asSigned8()
+                    val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
                     drawTileRow(x * 8, line, tileAddress + offset, bgPaletteData)
                 }
             }
@@ -184,7 +187,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             interruptManager.fireLCDC()
         }
 
-        if(line <= VBlankStartLine) {
+        if(line < VBlankStartLine) {
             mode = VideoMode.VBlank
             mode = when {
                 currentClockCycles >= 80 -> {
@@ -202,8 +205,9 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 }
             }
         } else {
-            if(mode != VideoMode.VBlank && mode1VBlankInterrupt && line == VBlankStartLine) {
-                interruptManager.fireLCDC()
+            if(mode != VideoMode.VBlank) {
+                if(mode1VBlankInterrupt)
+                    interruptManager.fireVBlank()
             }
             mode = VideoMode.VBlank
         }

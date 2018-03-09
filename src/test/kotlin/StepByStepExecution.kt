@@ -1,4 +1,5 @@
 import org.jglrxavpok.kameboy.EmulatorCore
+import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import java.awt.image.BufferedImage
@@ -30,16 +31,39 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
         val line = readLine()
         if(line == " ")
             return
-        if(line != null && "pic" in line) {
-            val rgb = emulatorCore.video.pixelData
-            val result = BufferedImage(256,256, BufferedImage.TYPE_INT_ARGB)
-            result.setRGB(0, 0, 256, 256, rgb, 0, 256)
-            val frame = JFrame("Video Result")
-            frame.add(JLabel(ImageIcon(result)))
-            frame.pack()
-            frame.setLocationRelativeTo(null)
-            frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
-            frame.isVisible = true
+        if(line != null) {
+            val rgb = when {
+                "pic" in line -> {
+                    emulatorCore.video.pixelData
+                }
+
+                "bgmap" in line -> {
+                    val data = IntArray(16*32 * 16*32)
+                    val video = emulatorCore.video
+                    for(row in 0..(15*16)) {
+                        for(x in 0..15) {
+                            val tileNumber = x+(row/8)*16
+                            val offset = tileNumber * 0x10
+                            val tileAddress = video.tileDataAddress + offset
+                            video.drawTileRow(x*8, row, tileAddress, video.bgPaletteData, target = data)
+                        }
+                    }
+                    data
+                }
+
+                else -> null
+            }
+
+            if(rgb != null) {
+                val result = BufferedImage(256,256, BufferedImage.TYPE_INT_ARGB)
+                result.setRGB(0, 0, 256, 256, rgb, 0, 256)
+                val frame = JFrame("Video Result")
+                frame.add(JLabel(ImageIcon(result)))
+                frame.pack()
+                frame.setLocationRelativeTo(null)
+                frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
+                frame.isVisible = true
+            }
         }
         if(line?.startsWith("to:") == true) {
             val requestedPC = line.substring("to:".length).trim().toInt()
