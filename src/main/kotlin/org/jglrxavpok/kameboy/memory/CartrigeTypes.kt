@@ -19,7 +19,7 @@ class MBC1(val cartridge: Cartridge): MemoryComponent {
     override val name = "MBC1"
     var mode = Mode.Rom16Ram8
     var currentBank = 0
-    val BankSize = 0x4000
+    val BankSize = 0x400
     val banks = Array(cartridge.romBankCount) { index ->
         val start = 0x8000 + index*BankSize
         val end = start+BankSize

@@ -1,10 +1,11 @@
 package org.jglrxavpok.kameboy.memory
 
+import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.DMARegister
 import org.jglrxavpok.kameboy.memory.specialRegs.LYRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.P1Register
 import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
-class MemoryMapper(val cartridgeData: Cartridge): MemoryComponent {
+class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): MemoryComponent {
 
     companion object {
         val ExecutionEntryPoint = 0x100
@@ -18,7 +19,7 @@ class MemoryMapper(val cartridgeData: Cartridge): MemoryComponent {
     val interruptEnableRegister = Register("Interrupt Enable Register")
     val lyRegister = LYRegister()
     val ioPorts = arrayOf(
-            P1Register(),
+            P1Register(input),
             Register("SB"),
             Register("SC"),
             Register("DIV"),

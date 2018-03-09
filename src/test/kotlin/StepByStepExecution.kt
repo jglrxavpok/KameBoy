@@ -1,5 +1,6 @@
 import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.helpful.asSigned8
+import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import java.awt.image.BufferedImage
@@ -9,7 +10,10 @@ import javax.swing.JLabel
 
 fun main(args: Array<String>) {
     val cartridge = Cartridge(rom("Tetris.gb"))
-    val core = EmulatorCore(cartridge) {}
+    val input = object: PlayerInput {
+        override val state = 0xF
+    }
+    val core = EmulatorCore(cartridge, input) {}
     StepByStepExecution(core).loop()
 }
 
@@ -45,7 +49,7 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
                             val tileNumber = x+(row/8)*16
                             val offset = tileNumber * 0x10
                             val tileAddress = video.tileDataAddress + offset
-                            video.drawTileRow(x*8, row, tileAddress, video.bgPaletteData, target = data)
+                            video.drawTileRow(x*8, row, row%8, tileAddress, video.bgPaletteData, target = data)
                         }
                     }
                     data

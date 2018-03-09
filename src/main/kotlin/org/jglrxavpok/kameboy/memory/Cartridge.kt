@@ -19,8 +19,7 @@ class Cartridge(val rawData: ByteArray): MemoryComponent {
     val complementCheck = rawData[0x14D]
     val checksum = fromNibbles(rawData[0x14E], rawData[0x14F])
     val cartrigeType = cartrigeTypeFromIndex(cartridgeTypeIndex)
-    val memoryMapper = MemoryMapper(this)
-    val romBankCount = when(romSizeIndex.asUnsigned()) {
+    val romBankCount get()= when(romSizeIndex.asUnsigned()) {
         in 0..6 -> 1 shl (1 + romSizeIndex)
         0x52 -> 72
         0x53 -> 80

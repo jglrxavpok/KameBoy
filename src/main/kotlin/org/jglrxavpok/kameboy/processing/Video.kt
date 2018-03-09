@@ -57,19 +57,18 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         Mode3(170)
     }
 
-    fun drawTileRow(x: Int, row: Int, tileAddress: Int, palette: MemoryRegister, target: IntArray = pixelData) {
+    fun drawTileRow(x: Int, row: Int, tileRow: Int, tileAddress: Int, palette: MemoryRegister, target: IntArray = pixelData) {
         val isBackground = palette.address == bgPaletteData.address
-        var screenY = row
+        var screenY = if(row < 0) row + 256 else row
         if(isBackground) { // background wraps
             screenY %= 256
         } else if(screenY >= 256) {
             return
         }
-        val tileRow = row % 8
         val lineDataLS = memory.read(tileAddress + tileRow*2)
         val lineDataMS = memory.read(tileAddress + tileRow*2 +1)
         for(i in 0..7) {
-            var screenX = x + i
+            var screenX = (if(x < 0) x + 256 else x) + i
             if(isBackground) { // background wraps
                 screenX %= 256
             } else if(screenX >= 256) {
@@ -87,10 +86,10 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     private fun pixelColor(index: Int, palette: MemoryRegister): Int {
         val data = palette.getValue() and (0b11 shl (index*2)) shr (index*2)
         return when(data) {
-            0 -> 0xFF000000.toInt()
-            1 -> 0xFF555555.toInt()
-            2 -> 0xFFAAAAAA.toInt()
-            3 -> 0xFFFFFFFF.toInt()
+            3 -> 0xFF000000.toInt()
+            2 -> 0xFF555555.toInt()
+            1 -> 0xFFAAAAAA.toInt()
+            0 -> 0xFFFFFFFF.toInt()
             else -> error("This is impossible!")
         }
     }
@@ -117,7 +116,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     val tileNumber = memory.read(backgroundTileMapAddress + (line/8)*32 + x)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8, line, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8, line, line%8, tileAddress + offset, bgPaletteData)
                 }
             }
             if(windowDisplayEnable) {
@@ -125,7 +124,24 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     val tileNumber = memory.read(windowTileMapAddress + (line/8)*32 + x)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8, line, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8, line, line%8, tileAddress + offset, bgPaletteData)
+                }
+            }
+
+            if(spriteDisplayEnable) {
+                val spriteTable = memory.spriteAttributeTable
+                val sprites = spriteTable.sprites.sorted()
+                sprites.forEach { sprite ->
+                    val posY = sprite.positionY.getValue()
+                    val posX = sprite.positionX.getValue()
+                    val tileNumber = sprite.tileNumber.getValue()
+                    val offset = tileNumber
+                    val tileAddress = 0x8000 + offset
+                    if(posY in line..(line+7)) {
+                        drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data)
+                    }
+
+                    //println(">> $posX ; $posY / $tileNumber")
                 }
             }
             // TODO: Sprites
@@ -135,47 +151,6 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     fun step(clockCycles: Int) {
         currentClockCycles += clockCycles
 
-      /*  if(currentClockCycles >= mode.durationInCycles) {
-            when(mode) {
-                VideoMode.Mode2 -> {
-                    currentClockCycles %= mode.durationInCycles
-                    mode = VideoMode.Mode3
-                }
-                VideoMode.Mode3 -> {
-                    currentClockCycles %= mode.durationInCycles
-                    mode = VideoMode.HBlank
-                    if(mode0HBlankInterrupt) {
-                        interruptManager.fireLCDC()
-                    }
-                }
-                VideoMode.HBlank -> { // H-Blank
-                    currentClockCycles %= mode.durationInCycles
-                    scanLine() // might override mode to VBlank (V-Blank
-                    val line = lcdcY.getValue()
-                    mode = if(line+1 == VBlankStartLine) {
-                        if(mode1VBlankInterrupt)
-                            interruptManager.fireVBlank()
-                        VideoMode.VBlank
-                    } else {
-                        if(mode2OamInterrupt) {
-                            interruptManager.fireLCDC()
-                        }
-                        VideoMode.Mode2
-                    }
-                    lcdcY.setValue(line+1)
-                }
-                VideoMode.VBlank -> { // V-Blank
-                    currentClockCycles %= mode.durationInCycles
-                    val line = lcdcY.getValue()
-                    if(line+1 == 154) {
-                        lcdcY.setValue(0)
-                        mode = VideoMode.Mode3
-                    } else {
-                        lcdcY.setValue(line+1)
-                    }
-                }
-            }
-        }*/
         if(!lcdDisplayEnable) {
             mode = VideoMode.HBlank
             lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))

@@ -1,4 +1,5 @@
 import org.jglrxavpok.kameboy.EmulatorCore
+import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.processing.CPU
@@ -17,7 +18,12 @@ class TestVideo {
     fun test0() {
         val cartridge = Cartridge(rom("Tetris.gb"))
         var frameCount = 0
-        val core = EmulatorCore(cartridge) { rgb ->
+        var pressedUp = false
+        val input = object: PlayerInput {
+            override val state: Int
+                get() = if(pressedUp) 0x0 else 0xF
+        }
+        val core = EmulatorCore(cartridge, input) { rgb ->
             frameCount++
             if(frameCount > 60) {
                 val result = BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB)
@@ -28,8 +34,13 @@ class TestVideo {
                 frame.setLocationRelativeTo(null)
                 frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
                 frame.isVisible = true
-
-                this.stop()
+                if(!pressedUp) {
+                    pressedUp = true
+                    this.mapper.interruptManager.firePinReleased()
+                    frameCount = 0
+                } else {
+                    this.stop()
+                }
             }
         }
         core.loop()

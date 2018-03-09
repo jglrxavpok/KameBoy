@@ -1,8 +1,9 @@
 package org.jglrxavpok.kameboy.memory.specialRegs
 
+import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Register
 
-class P1Register: Register("P1") {
+class P1Register(val input: PlayerInput): Register("P1") {
 
     var selectDirectionKeys = false
     var selectButtonKeys = false
@@ -13,7 +14,7 @@ class P1Register: Register("P1") {
             selectButtonKeys -> 0x20
             else -> 0x10
         }
-        val pressState = 0xF
+        val pressState = input.state
         return (0xC0 or selection) or pressState
     }
 

@@ -1,3 +1,4 @@
+import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.junit.Assert.assertEquals
@@ -15,7 +16,10 @@ class TestCartridges {
     @Test
     fun correctIOPortsAlignment() {
         val cartridge = Cartridge(rom("Tetris.gb"))
-        val mapper = MemoryMapper(cartridge)
+        val mapper = MemoryMapper(cartridge, object: PlayerInput {
+            override val state: Int
+                get() = 0xF
+        })
         assertEquals("WX", mapper.map(0xFF4B).name)
         assertEquals("LCDC", mapper.map(0xFF40).name)
         assertEquals("LY", mapper.map(0xFF44).name)
