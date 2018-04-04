@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.memory
 
+import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.DMARegister
 import org.jglrxavpok.kameboy.memory.specialRegs.LYRegister
@@ -136,7 +137,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
         }
     }
 
-    fun map(address: Int): MemoryComponent = when(address) {
+    fun map(address: Int): MemoryComponent = when(address.asAddress()) {
         in 0 until 0x8000 -> cartridgeData
         in 0x8000 until 0xA000 -> videoRAM
         in 0xA000 until 0xC000 -> cartridgeData.currentRAMBank

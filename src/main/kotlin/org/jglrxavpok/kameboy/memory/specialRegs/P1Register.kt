@@ -14,7 +14,7 @@ class P1Register(val input: PlayerInput): Register("P1") {
             selectButtonKeys -> 0x20
             else -> 0x10
         }
-        val pressState = input.state
+        val pressState = if(selectButtonKeys) input.buttonState else if(selectDirectionKeys) input.directionState else 0xFF
         return (0xC0 or selection) or pressState
     }
 

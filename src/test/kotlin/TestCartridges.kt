@@ -17,7 +17,9 @@ class TestCartridges {
     fun correctIOPortsAlignment() {
         val cartridge = Cartridge(rom("Tetris.gb"))
         val mapper = MemoryMapper(cartridge, object: PlayerInput {
-            override val state: Int
+            override val buttonState: Int
+                get() = 0xF
+            override val directionState: Int
                 get() = 0xF
         })
         assertEquals("WX", mapper.map(0xFF4B).name)

@@ -1,5 +1,7 @@
 package org.jglrxavpok.kameboy.helpful
 
+import org.lwjgl.system.MemoryUtil
+
 fun Byte.asUnsigned() = (this.toInt()) and 0xFF
 fun Int.asUnsigned16() = this and 0xFFFF
 fun Int.asUnsigned8() = this and 0xFF
@@ -39,3 +41,5 @@ fun Int.setBits(bitfield: Int, location: IntRange): Int {
     }
     return result
 }
+
+val nullptr = MemoryUtil.NULL

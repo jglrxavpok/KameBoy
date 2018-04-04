@@ -2,5 +2,6 @@ package org.jglrxavpok.kameboy.input
 
 interface PlayerInput {
 
-    val state: Int
+    val buttonState: Int
+    val directionState: Int
 }

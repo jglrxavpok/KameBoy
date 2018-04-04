@@ -904,6 +904,6 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     fun nextByte(): Int {
         val pc = programCounter.getValue()
         programCounter++
-        return memory.read(pc)
+        return memory.read(pc).asUnsigned8()
     }
 }

@@ -11,7 +11,8 @@ import javax.swing.JLabel
 fun main(args: Array<String>) {
     val cartridge = Cartridge(rom("Tetris.gb"))
     val input = object: PlayerInput {
-        override val state = 0xF
+        override val buttonState = 0xF
+        override val directionState = 0xF
     }
     val core = EmulatorCore(cartridge, input) {}
     StepByStepExecution(core).loop()
@@ -101,7 +102,8 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
             println("STAT: ${Integer.toHexString(memory.read(0xFF41))}")
             println("LY: ${Integer.toHexString(memory.read(0xFF44))}")
             println("Input: ${Integer.toHexString(memory.read(0xFF00))}")
-            println("Instruction: ${Integer.toHexString(memory.read(cpu.programCounter.getValue()))}")
+            println("Instruction: ${Integer.toHexString(cpu.programCounter.atPointed(memory))}")
+            println("Instruction: ${cpu.programCounter.getValue()}")
             println("========")
         }
         emulatorCore.step()

@@ -25,6 +25,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
         while(totalClockCycles < ClockCyclesPerFrame) {
             totalClockCycles += step()
         }
+        renderRoutine(video.pixelData)
     }
 
     fun step(): Int {
@@ -40,7 +41,6 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
         val timer = Timer()
         task = timer.scheduleAtFixedRate(0, 16) {
             frame()
-            renderRoutine(video.pixelData)
         }
     }
 

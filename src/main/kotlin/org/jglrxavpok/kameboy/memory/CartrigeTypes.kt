@@ -1,6 +1,8 @@
 package org.jglrxavpok.kameboy.memory
 
+import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asUnsigned
+import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
 
 class ROMOnly(val cartridge: Cartridge): MemoryComponent {
@@ -8,7 +10,7 @@ class ROMOnly(val cartridge: Cartridge): MemoryComponent {
     private val data = cartridge.rawData
 
     override fun write(address: Int, value: Int) {
-        data[address] = value.toByte()
+        data[address] = value.asUnsigned8().toByte()
     }
 
     override fun read(address: Int) = data[address].asUnsigned()
@@ -19,9 +21,9 @@ class MBC1(val cartridge: Cartridge): MemoryComponent {
     override val name = "MBC1"
     var mode = Mode.Rom16Ram8
     var currentBank = 0
-    val BankSize = 0x400
+    val BankSize = 0x4000
     val banks = Array(cartridge.romBankCount) { index ->
-        val start = 0x8000 + index*BankSize
+        val start = index*BankSize
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)
     }
@@ -58,7 +60,8 @@ class MBC1(val cartridge: Cartridge): MemoryComponent {
                 banks[0][address].asUnsigned()
             }
             in 0x4000..0x7FFF -> {
-                banks[currentBank][address].asUnsigned()
+                val bank = banks[currentBank]
+                bank[address-0x4000].asUnsigned()
             }
             else -> error("Invalid read address for MBC1 $address")
         }

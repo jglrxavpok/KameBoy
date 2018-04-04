@@ -20,8 +20,9 @@ class TestVideo {
         var frameCount = 0
         var pressedUp = false
         val input = object: PlayerInput {
-            override val state: Int
+            override val buttonState: Int
                 get() = if(pressedUp) 0x0 else 0xF
+            override val directionState = 0xF
         }
         val core = EmulatorCore(cartridge, input) { rgb ->
             frameCount++
