@@ -9,7 +9,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("opus5.gb"))
+    val cartridge = Cartridge(rom("LoZ Link's Awakening.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF
@@ -71,10 +71,23 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
             }
         }
         if(line?.startsWith("to:") == true) {
-            val requestedPC = line.substring("to:".length).trim().toInt()
-            while(cpu.programCounter.getValue() != requestedPC)
-                step(mute = true)
-            println("Arrived!")
+            val data = line.substring("to:".length).trim()
+            if("x" in data) {
+                val params = data.split("x")
+                val times = params[1].toInt()
+                val requestedPC = params[0].toInt()
+                repeat(times) {
+                    while(cpu.programCounter.getValue() != requestedPC)
+                        step(mute = true)
+                    step(mute = false)
+                }
+                println("Arrived!")
+            } else {
+                val requestedPC = data.toInt()
+                while(cpu.programCounter.getValue() != requestedPC)
+                    step(mute = true)
+                println("Arrived!")
+            }
         }
         val count = line?.toIntOrNull()
         loop(count ?: 1)
