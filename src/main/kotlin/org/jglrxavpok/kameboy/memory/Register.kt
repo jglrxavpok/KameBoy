@@ -3,7 +3,7 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
 
-open class Register(override val name: String, private var value: Int = 0x0, val sizeInBits: Int = 8): SingleValueMemoryComponent {
+open class Register(override val name: String, protected var registerValue: Int = 0x0, val sizeInBits: Int = 8): SingleValueMemoryComponent {
 
     val maxBit = (1 shl sizeInBits)
     val mask = maxBit-1
@@ -13,72 +13,72 @@ open class Register(override val name: String, private var value: Int = 0x0, val
     }
 
     override fun setValue(value: Int) {
-        this.value = value
+        this.registerValue = value
         fitValueInBounds()
     }
 
     override fun getValue(): Int {
-        return value
+        return registerValue
     }
 
     override fun read(address: Int) = getValue()
 
     operator fun inc(): Register {
-        value++
+        registerValue++
         fitValueInBounds()
         return this
     }
 
     operator fun dec(): Register {
-        value--
+        registerValue--
         fitValueInBounds()
         return this
     }
 
-    private fun fitValueInBounds() {
-        value = value and mask
+    protected open fun fitValueInBounds() {
+        registerValue = registerValue and mask
     }
 
     operator fun plusAssign(value: Int) {
-        this.value += value
+        this.registerValue += value
         fitValueInBounds()
     }
 
     operator fun plus(value: Int): Int {
-        return this.value + value
+        return this.registerValue + value
     }
 
     operator fun minus(value: Int): Int {
-        return this.value - value
+        return this.registerValue - value
     }
 
     infix fun shl(count: Int): Int {
-        value = value shl count
+        registerValue = registerValue shl count
         fitValueInBounds()
-        return value
+        return registerValue
     }
 
     infix fun shr(count: Int): Int {
-        value = value shr count
+        registerValue = registerValue shr count
         fitValueInBounds()
-        return value
+        return registerValue
     }
 
     /**
      * Returns the set state of a given bit
      */
     operator fun get(bitIndex: Int): Boolean {
-        return (value and (1 shl bitIndex)) != 0
+        return (registerValue and (1 shl bitIndex)) != 0
     }
 
     operator fun set(bitIndex: Int, value: Boolean) {
-        this.value = this.value.setBits(if(value) 1 else 0, bitIndex..bitIndex)
+        this.registerValue = this.registerValue.setBits(if(value) 1 else 0, bitIndex..bitIndex)
     }
 
-    fun atPointed(memoryComponent: MemoryComponent) = memoryComponent.read(value)
+    fun atPointed(memoryComponent: MemoryComponent) = memoryComponent.read(registerValue)
 
     override fun toString(): String {
-        return "Register[name=$name; value=$value]"
+        return "Register[name=$name; value=$registerValue]"
     }
 }
 

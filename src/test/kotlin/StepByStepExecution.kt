@@ -9,7 +9,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("Tetris.gb"))
+    val cartridge = Cartridge(rom("opus5.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF

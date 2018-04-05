@@ -178,7 +178,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val data by lazy { IntArray(256*256) }
         glBindTexture(GL_TEXTURE_2D, textureID)
         for((index, color) in videoData.withIndex()) {
-            val correctFormatColor = ((color shl 4) and 0xFFFFFF) or ((color shr 24) and 0xFF)
+            val correctFormatColor = color and 0xFFFFFF
             data[index] = correctFormatColor
         }
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, data)

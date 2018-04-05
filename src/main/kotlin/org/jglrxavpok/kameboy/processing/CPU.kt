@@ -48,6 +48,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         memory.write(0xFF05, 0x00)   // TIMA
         memory.write(0xFF06, 0x00)   // TMA
         memory.write(0xFF07, 0x00)   // TAC
+        memory.write(0xFF0F, 0xE1)   // IF
         memory.write(0xFF10, 0x80)   // NR10
         memory.write(0xFF11, 0xBF)   // NR11
         memory.write(0xFF12, 0xF3)   // NR12
@@ -76,7 +77,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         memory.write(0xFF49, 0xFF)   // OBP1
         memory.write(0xFF4A, 0x00)   // WY
         memory.write(0xFF4B, 0x00)   // WX
-        memory.write(0xFFFF, 0x00) // IE
+        memory.write(0xFFFF, 0x01) // IE
     }
 
     /**
