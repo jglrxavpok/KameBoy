@@ -3,6 +3,7 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
+import org.jglrxavpok.kameboy.processing.Sound
 import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
 class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): MemoryComponent {
 
@@ -14,6 +15,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
     override val name = "Memory mapper (internal)"
 
     val interruptManager = InterruptManager(this)
+    val sound = Sound(this)
 
     val interruptEnableRegister = Register("Interrupt Enable Register")
     val lyRegister = LYRegister()
@@ -56,9 +58,9 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
             Register("NR 42"),
             Register("NR 43"),
             Register("NR 44"),
-            Register("NR 50"),
-            Register("NR 51"),
-            Register("NR 52"),
+            sound.channelControl,
+            sound.outputSelect,
+            sound.soundToggle,
             Register("Unknown FF27"),
             Register("Unknown FF28"),
             Register("Unknown FF29"),
