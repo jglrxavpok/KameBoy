@@ -44,6 +44,7 @@ class TestVideo {
                 }
             }
         }
+        core.init()
         core.loop()
 
         Thread.sleep(50000)

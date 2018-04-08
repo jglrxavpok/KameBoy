@@ -27,6 +27,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var textureID: Int
     private var meshID: Int
     private var diffuseTextureUniform: Int
+    private var scrollUniform: Int
 
     init {
         window = glfwCreateWindow(400, 400, "Kameboy - ${cartridge.title}", nullptr, nullptr)
@@ -38,6 +39,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         shaderID = loadShader()
         glUseProgram(shaderID)
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
+        scrollUniform = glGetUniformLocation(shaderID, "scroll")
         textureID = prepareTexture()
         meshID = prepareRenderMesh()
 
@@ -153,7 +155,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun runEmulator() {
-        core.cpu.reset()
+        core.init()
         while(!glfwWindowShouldClose(window)) {
             glfwPollEvents()
             glClearColor(0f, .8f, 0f, 1f)
@@ -163,6 +165,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             glBindTexture(GL_TEXTURE_2D, textureID)
             glUseProgram(shaderID)
             glUniform1i(diffuseTextureUniform, 0)
+            glUniform2f(scrollUniform, core.video.scrollX.getValue().toFloat(), core.video.scrollY.getValue().toFloat())
 
             glBindVertexArray(meshID)
           /*  glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID)

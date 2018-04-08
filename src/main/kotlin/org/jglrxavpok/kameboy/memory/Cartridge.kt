@@ -31,7 +31,7 @@ class Cartridge(val rawData: ByteArray): MemoryComponent {
         0x52 -> 72
         0x53 -> 80
         0x54 -> 96
-        else -> error("Invalid rom size index ${romSizeIndex}")
+        else -> error("Invalid rom size index $romSizeIndex")
     }
     val ramBankCount = when(ramSizeIndex.asUnsigned()) {
         0 -> 0

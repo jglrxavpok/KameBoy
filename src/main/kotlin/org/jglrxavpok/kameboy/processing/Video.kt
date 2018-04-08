@@ -113,18 +113,19 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             // TODO: scroll
             if(bgDisplay) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(backgroundTileMapAddress + (line/8)*32 + x)
+                    val scrolledX = x * 8
+                    val tileNumber = memory.read(backgroundTileMapAddress + line /8*32 + scrolledX/8)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8 - scrollX.getValue(), line - scrollY.getValue(), line%8, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8, line, line %8, tileAddress + offset, bgPaletteData)
                 }
             }
             if(windowDisplayEnable) {
                 for(x in 0 until 32) {
-                    val tileNumber = memory.read(windowTileMapAddress + (line/8)*32 + x)
+                    val tileNumber = memory.read(windowTileMapAddress + (line / 8) * 32 + x)
                     val tileAddress = tileDataAddress
-                    val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8 + windowX.getValue(), line + windowY.getValue(), line%8, tileAddress + offset, bgPaletteData)
+                    val offset = (if (dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
+                    drawTileRow(x * 8 + windowX.getValue(), line + windowY.getValue(), line % 8, tileAddress + offset, bgPaletteData)
                 }
             }
 
@@ -140,7 +141,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     if(posY in line..(line+7)) {
                         drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data)
                     }
-                  //  println("$posX / $posY - $tileNumber")
+                    //println("$posX / $posY - $tileNumber")
                 }
             }
             // TODO: Sprites
@@ -201,5 +202,14 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
 
         coincidenceFlag = lyCompare.getValue() == lcdcY.getValue()
+    }
+
+    fun drawLogo() {
+        for(line in 0 until VBlankStartLine) {
+            for(x in 0 until 32) {
+                val offset = (line/8)*32 + x
+                drawTileRow(x * 8, line, line%8, 0x104 + offset, bgPaletteData)
+            }
+        }
     }
 }

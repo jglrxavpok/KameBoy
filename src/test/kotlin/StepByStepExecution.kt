@@ -9,7 +9,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("LoZ Link's Awakening.gb"))
+    val cartridge = Cartridge(rom("DrMario.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF
@@ -26,7 +26,7 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
     val memory = emulatorCore.mapper
 
     init {
-        emulatorCore.cpu.reset()
+        emulatorCore.init()
     }
 
     tailrec fun loop(stepcount: Int = 1) {
