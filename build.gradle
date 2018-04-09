@@ -48,6 +48,7 @@ dependencies {
     runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:${lwjglNatives}"
 
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile project(":Audiokode")
     testCompile 'junit:junit:4.12'
 }
 

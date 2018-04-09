@@ -40,6 +40,7 @@ class Wave3(sound: Sound): Channel(sound) {
     }
 
     override fun reset() {
+        super.reset()
         timer.periodInCycles = (sound.channel3Frequency * Sound.SecondsToCycles).toInt()
         timer.reset()
         disabled = false

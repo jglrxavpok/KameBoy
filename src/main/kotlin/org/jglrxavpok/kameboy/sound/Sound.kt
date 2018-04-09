@@ -2,6 +2,7 @@ package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.memory.specialRegs.NRx1
 import org.jglrxavpok.kameboy.memory.specialRegs.SoundFreqHighRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.SoundToggleRegister
@@ -14,13 +15,13 @@ class Sound(val memory: MemoryMapper) {
     }
 
     private var currentCycleCount = 0
-    val channelControl = MemoryRegister("NR50", memory, 0xFF24)
+    val channelControl = Register("NR50")
     val out1Volume get()= channelControl.getValue() and 0b111
     val out2Volume get()= (channelControl.getValue() shr 4) and 0b111
     val outputInTo1 by channelControl.bitVar(3)
     val outputInTo2 by channelControl.bitVar(7)
 
-    val outputSelect = MemoryRegister("NR51", memory, 0xFF25)
+    val outputSelect = Register("NR51")
     val output4to2 by outputSelect.bitVar(7)
     val output3to2 by outputSelect.bitVar(6)
     val output2to2 by outputSelect.bitVar(5)
@@ -53,7 +54,7 @@ class Sound(val memory: MemoryMapper) {
      */
     val sound1Length get()= (64.0-sound1LengthRaw)/256.0
     val channel1VolumeEnveloppe = MemoryRegister("NR12", memory, 0xFF12)
-    val initialEnveloppeVolume1 = (channel1VolumeEnveloppe.getValue() shr 4) and 0b1111
+    val initialEnveloppeVolume1 get()= (channel1VolumeEnveloppe.getValue() shr 4) and 0b1111
     val enveloppeDirection1 by channel1VolumeEnveloppe.bitVar(3)
     val numberOfEnveloppeSweeps1 get()= channel1VolumeEnveloppe.getValue() and 0b111
 
@@ -79,7 +80,7 @@ class Sound(val memory: MemoryMapper) {
     val sound2Length get()= (64.0-sound2LengthRaw)/256.0
 
     val channel2VolumeEnveloppe = MemoryRegister("NR22", memory, 0xFF17)
-    val initialEnveloppeVolume2 = (channel2VolumeEnveloppe.getValue() shr 4) and 0b1111
+    val initialEnveloppeVolume2 get()= (channel2VolumeEnveloppe.getValue() shr 4) and 0b1111
     val enveloppeDirection2 by channel2VolumeEnveloppe.bitVar(3)
     val numberOfEnveloppeSweeps2 get()= channel2VolumeEnveloppe.getValue() and 0b111
 
@@ -121,12 +122,12 @@ class Sound(val memory: MemoryMapper) {
     val channel4SoundLengthReg = NRx1(memory, channel4)
     val channel4SoundLength get()= (64.0-(channel4SoundLengthReg.getValue() and 0b11111)) / 256.0
     val channel4VolumeEnveloppe = MemoryRegister("NR42", memory, 0xFF21)
-    val initialEnveloppeVolume4 = (channel4VolumeEnveloppe.getValue() shr 4) and 0b1111
+    val initialEnveloppeVolume4 get()= (channel4VolumeEnveloppe.getValue() shr 4) and 0b1111
     val enveloppeDirection4 by channel4VolumeEnveloppe.bitVar(3)
     val numberOfEnveloppeSweeps4 get()= channel4VolumeEnveloppe.getValue() and 0b111
 
     val channel4PolynomialCounter = MemoryRegister("NR43", memory, 0xFF22)
-    val shiftClockFrequency = (channel4PolynomialCounter.getValue() shr 4) and 0b1111
+    val shiftClockFrequency get()= (channel4PolynomialCounter.getValue() shr 4) and 0b1111
     val counterWidth by channel4PolynomialCounter.bitVar(3)
     val divingRatioOfFreq get()= channel4PolynomialCounter.getValue() and 0b111
 
@@ -136,6 +137,7 @@ class Sound(val memory: MemoryMapper) {
     val counterSelection get()= arrayOf(counterSelection1, counterSelection2, counterSelection3, counterSelection4)
     val enveloppePeriod get()= arrayOf(numberOfEnveloppeSweeps1, numberOfEnveloppeSweeps2, -1, numberOfEnveloppeSweeps4)
     val enveloppeDirection get()= arrayOf(enveloppeDirection1, enveloppeDirection2, false, enveloppeDirection4)
+    val initialEnveloppeVolume get()= arrayOf(initialEnveloppeVolume1, initialEnveloppeVolume2, -1, initialEnveloppeVolume4)
 
 
     private var leftChannel = 0.0
@@ -150,10 +152,16 @@ class Sound(val memory: MemoryMapper) {
         outputSound()
     }
 
+    var _DEV_counter = 0
+
     private fun outputSound() {
+        // between -8.0V and +8.0V
         val leftVolume = (out1Volume+1) * leftChannel
         val rightVolume = (out2Volume+1) * rightChannel
-        TODO()
+        //TODO()
+        if(leftVolume > -7.0 || rightVolume > -7.0)
+            println("$leftVolume / $rightVolume $_DEV_counter")
+        _DEV_counter++
     }
 
     fun resetSound(soundNumber: Int) {

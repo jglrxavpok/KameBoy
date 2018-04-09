@@ -77,6 +77,7 @@ class Square1(sound: Sound): Channel(sound) {
     }
 
     override fun reset() {
+        super.reset()
         timer.periodInCycles = (sound.channel1Frequency * Sound.SecondsToCycles).toInt()
         timer.reset()
         disabled = false

@@ -20,14 +20,22 @@ class Cartridge(val rawData: ByteArray): MemoryComponent {
     val checksum = fromNibbles(rawData[0x14E], rawData[0x14F])
     val cartrigeType = cartrigeTypeFromIndex(cartridgeTypeIndex)
     val romBankCount get()= when(romSizeIndex.asUnsigned()) {
-        0 -> 0
+     /*   0 -> 0
         1 -> 1
         2 -> 2
         3 -> 4
         4 -> 8
         5 -> 16
         6 -> 32
-        7 -> 64
+        7 -> 64*/
+        0 -> 0
+        1 -> 4
+        2 -> 8
+        3 -> 16
+        4 -> 32
+        5 -> 64
+        6 -> 128
+        7 -> 256
         0x52 -> 72
         0x53 -> 80
         0x54 -> 96

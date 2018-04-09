@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.processing
 
+import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned16
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
@@ -42,6 +43,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         C.setValue(0x13)
         DE.setValue(0x00D8)
         HL.setValue(0x014D)
+
         stackPointer.setValue(0xFFFE)
         programCounter.setValue(0x0100)
 
@@ -470,26 +472,41 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0x0F -> { rrc(A); 4}
             0x1F -> { rr(A); 4}
 
-            0xC3 -> { jp(nextAddress()); 12}
+            0xC3 -> { jp(nextAddress()); 16}
             0xC2 -> {
                 val address = nextAddress()
-                if(!flagZ) jp(address)
-                12
+                if(!flagZ) {
+                    jp(address)
+                    16
+                } else
+                    12
             }
             0xCA -> {
                 val address = nextAddress()
-                if(flagZ) jp(address)
-                12
+                if(flagZ) {
+                    jp(address)
+                    16
+                }
+                else
+                    12
             }
             0xD2 -> {
                 val address = nextAddress()
-                if(!flagC) jp(address)
-                12
+                if(!flagC) {
+                    jp(address)
+                    16
+                }
+                else
+                    12
             }
             0xDA -> {
                 val address = nextAddress()
-                if(flagC) jp(address)
-                12
+                if(flagC) {
+                    jp(address)
+                    16
+                }
+                else
+                    12
             }
 
             0xE9 -> {
@@ -575,12 +592,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun call(address: Int) {
-        val lowValue = programCounter.getValue() and 0xFF
-        val highValue = (programCounter.getValue() shr 8) and 0xFF
-        memory.write(stackPointer.getValue(), highValue)
-        memory.write(stackPointer.getValue()+1, lowValue)
-        stackPointer--
-        stackPointer--
+        push(programCounter)
 
         jp(address)
     }
@@ -819,9 +831,9 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun inc(register: SingleValueMemoryComponent) {
+        flagH = register.getValue() and 0xF == 0xF
         val result = register.getValue() + 1
         flagZ = (result and 0xFF) == 0
-        flagH = result and 0xF == 0xF
         flagN = false
         register.setValue(result)
     }
@@ -845,7 +857,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun and(value: Int) {
-        val result = A.getValue() and value
+        val result = A.getValue().asUnsigned8() and value.asUnsigned8()
         A.setValue(result)
         flagZ = result == 0
         flagN = false
@@ -863,7 +875,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         flagZ = A.getValue() == value
         flagH = (A.getValue() and 0xF) < (value and 0xF)
         flagN = true
-        flagC = A.getValue() < value
+        flagC = A.getValue() and 0xFF < value and 0xFF
     }
 
     private fun add(value: Int) {
@@ -876,18 +888,18 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun pop(): Int {
+        val high = memory.read(stackPointer.getValue()).asUnsigned8()
+        val low = memory.read(stackPointer.getValue()+1).asUnsigned8()
         stackPointer++
         stackPointer++
-        val high = memory.read(stackPointer.getValue())
-        val low = memory.read(stackPointer.getValue()+1)
-        return (high shl 8) or low
+        return ((high shl 8) or low).asUnsigned16()
     }
 
-    private fun push(register: PairedRegisters) {
-        memory.write(stackPointer.getValue(), register.high.getValue())
-        memory.write(stackPointer.getValue()+1, register.low.getValue())
+    private fun push(register: SingleValueMemoryComponent) {
         stackPointer--
         stackPointer--
+        memory.write(stackPointer.getValue(), (register.getValue() shr 8).asUnsigned8())
+        memory.write(stackPointer.getValue()+1, register.getValue().asUnsigned8())
     }
 
     private fun ld_address(address: Int, value: Int) = memory.write(address, value)
@@ -898,7 +910,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         val low = nextByte().asUnsigned8()
         val high = nextByte().asUnsigned8()
 
-        return (high shl 8) or low
+        return ((high shl 8) or low).asAddress()
     }
 
     fun nextByte(): Int {

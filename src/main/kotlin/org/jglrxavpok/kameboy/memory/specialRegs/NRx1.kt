@@ -2,9 +2,12 @@ package org.jglrxavpok.kameboy.memory.specialRegs
 
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.sound.Channel
 
-class NRx1(memory: MemoryComponent, val soundChannel: Channel): MemoryRegister("NR${soundChannel.channelNumber}1", memory, 0xFF01 + soundChannel.channelNumber * 0x10) {
+class NRx1(memory: MemoryComponent, val soundChannel: Channel): Register("NR${soundChannel.channelNumber}1", 0) {
+
+    // address: 0xFF01 + soundChannel.channelNumber * 0x10
 
     override fun write(address: Int, value: Int) {
         super.write(address, value)

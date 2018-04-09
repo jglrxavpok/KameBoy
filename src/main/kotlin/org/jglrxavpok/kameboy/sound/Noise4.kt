@@ -36,6 +36,7 @@ class Noise4(sound: Sound): Channel(sound) {
     }
 
     override fun reset() {
+        super.reset()
         // FIXME: << <what value> ?
         timer.periodInCycles = (Divisors[sound.divingRatioOfFreq] shl 1).toInt()
         timer.reset()

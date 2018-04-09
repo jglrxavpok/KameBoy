@@ -36,7 +36,7 @@ open class Register(override val name: String, protected var registerValue: Int 
     }
 
     protected open fun fitValueInBounds() {
-        registerValue = registerValue and mask
+        registerValue = getValue() and mask
     }
 
     operator fun plusAssign(value: Int) {
@@ -45,21 +45,21 @@ open class Register(override val name: String, protected var registerValue: Int 
     }
 
     operator fun plus(value: Int): Int {
-        return this.registerValue + value
+        return this.getValue() + value
     }
 
     operator fun minus(value: Int): Int {
-        return this.registerValue - value
+        return this.getValue() - value
     }
 
     infix fun shl(count: Int): Int {
-        registerValue = registerValue shl count
+        registerValue = getValue() shl count
         fitValueInBounds()
         return registerValue
     }
 
     infix fun shr(count: Int): Int {
-        registerValue = registerValue shr count
+        registerValue = getValue() shr count
         fitValueInBounds()
         return registerValue
     }
@@ -68,14 +68,14 @@ open class Register(override val name: String, protected var registerValue: Int 
      * Returns the set state of a given bit
      */
     operator fun get(bitIndex: Int): Boolean {
-        return (registerValue and (1 shl bitIndex)) != 0
+        return (getValue() and (1 shl bitIndex)) != 0
     }
 
     operator fun set(bitIndex: Int, value: Boolean) {
-        this.registerValue = this.registerValue.setBits(if(value) 1 else 0, bitIndex..bitIndex)
+        this.registerValue = this.getValue().setBits(if(value) 1 else 0, bitIndex..bitIndex)
     }
 
-    fun atPointed(memoryComponent: MemoryComponent) = memoryComponent.read(registerValue)
+    fun atPointed(memoryComponent: MemoryComponent) = memoryComponent.read(getValue())
 
     override fun toString(): String {
         return "Register[name=$name; value=$registerValue]"
@@ -97,12 +97,12 @@ class PairedRegisters(val high: Register, val low: Register): SingleValueMemoryC
     override fun write(address: Int, value: Int) {
         val lowValue = value.asUnsigned8()
         val highValue = (value shr 8).asUnsigned8()
-        low.write(address, lowValue)
+        low.write(address+1, lowValue)
         high.write(address, highValue)
     }
 
     override fun read(address: Int): Int {
-        return (high.read(address).asUnsigned8() shl 8) or low.read(address).asUnsigned8()
+        return (high.read(address).asUnsigned8() shl 8) or low.read(address+1).asUnsigned8()
     }
 
     override fun setValue(value: Int) {
