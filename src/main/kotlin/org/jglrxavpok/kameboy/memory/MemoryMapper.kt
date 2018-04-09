@@ -3,7 +3,7 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
-import org.jglrxavpok.kameboy.processing.Sound
+import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
 class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): MemoryComponent {
 

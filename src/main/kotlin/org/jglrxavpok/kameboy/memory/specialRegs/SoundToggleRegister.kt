@@ -1,7 +1,7 @@
 package org.jglrxavpok.kameboy.memory.specialRegs
 
 import org.jglrxavpok.kameboy.memory.Register
-import org.jglrxavpok.kameboy.processing.Sound
+import org.jglrxavpok.kameboy.sound.Sound
 
 class SoundToggleRegister(val sound: Sound): Register("NR52") {
 

@@ -1,7 +1,7 @@
 import org.gradle.internal.os.OperatingSystem
 
 buildscript {
-    ext.kotlin_version = '1.2.30'
+    ext.kotlin_version = '1.2.31'
 
     repositories {
         mavenCentral()
@@ -20,7 +20,7 @@ repositories {
     mavenCentral()
 }
 
-project.ext.lwjglVersion = "3.1.2"
+project.ext.lwjglVersion = "3.1.6"
 
 
 switch ( OperatingSystem.current() ) {

@@ -2,7 +2,7 @@ package org.jglrxavpok.kameboy.memory.specialRegs
 
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryRegister
-import org.jglrxavpok.kameboy.processing.Sound
+import org.jglrxavpok.kameboy.sound.Sound
 
 class SoundFreqHighRegister(memory: MemoryComponent, name: String, val sound: Sound, address: Int, val soundNumber: Int): MemoryRegister(name, memory, address) {
 
