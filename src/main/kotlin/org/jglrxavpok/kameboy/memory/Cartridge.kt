@@ -48,7 +48,7 @@ class Cartridge(val rawData: ByteArray): MemoryComponent {
         4 -> 16
         else -> error("Unknown ram size index $ramSizeIndex")
     }
-    val ramBanks = Array(ramBankCount) { index ->
+    val ramBanks = Array(ramBankCount+1) { index ->
         RamBank("Switchable Ram Bank #$index")
     }
     var selectedRAMBankIndex = 0
@@ -66,4 +66,11 @@ class Cartridge(val rawData: ByteArray): MemoryComponent {
     }
 
     override fun read(address: Int) = cartrigeType.read(address)
+
+    override fun toString(): String {
+        return "Cartridge[\n" +
+                "Title: '$title'\n" +
+                "Cartridge type infos: $cartrigeType\n" +
+                "]"
+    }
 }

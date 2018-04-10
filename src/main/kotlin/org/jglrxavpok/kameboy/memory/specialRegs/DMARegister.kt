@@ -13,7 +13,7 @@ class DMARegister(val memoryMapper: MemoryMapper): Register("DMA") {
             val data = memoryMapper.read(address + index)
             memoryMapper.write(0xFE00 + index, data)
         }
-        println("transfer from $address")
+    //    println("transfer from $address")
     }
 
     override fun getValue(): Int {

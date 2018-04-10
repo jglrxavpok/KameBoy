@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("cpu_instrs.gb"))
+    private val cartridge = Cartridge(_DEV_rom("lyc.gb"))
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -119,6 +119,9 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     private fun initInput() {
         glfwSetKeyCallback(window) { window, key, scancode, action, mods ->
+            if(key == GLFW_KEY_F1 && action == GLFW_RELEASE) {
+                core.dumpInfos()
+            }
             val bit = when(key) {
                 GLFW_KEY_RIGHT, GLFW_KEY_Q -> 0
                 GLFW_KEY_LEFT, GLFW_KEY_W -> 1

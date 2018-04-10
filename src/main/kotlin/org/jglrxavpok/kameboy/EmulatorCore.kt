@@ -3,6 +3,7 @@ package org.jglrxavpok.kameboy
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
+import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import org.jglrxavpok.kameboy.processing.CPU
 import org.jglrxavpok.kameboy.processing.GameBoyTimer
 import org.jglrxavpok.kameboy.processing.Video
@@ -56,4 +57,38 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
     fun stop() {
         task.cancel()
     }
+
+    fun dumpInfos() {
+        println("========")
+        printReg(cpu.AF)
+        println("Z: ${cpu.flagZ}")
+        println("N: ${cpu.flagN}")
+        println("H: ${cpu.flagH}")
+        println("C: ${cpu.flagC}")
+        printReg(cpu.BC)
+        printReg(cpu.DE)
+        printReg(cpu.HL)
+        printReg(cpu.stackPointer)
+        printReg(cpu.programCounter)
+        try {
+            printReg(cpu.atHL)
+        } catch (e: Exception) {
+            println("(HL) INVALID ADDRESS (${e.message})")
+        }
+        println("LCDC: ${Integer.toHexString(mapper.read(0xFF40))}")
+        println("STAT: ${Integer.toHexString(mapper.read(0xFF41))}")
+        println("LY: ${Integer.toHexString(mapper.read(0xFF44))}")
+        println("Input: ${Integer.toHexString(mapper.read(0xFF00))}")
+        println("Instruction: ${Integer.toHexString(cpu.programCounter.atPointed(mapper))}")
+        println("PC (decimal): ${cpu.programCounter.getValue()}")
+        println("Cartridge info: $cartridge")
+        println("IF: ${Integer.toBinaryString(mapper.read(0xFF0F))}")
+        println("IE: ${Integer.toBinaryString(mapper.read(0xFFFF))}")
+        println("========")
+    }
+
+    private fun printReg(register: SingleValueMemoryComponent) {
+        println("${register.name} = ${Integer.toHexString(register.getValue())}")
+    }
+
 }

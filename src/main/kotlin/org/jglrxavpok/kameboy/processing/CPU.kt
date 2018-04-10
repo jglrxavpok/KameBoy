@@ -86,23 +86,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
      */
     fun step(): Int {
         val shouldChangeInterruptState = requestedInterruptChange
-        if(interruptManager.interruptsEnabled) {
-            val interruptFlag = memory.read(0xFF0F)
-            val interruptEnable = memory.read(0xFFFF)
-            if(interruptFlag and interruptEnable != 0) {
-                interruptManager.interruptsEnabled = false
-                when {
-                    !stopped && interruptManager.hasVBlank() -> interrupt(0)
-                    !stopped && interruptManager.hasLCDC() -> interrupt(1)
-                    !stopped && interruptManager.hasTimerOverflow() -> interrupt(2)
-                    !stopped && interruptManager.hasSerial() -> interrupt(3)
-                    interruptManager.hasPinReleased() -> {
-                        stopped = false
-                        interrupt(4)
-                    }
-                }
-            }
-        }
+        checkInterrupts()
         if(halted || stopped)
             return 4
         val position = programCounter.getValue()
@@ -121,8 +105,29 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         return -1
     }
 
+    private tailrec fun checkInterrupts() {
+        if(interruptManager.interruptsEnabled) {
+            val interruptFlag = memory.read(0xFF0F)
+            val interruptEnable = memory.read(0xFFFF)
+            if(interruptFlag and interruptEnable != 0) {
+                when {
+                    !stopped && interruptManager.hasVBlank() -> interrupt(0)
+                    !stopped && interruptManager.hasLCDC() -> interrupt(1)
+                    !stopped && interruptManager.hasTimerOverflow() -> interrupt(2)
+                    !stopped && interruptManager.hasSerial() -> interrupt(3)
+                    interruptManager.hasPinReleased() -> {
+                        stopped = false
+                        interrupt(4)
+                    }
+                }
+                checkInterrupts()
+            }
+        }
+    }
+
     private fun interrupt(interruptIndex: Int) {
         halted = false
+        interruptManager.interruptsEnabled = false
         interruptManager.reset(interruptIndex)
         call(0x40 + interruptIndex * 8)
     }

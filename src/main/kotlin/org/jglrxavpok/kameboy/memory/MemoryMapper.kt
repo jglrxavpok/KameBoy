@@ -18,7 +18,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
     val sound = Sound(this)
 
     val interruptEnableRegister = Register("Interrupt Enable Register")
-    val lyRegister = LYRegister()
+    val lyRegister = LYRegister(this)
     val divRegister = DivRegister()
     val timerRegister = TimerRegister(this)
     val ioPorts = arrayOf(

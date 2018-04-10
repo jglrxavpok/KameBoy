@@ -9,7 +9,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("cpu_instrs.gb"))
+    val cartridge = Cartridge(rom("DrMario.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF
@@ -95,34 +95,8 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
 
     private fun step(mute: Boolean) {
         if(!mute) {
-            println("========")
-            printReg(cpu.AF)
-            println("Z: ${cpu.flagZ}")
-            println("N: ${cpu.flagN}")
-            println("H: ${cpu.flagH}")
-            println("C: ${cpu.flagC}")
-            printReg(cpu.BC)
-            printReg(cpu.DE)
-            printReg(cpu.HL)
-            printReg(cpu.stackPointer)
-            printReg(cpu.programCounter)
-            try {
-                printReg(cpu.atHL)
-            } catch (e: Exception) {
-                println("(HL) INVALID ADDRESS (${e.message})")
-            }
-            println("LCDC: ${Integer.toHexString(memory.read(0xFF40))}")
-            println("STAT: ${Integer.toHexString(memory.read(0xFF41))}")
-            println("LY: ${Integer.toHexString(memory.read(0xFF44))}")
-            println("Input: ${Integer.toHexString(memory.read(0xFF00))}")
-            println("Instruction: ${Integer.toHexString(cpu.programCounter.atPointed(memory))}")
-            println("Instruction: ${cpu.programCounter.getValue()}")
-            println("========")
+            emulatorCore.dumpInfos()
         }
         emulatorCore.step()
-    }
-
-    private fun printReg(register: SingleValueMemoryComponent) {
-        println("${register.name} = ${Integer.toHexString(register.getValue())}")
     }
 }

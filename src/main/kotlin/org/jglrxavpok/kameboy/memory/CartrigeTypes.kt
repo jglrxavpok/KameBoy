@@ -10,11 +10,15 @@ class ROMOnly(val cartridge: Cartridge): MemoryComponent {
     private val data = cartridge.rawData
 
     override fun write(address: Int, value: Int) {
-        data[address] = value.asUnsigned8().toByte()
+       // data[address] = value.asUnsigned8().toByte()
+        //error("WRITE TO ROM to $address ; value is $value")
     }
 
     override fun read(address: Int) = data[address].asUnsigned()
 
+    override fun toString(): String {
+        return "ROM Only"
+    }
 }
 
 class MBC1(val cartridge: Cartridge): MemoryComponent {
@@ -22,7 +26,7 @@ class MBC1(val cartridge: Cartridge): MemoryComponent {
     var mode = Mode.Rom16Ram8
     var currentBank = 0
     val BankSize = 0x4000
-    val banks = Array(cartridge.romBankCount) { index ->
+    val banks = Array(cartridge.romBankCount+1) { index ->
         val start = index*BankSize
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)
@@ -72,4 +76,7 @@ class MBC1(val cartridge: Cartridge): MemoryComponent {
         Rom4Ram32
     }
 
+    override fun toString(): String {
+        return "MBC1(CurrentBank=$currentBank)"
+    }
 }

@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.processing
 
 import org.jglrxavpok.kameboy.helpful.asSigned8
+import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.InterruptManager
 import org.jglrxavpok.kameboy.memory.MemoryMapper
@@ -15,7 +16,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     }
     val windowX = MemoryRegister("WindowX", memory, 0xFF4B)
     val windowY = MemoryRegister("WindowY", memory, 0xFF4A)
-    val objPalette1Data = MemoryRegister("OBJ Palette 0 Data", memory, 0xFF49)
+    val objPalette1Data = MemoryRegister("OBJ Palette 1 Data", memory, 0xFF49)
     val objPalette0Data = MemoryRegister("OBJ Palette 0 Data", memory, 0xFF48)
     val bgPaletteData = MemoryRegister("BG Palette Data", memory, 0xFF47)
     // TODO: CGB palettes + VRAM bank
@@ -57,8 +58,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         Mode3(170)
     }
 
-    fun drawTileRow(x: Int, row: Int, tileRow: Int, tileAddress: Int, palette: MemoryRegister, target: IntArray = pixelData) {
-        val isBackground = palette.address == bgPaletteData.address
+    fun drawTileRow(x: Int, row: Int, tileRow: Int, tileAddress: Int, palette: MemoryRegister, target: IntArray = pixelData, isBackground: Boolean = false) {
         var screenY = if(row < 0) row + 256 else row
         if(isBackground) { // background wraps
             screenY %= 256
@@ -99,13 +99,6 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     fun scanLine() {
         val line = lcdcY.getValue()
-        if(line == lyCompare.getValue()) {
-            coincidenceFlag = true
-            if(coincidenceInterrupt)
-                interruptManager.fireLCDC()
-        } else {
-            coincidenceFlag = false
-        }
 
         Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, 0xFFFF0000.toInt())
 
@@ -117,7 +110,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     val tileNumber = memory.read(backgroundTileMapAddress + line /8*32 + scrolledX/8)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8, line, line %8, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8, line, line %8, tileAddress + offset, bgPaletteData, isBackground = true)
                 }
             }
             if(windowDisplayEnable) {
@@ -125,7 +118,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     val tileNumber = memory.read(windowTileMapAddress + (line / 8) * 32 + x)
                     val tileAddress = tileDataAddress
                     val offset = (if (dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8 + windowX.getValue(), line + windowY.getValue(), line % 8, tileAddress + offset, bgPaletteData)
+                    drawTileRow(x * 8 + windowX.getValue()-scrollX.getValue(), line - windowY.getValue()+scrollY.getValue(), line % 8, tileAddress + offset, bgPaletteData)
                 }
             }
 
@@ -133,10 +126,10 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 val spriteTable = memory.spriteAttributeTable
                 val sprites = spriteTable.sprites.sorted()
                 sprites.forEach { sprite ->
-                    val posY = sprite.positionY.getValue()
-                    val posX = sprite.positionX.getValue()
+                    val posY = sprite.positionY.getValue()/*+scrollY.getValue()*/-8
+                    val posX = sprite.positionX.getValue()/*+scrollX.getValue()*/-8
                     val tileNumber = sprite.tileNumber.getValue()
-                    val offset = tileNumber
+                    val offset = tileNumber.asUnsigned8()
                     val tileAddress = 0x8000 + offset
                     if(posY in line..(line+7)) {
                         drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data)
@@ -158,9 +151,9 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             return
         }
         val line = lcdcY.getValue()
-        if(coincidenceInterrupt && line == lyCompare.getValue()) {
+        /*if(coincidenceInterrupt && line == lyCompare.getValue()) {
             interruptManager.fireLCDC()
-        }
+        }*/
 
         if(line < VBlankStartLine) {
             mode = VideoMode.VBlank
@@ -181,7 +174,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             }
         } else {
             if(mode != VideoMode.VBlank) {
-                if(mode1VBlankInterrupt)
+                // FIXME if(mode1VBlankInterrupt)
                     interruptManager.fireVBlank()
             }
             mode = VideoMode.VBlank
