@@ -64,21 +64,21 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     vMirror: Boolean = false,
                     hMirror: Boolean = false,
                     tileHeight: Int = 8) {
-        var screenY = if(row < 0) row + 256 else row
+        var screenY = row
         if(isBackground) { // background wraps
-            screenY %= 256
-        } else if(screenY >= 256) {
+            screenY = wrapInBounds(row)
+        } else if(screenY >= 256 || screenY < 0) {
             return
         }
-        val effectiveTileRow = if(vMirror) tileHeight-tileLocalRow else tileLocalRow
+        val effectiveTileRow = if(vMirror) tileHeight-1-tileLocalRow else tileLocalRow
         val lineDataLS = memory.read(tileAddress + effectiveTileRow*2)
         val lineDataMS = memory.read(tileAddress + effectiveTileRow*2 +1)
         for(i in 0..7) {
-            var screenX = (if(x < 0) x + 256 else x) + i
+            var screenX = x + i
             if(isBackground) { // background wraps
-                screenX %= 256
-            } else if(screenX >= 256) {
-                break
+                screenX = wrapInBounds(screenX)
+            } else if(screenX >= 256 || screenX < 0) {
+                continue
             }
             val effectiveTileColumn = if(hMirror) i else (7-i)
             val highColor = if(lineDataMS and (1 shl effectiveTileColumn) != 0) 1 else 0
@@ -88,6 +88,12 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 continue
             target[screenY*256+screenX] = pixelColor(pixelColorIndex, palette)
         }
+    }
+
+    private tailrec fun wrapInBounds(value: Int): Int {
+        if(value >= 0)
+            return value % 256
+        return wrapInBounds(value+256)
     }
 
     private fun pixelColor(index: Int, palette: MemoryRegister): Int {
@@ -112,24 +118,24 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         if(line < VBlankStartLine && lcdDisplayEnable) {
             // TODO: scroll
             if(bgDisplay) {
-                val scrolledY = line - scrollY.getValue()
+                val scrolledY = wrapInBounds(line + scrollY.getValue())
                 for(x in 0 until 32) {
-                    val scrolledX = x * 8 - scrollX.getValue()
-                    val tileNumber = memory.read(backgroundTileMapAddress + scrolledY /8*32 + scrolledX/8)
+                    val scrolledX = wrapInBounds(x * 8 + scrollX.getValue())
+                    val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(scrolledX, line, line %8, tileAddress + offset, bgPaletteData, isBackground = true)
+                    drawTileRow(x*8, line, scrolledY %8, tileAddress + offset, bgPaletteData, isBackground = true)
                 }
             }
             if(windowDisplayEnable) {
-                val effectiveLine = +line-windowY.getValue()
-                if(effectiveLine >= 0) {
+                val effectiveLine = line-windowY.getValue()
+                if(effectiveLine in 0..255) {
                     for(x in 0 until 32) {
                         val effectiveX = x*8-windowX.getValue()+7
                         val tileNumber = memory.read(windowTileMapAddress + (effectiveLine / 8) * 32 + effectiveX/8)
                         val tileAddress = tileDataAddress
                         val offset = (if (dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                        drawTileRow(effectiveX, line, effectiveLine % 8, tileAddress + offset, bgPaletteData)
+                        drawTileRow(effectiveX, line, effectiveLine % 8, tileAddress + offset, bgPaletteData, isBackground = true)
                     }
                 }
             }
@@ -138,19 +144,23 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 val spriteTable = memory.spriteAttributeTable
                 val sprites = spriteTable.sprites.sorted()
                 sprites.forEach { sprite ->
-                    val posY = sprite.positionY.getValue()-scrollY.getValue()-8
-                    val posX = sprite.positionX.getValue()-scrollX.getValue()-8
+                    val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
+                    val posY = sprite.positionY.getValue()-8
+                    val posX = sprite.positionX.getValue()-8
                     val tileNumber = sprite.tileNumber.getValue()
                     val offset = tileNumber.asUnsigned8()
                     val tileAddress = 0x8000 + offset*2*8
 
+                    if(posX+8 < 0 || posX >= 256)
+                        return@forEach
+
                     if(spriteSizeSelect) {
                         if(posY+8 in line..(line+15)) {
-                            drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16)
+                            drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16)
                         }
                     } else {
                         if(posY in line..(line+7)) {
-                            drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
+                            drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
                         }
                     }
                     //println("$posX / $posY - $tileNumber")

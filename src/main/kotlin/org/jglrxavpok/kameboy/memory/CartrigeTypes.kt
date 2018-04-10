@@ -5,13 +5,22 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
 
-class ROMOnly(val cartridge: Cartridge): MemoryComponent {
-    override val name = "ROM Only"
+abstract class CartridgeType: MemoryComponent {
+    abstract fun accepts(address: Int): Boolean
+}
+
+class ROMOnly(val cartridge: Cartridge): CartridgeType() {
     private val data = cartridge.rawData
+
+    override val name = "ROM Only"
 
     override fun write(address: Int, value: Int) {
        // data[address] = value.asUnsigned8().toByte()
         //error("WRITE TO ROM to $address ; value is $value")
+    }
+
+    override fun accepts(address: Int): Boolean {
+        return address in 0..0x8000
     }
 
     override fun read(address: Int) = data[address].asUnsigned()
@@ -21,7 +30,7 @@ class ROMOnly(val cartridge: Cartridge): MemoryComponent {
     }
 }
 
-class MBC1(val cartridge: Cartridge): MemoryComponent {
+class MBC1(val cartridge: Cartridge): CartridgeType() {
     override val name = "MBC1"
     var mode = Mode.Rom16Ram8
     var currentBank = 0
@@ -56,6 +65,10 @@ class MBC1(val cartridge: Cartridge): MemoryComponent {
             }
             else -> error("Invalid address for MBC1 $address")
         }
+    }
+
+    override fun accepts(address: Int): Boolean {
+        return address in 0..0x8000
     }
 
     override fun read(address: Int): Int {

@@ -87,7 +87,7 @@ open class MemoryRegister(override val name: String, val memory: MemoryComponent
         memory.write(this.address, value)
     }
 
-    override fun getValue() = memory.read(this.address)
+    override fun getValue() = memory.read(this.address).asUnsigned8()
 }
 
 class PairedRegisters(val high: Register, val low: Register): SingleValueMemoryComponent {

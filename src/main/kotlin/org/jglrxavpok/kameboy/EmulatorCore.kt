@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy
 
+import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
@@ -7,7 +8,11 @@ import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import org.jglrxavpok.kameboy.processing.CPU
 import org.jglrxavpok.kameboy.processing.GameBoyTimer
 import org.jglrxavpok.kameboy.processing.Video
+import java.awt.image.BufferedImage
 import java.util.*
+import javax.swing.ImageIcon
+import javax.swing.JFrame
+import javax.swing.JLabel
 import kotlin.concurrent.scheduleAtFixedRate
 
 class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
@@ -89,6 +94,27 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
 
     private fun printReg(register: SingleValueMemoryComponent) {
         println("${register.name} = ${Integer.toHexString(register.getValue())}")
+    }
+
+    fun showBGMap() {
+        val data = IntArray(256*256)
+        val video = video
+        for(row in 0..144) {
+            for(x in 0..15) {
+                val tileNumber = x+(row/8)*16
+                val offset = tileNumber
+                val tileAddress = video.tileDataAddress + (if(video.dataSelect) offset else offset.asSigned8())*0x10
+                video.drawTileRow(x*8, row, row%8, tileAddress, video.bgPaletteData, target = data)
+            }
+        }
+        val result = BufferedImage(256,256, BufferedImage.TYPE_INT_ARGB)
+        result.setRGB(0, 0, 256, 256, data, 0, 256)
+        val frame = JFrame("Video Result")
+        frame.add(JLabel(ImageIcon(result)))
+        frame.pack()
+        frame.setLocationRelativeTo(null)
+        frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
+        frame.isVisible = true
     }
 
 }

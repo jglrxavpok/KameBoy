@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom(/*"LoZ Link's Awakening*/"Tetris.gb"))
+    private val cartridge = Cartridge(_DEV_rom("Pokemon Red.gb"))
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -30,7 +30,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var scrollUniform: Int
 
     init {
-        window = glfwCreateWindow(400, 400, "Kameboy - ${cartridge.title}", nullptr, nullptr)
+        window = glfwCreateWindow(160*4, 144*4, "Kameboy - ${cartridge.title}", nullptr, nullptr)
         initInput()
         glfwShowWindow(window)
 
@@ -119,8 +119,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     private fun initInput() {
         glfwSetKeyCallback(window) { window, key, scancode, action, mods ->
-            if(key == GLFW_KEY_F1 && action == GLFW_RELEASE) {
-                core.dumpInfos()
+            if(action == GLFW_RELEASE) {
+                when(key) {
+                    GLFW_KEY_F1 -> core.dumpInfos()
+                    GLFW_KEY_F2 -> core.showBGMap()
+                }
             }
             val bit = when(key) {
                 GLFW_KEY_RIGHT, GLFW_KEY_Q -> 0
@@ -159,10 +162,14 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     private fun runEmulator() {
         core.init()
+        val windowWPointer = IntArray(1)
+        val windowHPointer = IntArray(1)
         while(!glfwWindowShouldClose(window)) {
+            glfwGetWindowSize(window, windowWPointer, windowHPointer)
             glfwPollEvents()
             glClearColor(0f, .8f, 0f, 1f)
             glClear(GL_COLOR_BUFFER_BIT)
+            glViewport(0, 0, windowWPointer[0], windowHPointer[0])
 
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, textureID)

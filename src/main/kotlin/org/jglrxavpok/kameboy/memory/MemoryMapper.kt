@@ -142,7 +142,13 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
     fun map(address: Int): MemoryComponent = when(address.asAddress()) {
         in 0 until 0x8000 -> cartridgeData
         in 0x8000 until 0xA000 -> videoRAM
-        in 0xA000 until 0xC000 -> cartridgeData.currentRAMBank
+        in 0xA000 until 0xC000 -> {
+            if(cartridgeData.cartrigeType.accepts(address)) {
+                cartridgeData.cartrigeType
+            } else {
+                cartridgeData.currentRAMBank
+            }
+        }
         in 0xC000..0xDFFF, in 0xE000..0xFDFF -> internalRAM
         in 0xFE00 until 0xFEA0 -> spriteAttributeTable
         in 0xFEA0 until 0xFF00 -> empty0

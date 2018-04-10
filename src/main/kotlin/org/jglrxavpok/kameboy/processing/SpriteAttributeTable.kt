@@ -30,6 +30,7 @@ class SpriteAttributeTable: MemoryComponent {
         val tileNumber = MemoryRegister("Sprite$index Tile Number", this@SpriteAttributeTable, startAddress+2)
         val attributes = MemoryRegister("Sprite$index Attributes", this@SpriteAttributeTable, startAddress+3)
 
+        val paletteNumber by attributes.bitVar(4)
         val hMirror by attributes.bitVar(5)
         val vMirror by attributes.bitVar(6)
         val priority by attributes.bitVar(7)

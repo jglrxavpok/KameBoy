@@ -3,6 +3,7 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.AsciiString
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.fromNibbles
+import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC3
 
 class Cartridge(val rawData: ByteArray): MemoryComponent {
     val scrollingLogo = rawData.sliceArray(0x0104..0x0133)
@@ -55,9 +56,11 @@ class Cartridge(val rawData: ByteArray): MemoryComponent {
     val currentRAMBank get()= ramBanks[selectedRAMBankIndex]
     override val name = "Cartridge (${cartrigeType.name})"
 
-    fun cartrigeTypeFromIndex(index: Byte): MemoryComponent = when(index.asUnsigned()) {
+    fun cartrigeTypeFromIndex(index: Byte): CartridgeType = when(index.asUnsigned()) {
         0 -> ROMOnly(this)
         1, 2, 3 -> MBC1(this)
+
+        0x13 -> MBC3(this)
         else -> error("Cartridge type $index not supported")
     }
 
