@@ -20,7 +20,7 @@ class P1Register(val input: PlayerInput): Register("P1") {
 
     override fun setValue(value: Int) {
         super.setValue(value)
-        selectButtonKeys = value and 0x20 != 0
-        selectDirectionKeys = value and 0x10 != 0
+        selectButtonKeys = value and 0x20 == 0
+        selectDirectionKeys = value and 0x10 == 0
     }
 }

@@ -58,15 +58,21 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         Mode3(170)
     }
 
-    fun drawTileRow(x: Int, row: Int, tileRow: Int, tileAddress: Int, palette: MemoryRegister, target: IntArray = pixelData, isBackground: Boolean = false) {
+    fun drawTileRow(x: Int, row: Int, tileLocalRow: Int, tileAddress: Int, palette: MemoryRegister,
+                    target: IntArray = pixelData,
+                    isBackground: Boolean = false,
+                    vMirror: Boolean = false,
+                    hMirror: Boolean = false,
+                    tileHeight: Int = 8) {
         var screenY = if(row < 0) row + 256 else row
         if(isBackground) { // background wraps
             screenY %= 256
         } else if(screenY >= 256) {
             return
         }
-        val lineDataLS = memory.read(tileAddress + tileRow*2)
-        val lineDataMS = memory.read(tileAddress + tileRow*2 +1)
+        val effectiveTileRow = if(vMirror) tileHeight-tileLocalRow else tileLocalRow
+        val lineDataLS = memory.read(tileAddress + effectiveTileRow*2)
+        val lineDataMS = memory.read(tileAddress + effectiveTileRow*2 +1)
         for(i in 0..7) {
             var screenX = (if(x < 0) x + 256 else x) + i
             if(isBackground) { // background wraps
@@ -74,8 +80,9 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             } else if(screenX >= 256) {
                 break
             }
-            val highColor = if(lineDataMS and (1 shl (7-i)) != 0) 1 else 0
-            val lowColor = if(lineDataLS and (1 shl (7-i)) != 0) 1 else 0
+            val effectiveTileColumn = if(hMirror) i else (7-i)
+            val highColor = if(lineDataMS and (1 shl effectiveTileColumn) != 0) 1 else 0
+            val lowColor = if(lineDataLS and (1 shl effectiveTileColumn) != 0) 1 else 0
             val pixelColorIndex = (highColor shl 1) + lowColor
             if(pixelColorIndex == 0 && !isBackground) // transparent pixel
                 continue
@@ -105,20 +112,25 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         if(line < VBlankStartLine && lcdDisplayEnable) {
             // TODO: scroll
             if(bgDisplay) {
+                val scrolledY = line - scrollY.getValue()
                 for(x in 0 until 32) {
-                    val scrolledX = x * 8
-                    val tileNumber = memory.read(backgroundTileMapAddress + line /8*32 + scrolledX/8)
+                    val scrolledX = x * 8 - scrollX.getValue()
+                    val tileNumber = memory.read(backgroundTileMapAddress + scrolledY /8*32 + scrolledX/8)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8, line, line %8, tileAddress + offset, bgPaletteData, isBackground = true)
+                    drawTileRow(scrolledX, line, line %8, tileAddress + offset, bgPaletteData, isBackground = true)
                 }
             }
             if(windowDisplayEnable) {
-                for(x in 0 until 32) {
-                    val tileNumber = memory.read(windowTileMapAddress + (line / 8) * 32 + x)
-                    val tileAddress = tileDataAddress
-                    val offset = (if (dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x * 8 + windowX.getValue()-scrollX.getValue(), line - windowY.getValue()+scrollY.getValue(), line % 8, tileAddress + offset, bgPaletteData)
+                val effectiveLine = +line-windowY.getValue()
+                if(effectiveLine >= 0) {
+                    for(x in 0 until 32) {
+                        val effectiveX = x*8-windowX.getValue()+7
+                        val tileNumber = memory.read(windowTileMapAddress + (effectiveLine / 8) * 32 + effectiveX/8)
+                        val tileAddress = tileDataAddress
+                        val offset = (if (dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
+                        drawTileRow(effectiveX, line, effectiveLine % 8, tileAddress + offset, bgPaletteData)
+                    }
                 }
             }
 
@@ -126,13 +138,20 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 val spriteTable = memory.spriteAttributeTable
                 val sprites = spriteTable.sprites.sorted()
                 sprites.forEach { sprite ->
-                    val posY = sprite.positionY.getValue()/*+scrollY.getValue()*/-8
-                    val posX = sprite.positionX.getValue()/*+scrollX.getValue()*/-8
+                    val posY = sprite.positionY.getValue()-scrollY.getValue()-8
+                    val posX = sprite.positionX.getValue()-scrollX.getValue()-8
                     val tileNumber = sprite.tileNumber.getValue()
                     val offset = tileNumber.asUnsigned8()
-                    val tileAddress = 0x8000 + offset
-                    if(posY in line..(line+7)) {
-                        drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data)
+                    val tileAddress = 0x8000 + offset*2*8
+
+                    if(spriteSizeSelect) {
+                        if(posY+8 in line..(line+15)) {
+                            drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16)
+                        }
+                    } else {
+                        if(posY in line..(line+7)) {
+                            drawTileRow(posX, line, posY-line, tileAddress, objPalette0Data, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
+                        }
                     }
                     //println("$posX / $posY - $tileNumber")
                 }
@@ -156,7 +175,6 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         }*/
 
         if(line < VBlankStartLine) {
-            mode = VideoMode.VBlank
             mode = when {
                 currentClockCycles >= 80 -> {
                     if(mode != VideoMode.Mode2 && mode2OamInterrupt) {

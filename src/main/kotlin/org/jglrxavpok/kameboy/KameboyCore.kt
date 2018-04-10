@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("lyc.gb"))
+    private val cartridge = Cartridge(_DEV_rom(/*"LoZ Link's Awakening*/"Tetris.gb"))
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -125,8 +125,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             val bit = when(key) {
                 GLFW_KEY_RIGHT, GLFW_KEY_Q -> 0
                 GLFW_KEY_LEFT, GLFW_KEY_W -> 1
-                GLFW_KEY_UP, GLFW_KEY_ENTER -> 2
-                GLFW_KEY_DOWN, GLFW_KEY_BACKSPACE -> 3
+                GLFW_KEY_UP, GLFW_KEY_BACKSPACE -> 2
+                GLFW_KEY_DOWN, GLFW_KEY_ENTER -> 3
                 else -> -1
             }
             if(bit >= 0) {

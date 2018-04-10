@@ -159,8 +159,8 @@ class Sound(val memory: MemoryMapper) {
         val leftVolume = (out1Volume+1) * leftChannel
         val rightVolume = (out2Volume+1) * rightChannel
         //TODO()
-        if(leftVolume > -7.0 || rightVolume > -7.0)
-            println("$leftVolume / $rightVolume $_DEV_counter")
+  //      if(leftVolume > -7.0 || rightVolume > -7.0)
+//            println("$leftVolume / $rightVolume $_DEV_counter")
         _DEV_counter++
     }
 
