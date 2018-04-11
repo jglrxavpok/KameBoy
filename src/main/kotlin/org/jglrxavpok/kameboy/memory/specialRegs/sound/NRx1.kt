@@ -1,11 +1,11 @@
-package org.jglrxavpok.kameboy.memory.specialRegs
+package org.jglrxavpok.kameboy.memory.specialRegs.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.sound.Channel
 
-class NRx1(memory: MemoryComponent, val soundChannel: Channel): Register("NR${soundChannel.channelNumber}1", 0) {
+class NRx1(memory: MemoryComponent, val soundChannel: Channel, orValue: Int): NRRegister(soundChannel.channelNumber, 1, orValue) {
 
     // address: 0xFF01 + soundChannel.channelNumber * 0x10
 

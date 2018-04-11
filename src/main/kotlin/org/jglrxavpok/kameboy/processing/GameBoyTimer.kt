@@ -1,9 +1,7 @@
 package org.jglrxavpok.kameboy.processing
 
-import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
-import org.jglrxavpok.kameboy.sound.Sound.Companion.SecondsToCycles
 
 class GameBoyTimer(val mapper: MemoryMapper) {
 

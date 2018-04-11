@@ -117,7 +117,6 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, 0xFFFF0000.toInt())
 
         if(line < VBlankStartLine && lcdDisplayEnable) {
-            // TODO: scroll
             if(bgDisplay) {
                 val scrolledY = wrapInBounds(line + scrollY.getValue())
                 for(x in 0 until 32) {
@@ -149,16 +148,21 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     // for some reason the sort fails sometimes
                     emptyList<SpriteAttributeTable.Sprite>()
                 }
-                sprites.forEach { sprite ->
+                // draw only the 10 first sprites on this scanline
+                sprites
+                        .filter(SpriteAttributeTable.Sprite::visible)
+                        .filter { sprite ->
+                            val posX = sprite.positionX.getValue()-8
+                            posX+8 > 0 && posX <= 256
+                        }
+                        /*.take(10)*/
+                        .forEach { sprite ->
                     val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
                     val posY = sprite.positionY.getValue()-8
                     val posX = sprite.positionX.getValue()-8
                     val tileNumber = sprite.tileNumber.getValue()
                     val offset = tileNumber.asUnsigned8()
                     val tileAddress = 0x8000 + offset*2*8
-
-                    if(posX+8 < 0 || posX >= 256)
-                        return@forEach
 
                     if(spriteSizeSelect) {
                         if(posY+8 in line..(line+15)) {
@@ -169,10 +173,8 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                             drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
                         }
                     }
-                    //println("$posX / $posY - $tileNumber")
                 }
             }
-            // TODO: Sprites
         }
     }
 

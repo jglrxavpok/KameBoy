@@ -35,6 +35,8 @@ class SpriteAttributeTable: MemoryComponent {
         val vMirror by attributes.bitVar(6)
         val priority by attributes.bitVar(7)
 
+        val visible get()= positionX.getValue() != 0 && positionY.getValue() != 0
+
         override fun compareTo(other: Sprite): Int {
             if(!overlaps(other))
                 return 0

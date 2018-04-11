@@ -1,4 +1,4 @@
-package org.jglrxavpok.kameboy.memory.specialRegs
+package org.jglrxavpok.kameboy.memory.specialRegs.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryRegister

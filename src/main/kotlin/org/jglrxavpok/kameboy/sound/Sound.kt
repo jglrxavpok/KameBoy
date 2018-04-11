@@ -3,10 +3,7 @@ package org.jglrxavpok.kameboy.sound
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import org.jglrxavpok.kameboy.memory.Register
-import org.jglrxavpok.kameboy.memory.specialRegs.NRx1
-import org.jglrxavpok.kameboy.memory.specialRegs.SoundFreqHighRegister
-import org.jglrxavpok.kameboy.memory.specialRegs.SoundToggleRegister
-import javax.sound.sampled.AudioSystem
+import org.jglrxavpok.kameboy.memory.specialRegs.sound.*
 
 class Sound(val memory: MemoryMapper) {
 
@@ -15,13 +12,13 @@ class Sound(val memory: MemoryMapper) {
     }
 
     private var currentCycleCount = 0
-    val channelControl = Register("NR50")
+    val channelControl = OrOnReadRegister("NR50", 0x00)
     val out1Volume get()= channelControl.getValue() and 0b111
     val out2Volume get()= (channelControl.getValue() shr 4) and 0b111
     val outputInTo1 by channelControl.bitVar(3)
     val outputInTo2 by channelControl.bitVar(7)
 
-    val outputSelect = Register("NR51")
+    val outputSelect = OrOnReadRegister("NR51", 0x00)
     val output4to2 by outputSelect.bitVar(7)
     val output3to2 by outputSelect.bitVar(6)
     val output2to2 by outputSelect.bitVar(5)
@@ -46,7 +43,7 @@ class Sound(val memory: MemoryMapper) {
     val sweepPeriod get()= (sound1Sweep.getValue() shr 4) and 0b111
     val sweepIncrease by soundToggle.bitVar(3)
     val numberOfSweeps get()= sound1Sweep.getValue() and 0b111
-    val channel1Attributes = NRx1(memory, channel1)
+    val channel1Attributes = NRx1(memory, channel1, 0x3F)
     val wavePattern1Duty get()= (channel1Attributes.getValue() shr 6) and 0b11
     val sound1LengthRaw get()= channel1Attributes.getValue() and 0b1111
     /**
@@ -71,7 +68,7 @@ class Sound(val memory: MemoryMapper) {
     }
 
     // SOUND 2
-    val channel2Attributes = NRx1(memory, channel2)
+    val channel2Attributes = NRx1(memory, channel2, 0x3F)
     val wavePattern2Duty get()= (channel2Attributes.getValue() shr 6) and 0b11
     val sound2LengthRaw get()= channel2Attributes.getValue() and 0b1111
     /**
@@ -99,7 +96,7 @@ class Sound(val memory: MemoryMapper) {
     // SOUND 3
     val channel2ToggleReg = MemoryRegister("NR30", memory, 0xFF1A)
     val channel2Toggle by channel2ToggleReg.bitVar(7)
-    val channel3SoundLengthRaw = NRx1(memory, channel3)
+    val channel3SoundLengthRaw = NRx1(memory, channel3, 0xFF)
     val channel3SoundLength get()= (256.0-channel3SoundLengthRaw.getValue())/256.0
     val channel3OutputLevelReg = MemoryRegister("NR32", memory, 0xFF1C)
     val channel3OutputLevel get()= (channel3OutputLevelReg.getValue() shr 5) and 0b11
@@ -119,7 +116,7 @@ class Sound(val memory: MemoryMapper) {
     val WavePatternInterval = 0xFF30..0xFF3F
 
     // SOUND 4
-    val channel4SoundLengthReg = NRx1(memory, channel4)
+    val channel4SoundLengthReg = NRx1(memory, channel4, 0xFF)
     val channel4SoundLength get()= (64.0-(channel4SoundLengthReg.getValue() and 0b11111)) / 256.0
     val channel4VolumeEnveloppe = MemoryRegister("NR42", memory, 0xFF21)
     val initialEnveloppeVolume4 get()= (channel4VolumeEnveloppe.getValue() shr 4) and 0b1111

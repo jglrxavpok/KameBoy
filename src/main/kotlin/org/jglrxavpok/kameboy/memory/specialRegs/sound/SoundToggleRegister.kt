@@ -1,4 +1,4 @@
-package org.jglrxavpok.kameboy.memory.specialRegs
+package org.jglrxavpok.kameboy.memory.specialRegs.sound
 
 import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.sound.Sound
@@ -24,6 +24,6 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
         if(sound.isSoundOn(4)) {
             result = result or (1 shl 3)
         }
-        return result
+        return result or 0x70
     }
 }
