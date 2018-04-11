@@ -1,7 +1,5 @@
 package org.jglrxavpok.kameboy
 
-import org.jglrxavpok.audiokode.SoundEngine
-import org.jglrxavpok.audiokode.ThreadedSoundEngine
 import org.jglrxavpok.kameboy.helpful.nullptr
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.input.PlayerInput
