@@ -1,5 +1,7 @@
 package org.jglrxavpok.kameboy
 
+import org.jglrxavpok.audiokode.SoundEngine
+import org.jglrxavpok.audiokode.ThreadedSoundEngine
 import org.jglrxavpok.kameboy.helpful.nullptr
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.input.PlayerInput
@@ -22,13 +24,12 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("Tetris.gb"), _DEV_BOOT_ROM())
+    private val cartridge = Cartridge(_DEV_rom("LoZ Link's Awakening.gb"), _DEV_BOOT_ROM())
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
     private var diffuseTextureUniform: Int
-    private var scrollUniform: Int
 
     init {
         window = glfwCreateWindow(160*4, 144*4, "Kameboy - ${cartridge.title}", nullptr, nullptr)
@@ -40,7 +41,6 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         shaderID = loadShader()
         glUseProgram(shaderID)
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
-        scrollUniform = glGetUniformLocation(shaderID, "scroll")
         textureID = prepareTexture()
         meshID = prepareRenderMesh()
 
@@ -183,11 +183,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             glBindTexture(GL_TEXTURE_2D, textureID)
             glUseProgram(shaderID)
             glUniform1i(diffuseTextureUniform, 0)
-            glUniform2f(scrollUniform, core.video.scrollX.getValue().toFloat(), core.video.scrollY.getValue().toFloat())
 
             glBindVertexArray(meshID)
-          /*  glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID)
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID)*/
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
 
             core.frame()

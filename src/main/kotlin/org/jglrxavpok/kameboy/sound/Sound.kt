@@ -136,6 +136,7 @@ class Sound(val memory: MemoryMapper) {
     val enveloppeDirection get()= arrayOf(enveloppeDirection1, enveloppeDirection2, false, enveloppeDirection4)
     val initialEnveloppeVolume get()= arrayOf(initialEnveloppeVolume1, initialEnveloppeVolume2, -1, initialEnveloppeVolume4)
 
+    var output: (Double, Double) -> Unit = {_,_->}
 
     private var leftChannel = 0.0
     private var rightChannel = 0.0
@@ -155,16 +156,11 @@ class Sound(val memory: MemoryMapper) {
         }
     }
 
-    var _DEV_counter = 0
-
     private fun outputSound() {
         // between -8.0V and +8.0V
         val leftVolume = (out1Volume+1) * leftChannel
         val rightVolume = (out2Volume+1) * rightChannel
-        //TODO()
-  //      if(leftVolume > -7.0 || rightVolume > -7.0)
-//            println("$leftVolume / $rightVolume $_DEV_counter")
-        _DEV_counter++
+        output(leftVolume, rightVolume)
     }
 
     fun resetSound(soundNumber: Int) {
