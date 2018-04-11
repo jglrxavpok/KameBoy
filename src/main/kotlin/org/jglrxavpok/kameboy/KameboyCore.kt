@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("Pokemon Red.gb"))
+    private val cartridge = Cartridge(_DEV_rom("cpu_instrs.gb"))
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -130,18 +130,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                 GLFW_KEY_LEFT, GLFW_KEY_W -> 1
                 GLFW_KEY_UP, GLFW_KEY_BACKSPACE -> 2
                 GLFW_KEY_DOWN, GLFW_KEY_ENTER -> 3
-                else -> -1
+                else -> return@glfwSetKeyCallback
             }
-            if(bit >= 0) {
-                val released = when(action) {
-                    GLFW_PRESS -> 0
-                    GLFW_RELEASE -> 1
-                    else -> return@glfwSetKeyCallback
-                }
-                when {
-                    isButtonKey(key) -> buttonState = buttonState.setBits(released, bit..bit)
-                    isDirectionKey(key) -> directionState = directionState.setBits(released, bit..bit)
-                }
+            val released = when(action) {
+                GLFW_PRESS -> 0
+                GLFW_RELEASE -> 1
+                else -> return@glfwSetKeyCallback
+            }
+            when {
+                isButtonKey(key) -> buttonState = buttonState.setBits(released, bit..bit)
+                isDirectionKey(key) -> directionState = directionState.setBits(released, bit..bit)
             }
         }
     }
@@ -164,6 +162,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         core.init()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
+        glfwSwapInterval(1)
+
         while(!glfwWindowShouldClose(window)) {
             glfwGetWindowSize(window, windowWPointer, windowHPointer)
             glfwPollEvents()

@@ -231,7 +231,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0x3A -> { ld(A, HL.atPointed(memory)); HL--; 8}
             0x32 -> { ld_address(HL.getValue(), A.getValue()); HL--; 8}
 
-            0x2A -> { ld(A, HL.atPointed(memory)); HL++; 8}
+            0x2A -> { ld(A, atHL.getValue()); HL++; 8}
             0x22 -> { ld_address(HL.getValue(), A.getValue()); HL++; 8}
 
             0xF0 -> { ld(A, memory.read(0xFF00 + nextByte())); 12}
@@ -816,7 +816,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun inc16(register: SingleValueMemoryComponent) {
-        val value = register.getValue()+1
+        val value = (register.getValue().asUnsigned16()+1).asUnsigned16()
         register.setValue(value)
     }
 
@@ -829,22 +829,27 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun dec(register: SingleValueMemoryComponent) {
+        val oldValue = register.getValue()
         register.setValue(register.getValue()-1)
         flagZ = register.getValue() == 0
-        flagH = (register.getValue() and 0xF) == 0xF
+        flagH = halfCarry(oldValue, 1, register.getValue())
         flagN = true
     }
 
+    private fun halfCarry(a: Int, b: Int, result: Int): Boolean {
+        return (((a xor b) xor result) and 0x10) == 0x10
+    }
+
     private fun inc(register: SingleValueMemoryComponent) {
-        flagH = register.getValue() and 0xF == 0xF
         val result = register.getValue() + 1
+        flagH = halfCarry(register.getValue(), 1, result)//register.getValue() and 0xF == 0xF
         flagZ = (result and 0xFF) == 0
         flagN = false
         register.setValue(result)
     }
 
     private fun xor(value: Int) {
-        val result = A.getValue() xor value
+        val result = ((A.getValue().asUnsigned8()) xor value.asUnsigned8()).asUnsigned8()
         A.setValue(result)
         flagZ = result == 0
         flagN = false
@@ -853,9 +858,9 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun or(value: Int) {
-        val result = A.getValue() or value
+        val result = ((A.getValue().asUnsigned8()) or value.asUnsigned8()).asUnsigned8()
         A.setValue(result)
-        flagZ = result == 0
+        flagZ = A.getValue() == 0
         flagN = false
         flagC = false
         flagH = false
@@ -864,7 +869,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     private fun and(value: Int) {
         val result = A.getValue().asUnsigned8() and value.asUnsigned8()
         A.setValue(result)
-        flagZ = result == 0
+        flagZ = A.getValue() == 0
         flagN = false
         flagC = false
         flagH = true

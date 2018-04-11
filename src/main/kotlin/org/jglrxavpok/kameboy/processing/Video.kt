@@ -86,7 +86,8 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             val pixelColorIndex = (highColor shl 1) + lowColor
             if(pixelColorIndex == 0 && !isBackground) // transparent pixel
                 continue
-            target[screenY*256+screenX] = pixelColor(pixelColorIndex, palette)
+            val color = pixelColor(pixelColorIndex, palette)
+            target[screenY*256+screenX] = color
         }
     }
 
@@ -142,7 +143,12 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
             if(spriteDisplayEnable) {
                 val spriteTable = memory.spriteAttributeTable
-                val sprites = spriteTable.sprites.sorted()
+                val sprites = try {
+                    spriteTable.sprites.sorted()
+                } catch (e: IllegalArgumentException) {
+                    // for some reason the sort fails sometimes
+                    emptyList<SpriteAttributeTable.Sprite>()
+                }
                 sprites.forEach { sprite ->
                     val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
                     val posY = sprite.positionY.getValue()-8

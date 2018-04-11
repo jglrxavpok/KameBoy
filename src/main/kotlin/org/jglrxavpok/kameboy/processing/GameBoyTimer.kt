@@ -3,11 +3,12 @@ package org.jglrxavpok.kameboy.processing
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import org.jglrxavpok.kameboy.sound.Sound.Companion.SecondsToCycles
 
 class GameBoyTimer(val mapper: MemoryMapper) {
 
     companion object {
-        val DivCycleRate = 256// 4194304 (cpu clock speed) /16384 (divider speed)
+        val DivCycleRate = 512 // 4194304 (cpu clock speed) /16384 (divider speed)
         val TimerCounterRates = arrayOf(4194304 / 4096, 4194304 / 262144, 4194304 / 65536, 4194304 / 16384)// 4194304 (cpu clock speed) /x (timer speed)
     }
 
@@ -18,17 +19,19 @@ class GameBoyTimer(val mapper: MemoryMapper) {
     private val clockSelect get()= timerControl.getValue() and 0b11
 
     fun step(cycles: Int) {
-        currentDivCycle += cycles
-        currentTimerCycle += cycles
+        currentDivCycle += cycles/4
         if(currentDivCycle > DivCycleRate) {
             currentDivCycle %= DivCycleRate
             mapper.divRegister.inc()
         }
 
-        val timerRate = TimerCounterRates[clockSelect]
-        if(currentTimerCycle > timerRate) {
-            currentDivCycle %= timerRate
-            mapper.timerRegister.inc()
+        if(!timerStop) {
+            currentTimerCycle += cycles/4
+            val timerRate = TimerCounterRates[clockSelect]
+            if(currentTimerCycle > timerRate) {
+                currentTimerCycle %= timerRate
+                mapper.timerRegister.inc()
+            }
         }
     }
 }
