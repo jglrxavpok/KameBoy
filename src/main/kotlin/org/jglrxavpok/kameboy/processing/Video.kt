@@ -124,7 +124,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
                     val tileAddress = tileDataAddress
                     val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x*8, line, scrolledY %8, tileAddress + offset, bgPaletteData, isBackground = true)
+                    drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset, bgPaletteData, isBackground = true)
                 }
             }
             if(windowDisplayEnable) {

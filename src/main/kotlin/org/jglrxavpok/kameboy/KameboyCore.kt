@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("LoZ Link's Awakening.gb"))
+    private val cartridge = Cartridge(_DEV_rom("cpu_instrs.gb"))
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
