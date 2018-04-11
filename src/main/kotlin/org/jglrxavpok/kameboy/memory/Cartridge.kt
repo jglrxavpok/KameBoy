@@ -5,7 +5,9 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.fromNibbles
 import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC3
 
-class Cartridge(val rawData: ByteArray): MemoryComponent {
+class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null): MemoryComponent {
+    val hasBootRom = bootROM != null
+    val bootRomComponent = RomWrapper(bootROM ?: ByteArray(0))
     val scrollingLogo = rawData.sliceArray(0x0104..0x0133)
     val title = AsciiString(rawData.sliceArray(0x0134..0x0142))
     val isForColorGB = rawData[0x0143].asUnsigned() == 0x80

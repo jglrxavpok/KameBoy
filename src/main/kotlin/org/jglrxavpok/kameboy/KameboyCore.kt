@@ -17,11 +17,12 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 import org.lwjgl.opengl.GL30.glGenVertexArrays
 import org.lwjgl.system.MemoryStack
+import java.io.File
 import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("cpu_instrs.gb"))
+    private val cartridge = Cartridge(_DEV_rom("Tetris.gb"), _DEV_BOOT_ROM())
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -151,6 +152,13 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     override var directionState = 0xFF
 
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
+
+    private fun _DEV_BOOT_ROM(): ByteArray? {
+        val bootRomFile = File("DMG_ROM.bin")
+        if(!bootRomFile.exists())
+            return null
+        return bootRomFile.readBytes()
+    }
 
     private fun cleanup() {
         glDeleteProgram(shaderID)

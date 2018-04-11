@@ -398,37 +398,31 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0xCB -> executeCBOpcode(nextByte())
 
             0x27 -> {
-                flagZ = A.getValue() == 0
-                flagH = false
-                /* from http://www.felixcloutier.com/x86/DAA.html
-                old_AL ← AL;
-        old_CF ← CF;
-        CF ← 0;
-        IF (((AL AND 0FH) > 9) or AF = 1)
-                THEN
-                    AL ← AL + 6;
-                    CF ← old_CF or (Carry from AL ← AL + 6);
-                    AF ← 1;
-                ELSE
-                    AF ← 0;
-        FI;
-        IF ((old_AL > 99H) or (old_CF = 1))
-            THEN
-                    AL ← AL + 60H;
-                    CF ← 1;
-            ELSE
-                    CF ← 0;
-        FI;
-                 */
-                flagC = false
-                if((A.getValue() and 0xF) > 9) {
-                    A.setValue(A + 0x06)
+                // DAA
+                // adapted from https://github.com/kotcrab/xgbc/blob/25d2623acf0f1e87cb7a2db61c26af4d2d74f735/src/main/kotlin/com/kotcrab/xgbc/cpu/OpCodesProcessor.kt#L318-L340
+
+                var regA = A.getValue()
+
+                if (!flagN) {
+                    if (flagH || (regA and 0xF) > 9) regA += 0x06
+                    if (flagC || regA > 0x9F) regA += 0x60
+                } else {
+                    if (flagH) regA = (regA - 6) and 0xFF
+                    if (flagC) regA -= 0x60
                 }
-                if((A.getValue() shr 4) and 0xF > 9) {
-                    A.setValue(A + 0x60)
+
+                flagH = false
+                flagZ = false
+                if ((regA and 0x100) == 0x100) {
                     flagC = true
                 }
-                4
+
+                regA = regA and 0xFF
+
+                if (regA == 0) flagZ = true
+
+                A.setValue(regA)
+                8
             }
 
             0x2F -> {

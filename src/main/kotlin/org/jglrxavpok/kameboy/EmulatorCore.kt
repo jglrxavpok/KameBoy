@@ -46,8 +46,11 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
     }
 
     fun init() {
-        cpu.reset()
-        video.drawLogo()
+        if(!cartridge.hasBootRom) {
+            cpu.reset()
+        } else {
+            println("Found BOOT Rom, loading it")
+        }
     }
 
     private lateinit var task: TimerTask

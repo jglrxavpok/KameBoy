@@ -27,3 +27,6 @@ hs_err_pid*
 resources/roms/
 .idea/
 .gradle
+
+# GB Boot ROM
+DMG_ROM.bin

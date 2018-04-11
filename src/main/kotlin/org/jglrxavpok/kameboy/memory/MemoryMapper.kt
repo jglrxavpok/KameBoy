@@ -142,7 +142,13 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
     }
 
     fun map(address: Int): MemoryComponent = when(address.asAddress()) {
-        in 0 until 0x8000 -> cartridgeData
+        in 0 until 0x8000 -> {
+            if(cartridgeData.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
+                cartridgeData.bootRomComponent
+            } else {
+                cartridgeData
+            }
+        }
         in 0x8000 until 0xA000 -> videoRAM
         in 0xA000 until 0xC000 -> {
             if(cartridgeData.cartrigeType.accepts(address)) {
