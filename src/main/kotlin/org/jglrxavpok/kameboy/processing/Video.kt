@@ -158,7 +158,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                         /*.take(10)*/
                         .forEach { sprite ->
                     val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
-                    val posY = sprite.positionY.getValue()-8
+                    val posY = sprite.positionY.getValue()-8-1
                     val posX = sprite.positionX.getValue()-8
                     val tileNumber = sprite.tileNumber.getValue()
                     val offset = tileNumber.asUnsigned8()

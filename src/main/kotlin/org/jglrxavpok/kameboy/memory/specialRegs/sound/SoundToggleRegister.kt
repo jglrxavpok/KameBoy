@@ -5,8 +5,18 @@ import org.jglrxavpok.kameboy.sound.Sound
 
 class SoundToggleRegister(val sound: Sound): Register("NR52") {
 
+    var isOn: Boolean = true
+
     override fun write(address: Int, value: Int) {
-        super.write(address, value and 0b10000000)
+        val valueToWrite = value and 0b10000000
+        if(valueToWrite == 0) { // power off APU
+            for(addr in 0xFF10..0xFF25) { // NR10-NR51
+                sound.memory.write(addr, 0x00)
+            }
+        }
+        // the order is important, write 0x00 **then** turn off
+        super.write(address, valueToWrite)
+        isOn = valueToWrite != 0
     }
 
     override fun read(address: Int): Int {

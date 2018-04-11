@@ -46,7 +46,7 @@ class Square1(sound: Sound): Channel(sound) {
     }
 
     private fun clockSweep() {
-        if(sweepFlag && sound.sweepPeriod != 0) {
+        if(sweepFlag && sound.sweepPeriod != 0 && sound.numberOfSweeps != 0) {
             calculateFrequency()
             val newFreq = sweepShadowRegister
             checkOverflow()

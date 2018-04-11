@@ -27,6 +27,8 @@ class TestCartridges {
         assertEquals("LY", mapper.map(0xFF44).name)
         assertEquals("SCY", mapper.map(0xFF42).name)
         assertEquals("SCX", mapper.map(0xFF43).name)
+        assertEquals("NR52", mapper.map(0xFF26).name)
+        assertEquals("NR51", mapper.map(0xFF25).name)
     }
 
     private fun rom(name: String) = javaClass.getResourceAsStream("/roms/$name").use { it.readBytes() }

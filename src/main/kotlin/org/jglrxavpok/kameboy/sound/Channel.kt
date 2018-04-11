@@ -28,28 +28,34 @@ abstract class Channel(val sound: Sound) {
         frameStep %= 8
     }
 
-    protected var disabled = false
+    protected var disabled = true
     private var clockLength = 0
     private var volume = 0
 
     private fun clockVolumeEnveloppe() {
         if(hasVolumeEnveloppe && sound.enveloppePeriod[channelNumber-1] != 0) {
-            val newVolume = volume + if(sound.enveloppeDirection[channelNumber-1]) 1 else 0
+            val newVolume = volume + if(sound.enveloppeDirection[channelNumber-1]) 1 else -1
             if(newVolume in 0..15) {
                 volume = newVolume
+            }
+            if(volume == 0) {
+                disabled = true
+                reset()
             }
         }
     }
 
     fun isSoundOn(): Boolean {
-        return disabled
+        return !disabled
     }
 
     fun clockLengthCounter() {
         if(sound.counterSelection[channelNumber-1]) {
             clockLength--
             if(clockLength <= 0) {
+                clockLength = 0
                 disabled = true
+                reset()
             }
         }
     }
