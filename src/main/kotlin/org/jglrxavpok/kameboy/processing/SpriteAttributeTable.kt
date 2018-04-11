@@ -8,9 +8,10 @@ class SpriteAttributeTable: MemoryComponent {
 
     val startAddress = 0xFE00
     val data = ByteArray(0xFEA0-0xFE00)
-    val sprites = Array(40) { index ->
+    var sprites = Array(40) { index ->
         Sprite(index)
     }
+        private set
 
     override val name = "OAM"
 
@@ -20,6 +21,12 @@ class SpriteAttributeTable: MemoryComponent {
 
     override fun read(address: Int): Int {
         return data[address - startAddress].asUnsigned()
+    }
+
+    fun reloadSprites() {
+        sprites = Array(40) { index ->
+            Sprite(index)
+        }
     }
 
 

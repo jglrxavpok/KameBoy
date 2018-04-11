@@ -145,8 +145,9 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 val sprites = try {
                     spriteTable.sprites.sorted()
                 } catch (e: IllegalArgumentException) {
+                    spriteTable.reloadSprites()
                     // for some reason the sort fails sometimes
-                    emptyList<SpriteAttributeTable.Sprite>()
+                    spriteTable.sprites.asList()
                 }
                 // draw only the 10 first sprites on this scanline
                 sprites
@@ -157,22 +158,22 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                         }
                         /*.take(10)*/
                         .forEach { sprite ->
-                    val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
-                    val posY = sprite.positionY.getValue()-8-1
-                    val posX = sprite.positionX.getValue()-8
-                    val tileNumber = sprite.tileNumber.getValue()
-                    val offset = tileNumber.asUnsigned8()
-                    val tileAddress = 0x8000 + offset*2*8
+                            val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
+                            val posY = sprite.positionY.getValue()-8-1
+                            val posX = sprite.positionX.getValue()-8
+                            val tileNumber = sprite.tileNumber.getValue()
+                            val offset = tileNumber.asUnsigned8()
+                            val tileAddress = 0x8000 + offset*2*8
 
-                    if(spriteSizeSelect) {
-                        if(posY+8 in line..(line+15)) {
-                            drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16)
-                        }
-                    } else {
-                        if(posY in line..(line+7)) {
-                            drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
-                        }
-                    }
+                            if(spriteSizeSelect) {
+                                if(posY+8 in line..(line+15)) {
+                                    drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16)
+                                }
+                            } else {
+                                if(posY in line..(line+7)) {
+                                    drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
+                                }
+                            }
                 }
             }
         }
@@ -185,6 +186,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             mode = VideoMode.HBlank
             lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
             lcdcY.setValue(0)
+            currentClockCycles = 456
             return
         }
         val line = lcdcY.getValue()
@@ -210,8 +212,10 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             }
         } else {
             if(mode != VideoMode.VBlank) {
-                // FIXME if(mode1VBlankInterrupt)
-                    interruptManager.fireVBlank()
+                interruptManager.fireVBlank()
+
+                if(mode1VBlankInterrupt)
+                    interruptManager.fireLCDC()
             }
             mode = VideoMode.VBlank
         }

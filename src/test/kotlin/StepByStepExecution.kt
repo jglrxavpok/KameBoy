@@ -9,7 +9,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("DrMario.gb"))
+    val cartridge = Cartridge(rom("Puyo Puyo.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF
@@ -88,6 +88,13 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
                     step(mute = true)
                 println("Arrived!")
             }
+        }
+        if(line?.startsWith("ly:") == true) {
+            val data = line.substring("to:".length).trim()
+            val requestedLY = data.toInt()
+            while(memory.read(0xFF44) != requestedLY)
+                step(mute = true)
+            println("Arrived!")
         }
         val count = line?.toIntOrNull()
         loop(count ?: 1)

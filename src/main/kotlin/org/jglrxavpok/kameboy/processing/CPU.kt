@@ -5,6 +5,7 @@ import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned16
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.memory.*
+import org.jglrxavpok.kameboy.memory.specialRegs.FRegister
 
 class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
 
@@ -19,7 +20,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     var C = Register("C", 0, sizeInBits = 8)
     var D = Register("D", 0, sizeInBits = 8)
     var E = Register("E", 0, sizeInBits = 8)
-    var F = Register("F", 0, sizeInBits = 8)
+    var F = FRegister()
     var H = Register("H", 0, sizeInBits = 8)
     var L = Register("L", 0, sizeInBits = 8)
     var AF = PairedRegisters(A, F)
@@ -106,10 +107,15 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private tailrec fun checkInterrupts() {
+        val interruptFlag = memory.read(0xFF0F)
+        val interruptEnable = memory.read(0xFFFF)
+        if(interruptFlag != 0) {
+            halted = false // always wake CPU up
+            // https://kotcrab.com/blog/2016/04/22/what-i-learned-from-game-boy-emulator-development/
+        }
         if(interruptManager.interruptsEnabled) {
-            val interruptFlag = memory.read(0xFF0F)
-            val interruptEnable = memory.read(0xFFFF)
-            if(interruptFlag and interruptEnable != 0) {
+
+            if (interruptFlag and interruptEnable != 0) {
                 when {
                     !stopped && interruptManager.hasVBlank() -> interrupt(0)
                     !stopped && interruptManager.hasLCDC() -> interrupt(1)
@@ -126,7 +132,6 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun interrupt(interruptIndex: Int) {
-        halted = false
         interruptManager.interruptsEnabled = false
         interruptManager.reset(interruptIndex)
         call(0x40 + interruptIndex * 8)
@@ -533,12 +538,16 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             }
             0x30 -> {
                 val address = nextByte()
-                if(!flagC) jpRelative(address)
+                if(!flagC) {
+                    jpRelative(address)
+                }
                 8
             }
             0x38 -> {
                 val address = nextByte()
-                if(flagC) jpRelative(address)
+                if(flagC) {
+                    jpRelative(address)
+                }
                 8
             }
 
@@ -604,7 +613,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
 
     private fun jpRelative(unsignedOffset: Int) {
         val offset = unsignedOffset.asSigned8()
-        jp(programCounter + offset)
+        jp(programCounter.getValue() + offset)
     }
 
     private fun jp(address: Int) {
@@ -841,7 +850,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun inc(register: SingleValueMemoryComponent) {
-        val result = register.getValue() + 1
+        val result = (register.getValue() + 1).asUnsigned8()
         flagH = halfCarry(register.getValue(), 1, result)//register.getValue() and 0xF == 0xF
         flagZ = (result and 0xFF) == 0
         flagN = false
@@ -885,7 +894,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
         flagZ = A.getValue() == value
         flagH = (A.getValue() and 0xF) < (value and 0xF)
         flagN = true
-        flagC = A.getValue() and 0xFF < value and 0xFF
+        flagC = (A.getValue() and 0xFF) < (value and 0xFF)
     }
 
     private fun add(value: Int) {
