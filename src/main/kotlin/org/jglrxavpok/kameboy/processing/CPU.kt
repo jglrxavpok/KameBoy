@@ -7,7 +7,7 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.memory.*
 import org.jglrxavpok.kameboy.memory.specialRegs.FRegister
 
-class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
+class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     var halted = false
     var stopped = false
@@ -453,7 +453,15 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0x10 -> {
                 val nextPart = nextByte()
                 when(nextPart) {
-                    0x00 -> { stopped = true; 4}
+                    0x00 -> {
+                        if(memory.speedRegister.shouldPrepareSwitch) {
+                            memory.speedRegister.setValue(0x00)
+                            memory.currentSpeedFactor = -memory.currentSpeedFactor+3
+                        } else {
+                            stopped = true
+                        }
+                        4
+                    }
                     else -> error("Invalid opcode 0x10 ${Integer.toHexString(nextPart)}")
                 }
             }
@@ -883,7 +891,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun sub(value: Int) {
-        val result = A - value
+        val result = A.getValue() - value
         cp(value)
         A.setValue(result)
     }
@@ -896,7 +904,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
     }
 
     private fun add(value: Int) {
-        val result = A + value
+        val result = A.getValue() + value
         flagZ = (result and 0xFF) == 0
         flagH = ((A.getValue() and 0x0F)+(value and 0x0F)) and 0x10 == 0x10
         flagC = result > 0xFF

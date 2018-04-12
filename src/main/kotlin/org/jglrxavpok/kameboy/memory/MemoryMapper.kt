@@ -8,6 +8,10 @@ import org.jglrxavpok.kameboy.memory.specialRegs.sound.OrOnReadRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.SoundRegister
 import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
+
+/**
+ * TODO: Decouple sound/interrupts/gbc registers from MMU
+ */
 class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false): MemoryComponent {
 
     companion object {
@@ -27,6 +31,9 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
     val serialIO = SerialIO(interruptManager, this, outputSerial)
     val serialControlReg = SerialControllerRegister(serialIO)
     val serialDataReg = SerialDataRegister(serialIO, serialControlReg)
+
+    var currentSpeedFactor: Int = 1
+    val speedRegister = SpeedRegister(this)
     val ioPorts = arrayOf(
             P1Register(input),
             serialDataReg,
@@ -147,6 +154,9 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
     val bootRegister = OrOnReadRegister("BOOT register", 0xFF)
 
     fun map(address: Int): MemoryComponent = when(address.asAddress()) {
+        // GBC registers
+        0xFF4D -> speedRegister
+        // DMG registers
         in 0 until 0x8000 -> {
             if(cartridgeData.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
                 cartridgeData.bootRomComponent

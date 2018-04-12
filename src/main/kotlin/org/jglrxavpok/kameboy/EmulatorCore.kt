@@ -39,11 +39,15 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
 
     fun step(): Int {
         val clockCycles = cpu.step()
-        video.step(clockCycles)
-        timer.step(clockCycles)
-        mapper.sound.step(clockCycles)
+        val speedFactor = mapper.currentSpeedFactor
         mapper.serialIO.step(clockCycles)
-        return clockCycles
+        timer.step(clockCycles)
+
+        // video & sound are not affected by speed change
+
+        video.step(clockCycles/speedFactor)
+        mapper.sound.step(clockCycles/speedFactor)
+        return clockCycles/speedFactor
     }
 
     fun init() {
@@ -71,6 +75,9 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
         println("========")
         if(cpu.halted) {
             println("***CPU HALTED***")
+        }
+        if(cpu.stopped) {
+            println("***!!CPU STOPPED!!***")
         }
         printReg(cpu.AF)
         println("Z: ${cpu.flagZ}")
