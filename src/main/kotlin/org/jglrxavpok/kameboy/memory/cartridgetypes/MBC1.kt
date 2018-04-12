@@ -1,41 +1,15 @@
-package org.jglrxavpok.kameboy.memory
+package org.jglrxavpok.kameboy.memory.cartridgetypes
 
-import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asUnsigned
-import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
-
-abstract class CartridgeType: MemoryComponent {
-    abstract fun accepts(address: Int): Boolean
-}
-
-class ROMOnly(val cartridge: Cartridge): CartridgeType() {
-    private val data = cartridge.rawData
-
-    override val name = "ROM Only"
-
-    override fun write(address: Int, value: Int) {
-       // data[address] = value.asUnsigned8().toByte()
-        //error("WRITE TO ROM to $address ; value is $value")
-    }
-
-    override fun accepts(address: Int): Boolean {
-        return address in 0..0x8000
-    }
-
-    override fun read(address: Int) = data[address].asUnsigned()
-
-    override fun toString(): String {
-        return "ROM Only"
-    }
-}
+import org.jglrxavpok.kameboy.memory.Cartridge
 
 class MBC1(val cartridge: Cartridge): CartridgeType() {
     override val name = "MBC1"
     var mode = Mode.Rom16Ram8
-    var currentBank = 0
+    var currentBank = 1
     val BankSize = 0x4000
-    val banks = Array(cartridge.romBankCount+1) { index ->
+    val banks = Array(cartridge.romBankCount) { index ->
         val start = index*BankSize
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)
@@ -49,19 +23,17 @@ class MBC1(val cartridge: Cartridge): CartridgeType() {
             in 0x2000..0x3FFF -> {
                 val bank = value and 0b00011111
                 // set lower 5 bits
-                currentBank = currentBank.setBits(if(bank == 0)
-                    1
-                else
-                    bank, 0..4)
+                currentBank = if(bank == 0) 1 else currentBank.setBits(bank, 0..4)
             }
             in 0x4000..0x5FFF -> {
                 when(mode) {
-                    Mode.Rom16Ram8 -> currentBank = currentBank.setBits((value and 0xF), 5..6)
+                    Mode.Rom16Ram8 -> currentBank = currentBank.setBits((value and 0b11), 5..6)
                     Mode.Rom4Ram32 -> cartridge.selectedRAMBankIndex = value and 0b11
                 }
             }
             in 0x0000..0x1FFF -> {
-                cartridge.currentRAMBank.enabled = value and 0xF == 0xA
+                cartridge.currentRAMBank.enabled = value and 0xA != 0
+                // TODO: save to battery here if there is one
             }
             else -> error("Invalid address for MBC1 $address")
         }
@@ -77,10 +49,12 @@ class MBC1(val cartridge: Cartridge): CartridgeType() {
                 banks[0][address].asUnsigned()
             }
             in 0x4000..0x7FFF -> {
+                if(currentBank >= banks.size)
+                    return 0xFF
                 val bank = banks[currentBank]
                 bank[address-0x4000].asUnsigned()
             }
-            else -> error("Invalid read address for MBC1 $address")
+            else -> 0xFF//error("Invalid read address for MBC1 $address")
         }
     }
 

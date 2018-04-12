@@ -1,15 +1,13 @@
 import org.jglrxavpok.kameboy.EmulatorCore
-import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
-import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import java.awt.image.BufferedImage
 import javax.swing.ImageIcon
 import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("Puyo Puyo.gb"))
+    val cartridge = Cartridge(rom("DrMario.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF

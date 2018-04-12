@@ -8,10 +8,14 @@ class RamBank(override val name: String): MemoryComponent {
     val startAddress = 0xA000
     var enabled = false
 
+    init {
+        data.fill(0xFF.toByte())
+    }
+
     override fun write(address: Int, value: Int) {
         if(enabled)
             data[address - startAddress] = value.toByte()
     }
 
-    override fun read(address: Int) = if(enabled) data[address - startAddress].asUnsigned() else 0
+    override fun read(address: Int) = if(enabled) data[address - startAddress].asUnsigned() else 0xFF
 }

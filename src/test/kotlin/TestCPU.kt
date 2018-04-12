@@ -58,7 +58,7 @@ class TestCPU {
             override val directionState: Int
                 get() = 0xFF
         }
-        val memory = MemoryMapper(cart, input)
+        val memory = MemoryMapper(cart, input, false)
         val cpu = CPU(memory, memory.interruptManager)
         cpu.reset()
         while(cpu.programCounter.getValue() < 0x15B) {

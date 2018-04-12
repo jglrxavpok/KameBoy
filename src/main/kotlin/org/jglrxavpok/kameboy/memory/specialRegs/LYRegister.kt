@@ -1,6 +1,5 @@
 package org.jglrxavpok.kameboy.memory.specialRegs
 
-import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import org.jglrxavpok.kameboy.memory.Register
@@ -21,7 +20,7 @@ class LYRegister(val memory: MemoryMapper): Register("LY") {
         if(line == lyCompare.getValue()) {
             coincidenceFlag = true
             if(coincidenceInterrupt)
-                memory.interruptManager.fireLCDC()
+                memory.interruptManager.fireLcdStat()
         } else {
             coincidenceFlag = false
         }

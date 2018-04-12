@@ -3,7 +3,10 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.AsciiString
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.fromNibbles
+import org.jglrxavpok.kameboy.memory.cartridgetypes.CartridgeType
+import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC1
 import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC3
+import org.jglrxavpok.kameboy.memory.cartridgetypes.ROMOnly
 
 class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null): MemoryComponent {
     val hasBootRom = bootROM != null
@@ -31,7 +34,7 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null): MemoryC
         5 -> 16
         6 -> 32
         7 -> 64*/
-        0 -> 0
+        0 -> 2
         1 -> 4
         2 -> 8
         3 -> 16

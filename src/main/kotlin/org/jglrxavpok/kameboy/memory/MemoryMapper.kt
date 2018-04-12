@@ -4,10 +4,11 @@ import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.NRRegister
+import org.jglrxavpok.kameboy.memory.specialRegs.sound.OrOnReadRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.SoundRegister
 import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
-class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): MemoryComponent {
+class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false): MemoryComponent {
 
     companion object {
         val ExecutionEntryPoint = 0x100
@@ -23,7 +24,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
     val lyRegister = LYRegister(this)
     val divRegister = DivRegister()
     val timerRegister = TimerRegister(this)
-    val serialIO = SerialIO(interruptManager, this)
+    val serialIO = SerialIO(interruptManager, this, outputSerial)
     val serialControlReg = SerialControllerRegister(serialIO)
     val serialDataReg = SerialDataRegister(serialIO, serialControlReg)
     val ioPorts = arrayOf(
@@ -143,13 +144,18 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
             return address-0x8000
         }
     }
+    val bootRegister = OrOnReadRegister("BOOT register", 0xFF)
 
     fun map(address: Int): MemoryComponent = when(address.asAddress()) {
         in 0 until 0x8000 -> {
             if(cartridgeData.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
                 cartridgeData.bootRomComponent
             } else {
-                cartridgeData
+                if(address == 0xFF50) {
+                    bootRegister
+                } else {
+                    cartridgeData
+                }
             }
         }
         in 0x8000 until 0xA000 -> videoRAM

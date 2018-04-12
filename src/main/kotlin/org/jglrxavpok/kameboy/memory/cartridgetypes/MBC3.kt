@@ -2,11 +2,7 @@ package org.jglrxavpok.kameboy.memory.cartridgetypes
 
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
-import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.Cartridge
-import org.jglrxavpok.kameboy.memory.CartridgeType
-import org.jglrxavpok.kameboy.memory.MemoryComponent
-import kotlin.system.measureTimeMillis
 
 /**
  * TODO: better implementation of RTC
@@ -15,9 +11,9 @@ class MBC3(val cartridge: Cartridge): CartridgeType() {
     override val name = "MBC3"
     private var enabled = true
     var mode = Mode.Ram
-    var currentBank = 0
+    var currentBank = 1
     val BankSize = 0x4000
-    val banks = Array(cartridge.romBankCount+1) { index ->
+    val banks = Array(cartridge.romBankCount) { index ->
         val start = index*BankSize
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)

@@ -9,7 +9,7 @@ class InterruptManager(val memory: MemoryComponent) {
         fireInterrupt(0)
     }
 
-    fun fireLCDC() {
+    fun fireLcdStat() {
         fireInterrupt(1)
     }
 
@@ -33,7 +33,7 @@ class InterruptManager(val memory: MemoryComponent) {
         return IF.getValue() and (1 shl 0) != 0
     }
 
-    fun hasLCDC(): Boolean {
+    fun hasLcdStat(): Boolean {
         return IF.getValue() and (1 shl 1) != 0
     }
 

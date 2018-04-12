@@ -15,7 +15,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import kotlin.concurrent.scheduleAtFixedRate
 
-class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
+class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
     companion object {
         val CpuClockSpeed = 4194304 // Clock cycles / second
         val VideoVSync = 59.73 // updates per second
@@ -23,7 +23,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
         val ClockCyclesPerFrame = CpuClockSpeed / VideoVSync
     }
 
-    val mapper = MemoryMapper(cartridge, input)
+    val mapper = MemoryMapper(cartridge, input, outputSerial)
     val cpu = CPU(mapper, mapper.interruptManager)
     val video = Video(mapper, mapper.interruptManager)
     val timer = GameBoyTimer(mapper)
@@ -69,6 +69,9 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
 
     fun dumpInfos() {
         println("========")
+        if(cpu.halted) {
+            println("***CPU HALTED***")
+        }
         printReg(cpu.AF)
         println("Z: ${cpu.flagZ}")
         println("N: ${cpu.flagN}")

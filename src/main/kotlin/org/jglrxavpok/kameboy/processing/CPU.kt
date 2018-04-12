@@ -117,7 +117,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             if (interruptFlag and interruptEnable != 0) {
                 when {
                     !stopped && interruptManager.hasVBlank() -> interrupt(0)
-                    !stopped && interruptManager.hasLCDC() -> interrupt(1)
+                    !stopped && interruptManager.hasLcdStat() -> interrupt(1)
                     !stopped && interruptManager.hasTimerOverflow() -> interrupt(2)
                     !stopped && interruptManager.hasSerial() -> interrupt(3)
                     interruptManager.hasPinReleased() -> {
@@ -584,7 +584,12 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             0xD0 -> { if(!flagC) ret(); 8}
             0xD8 -> { if(flagC) ret(); 8}
 
-            0xD9 -> { ret(); interruptManager.interruptsEnabled = true; 8}
+            0xD9 -> {
+                requestedInterruptChange = true
+                desiredInterruptState = true
+                ret()
+                8
+            }
 
             else -> error("Invalid opcode ${Integer.toHexString(opcode)}")
         }

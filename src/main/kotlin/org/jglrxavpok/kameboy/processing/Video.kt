@@ -198,14 +198,14 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             mode = when {
                 currentClockCycles >= 80 -> {
                     if(mode != VideoMode.Mode2 && mode2OamInterrupt) {
-                        interruptManager.fireLCDC()
+                        interruptManager.fireLcdStat()
                     }
                     VideoMode.Mode2
                 }
                 currentClockCycles >= 172 + 80 -> VideoMode.Mode3
                 else -> {
                     if(mode != VideoMode.HBlank && mode0HBlankInterrupt) {
-                        interruptManager.fireLCDC()
+                        interruptManager.fireLcdStat()
                     }
                     VideoMode.HBlank
                 }
@@ -215,7 +215,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 interruptManager.fireVBlank()
 
                 if(mode1VBlankInterrupt)
-                    interruptManager.fireLCDC()
+                    interruptManager.fireLcdStat()
             }
             mode = VideoMode.VBlank
         }

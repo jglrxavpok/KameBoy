@@ -21,7 +21,7 @@ class TestCartridges {
                 get() = 0xF
             override val directionState: Int
                 get() = 0xF
-        })
+        }, false)
         assertEquals("WX", mapper.map(0xFF4B).name)
         assertEquals("LCDC", mapper.map(0xFF40).name)
         assertEquals("LY", mapper.map(0xFF44).name)
