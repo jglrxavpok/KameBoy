@@ -103,10 +103,10 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             println("Found error in opcode ${Integer.toHexString(opcode)} at PC ${Integer.toHexString(position)}")
             e.printStackTrace()
         }
-        return -1
+        return 1
     }
 
-    private tailrec fun checkInterrupts() {
+    private fun checkInterrupts() {
         val interruptFlag = memory.read(0xFF0F)
         val interruptEnable = memory.read(0xFFFF)
         if(interruptFlag != 0) {
@@ -114,7 +114,6 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
             // https://kotcrab.com/blog/2016/04/22/what-i-learned-from-game-boy-emulator-development/
         }
         if(interruptManager.interruptsEnabled) {
-
             if (interruptFlag and interruptEnable != 0) {
                 when {
                     !stopped && interruptManager.hasVBlank() -> interrupt(0)
@@ -126,7 +125,7 @@ class CPU(val memory: MemoryComponent, val interruptManager: InterruptManager) {
                         interrupt(4)
                     }
                 }
-                checkInterrupts()
+               // checkInterrupts()
             }
         }
     }

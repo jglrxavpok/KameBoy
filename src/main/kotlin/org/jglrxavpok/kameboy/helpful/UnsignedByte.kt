@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.helpful
 
+import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
 import org.lwjgl.system.MemoryUtil
 
 fun Byte.asUnsigned() = (this.toInt()) and 0xFF
@@ -41,5 +42,7 @@ fun Int.setBits(bitfield: Int, location: IntRange): Int {
     }
     return result
 }
+
+val Int.hz2cycles get()= CpuClockSpeed / this
 
 val nullptr = MemoryUtil.NULL

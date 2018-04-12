@@ -4,7 +4,6 @@ abstract class Channel(val sound: Sound) {
 
     abstract val channelNumber: Int
 
-    abstract fun step(cycles: Int)
     abstract fun onFrameSequencerStep(step: Int)
     open val hasVolumeEnveloppe = true
     private var frameStep = 0
@@ -12,6 +11,11 @@ abstract class Channel(val sound: Sound) {
     open fun reset() {
         volume = sound.initialEnveloppeVolume[channelNumber-1]
         frameStep = 0
+        frameSequencer.reset()
+    }
+
+    open fun step(cycles: Int) {
+        frameSequencer.step(cycles)
     }
 
     val frameSequencer = Timer((512/8* Sound.SecondsToCycles).toInt()) { frameSequencer ->
@@ -65,8 +69,8 @@ abstract class Channel(val sound: Sound) {
     }
 
     fun output(nibble: Int) {
-        val voltage = dac(nibble)
-        sound.mix(voltage, channelNumber)
+        //val voltage = dac(nibble)
+        sound.mix(nibble, channelNumber)
     }
 
     private fun dac(nibble: Int): Double {

@@ -42,6 +42,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val renderR
         video.step(clockCycles)
         timer.step(clockCycles)
         mapper.sound.step(clockCycles)
+        mapper.serialIO.step(clockCycles)
         return clockCycles
     }
 

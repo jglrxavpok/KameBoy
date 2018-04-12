@@ -23,10 +23,13 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
     val lyRegister = LYRegister(this)
     val divRegister = DivRegister()
     val timerRegister = TimerRegister(this)
+    val serialIO = SerialIO(interruptManager, this)
+    val serialControlReg = SerialControllerRegister(serialIO)
+    val serialDataReg = SerialDataRegister(serialIO, serialControlReg)
     val ioPorts = arrayOf(
             P1Register(input),
-            Register("SB"),
-            Register("SC"),
+            serialDataReg,
+            serialControlReg,
             Register("Unknown FF03"),
             divRegister,
             timerRegister,
@@ -39,7 +42,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput): Memory
             Register("Unknown FF0C"),
             Register("Unknown FF0D"),
             Register("Unknown FF0E"),
-            Register("IF"),
+            IFRegister(),
             NRRegister(1,0, 0x80, sound),
             sound.channel1Attributes,
             NRRegister(1, 2, 0x00, sound),

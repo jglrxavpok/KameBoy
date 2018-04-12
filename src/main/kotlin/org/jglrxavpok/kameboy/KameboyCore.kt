@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.helpful.nullptr
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
+import org.jglrxavpok.kameboy.ui.KameboyAudio
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL
@@ -22,7 +23,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("LoZ Link's Awakening.gb"), _DEV_BOOT_ROM())
+    private val cartridge = Cartridge(_DEV_rom("cpu_instrs.gb")/*, _DEV_BOOT_ROM()*/)
     private val core = EmulatorCore(cartridge, this, { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -41,6 +42,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
         textureID = prepareTexture()
         meshID = prepareRenderMesh()
+        //val audio = KameboyAudio(core.mapper.sound) // TODO
 
         runEmulator()
         cleanup()

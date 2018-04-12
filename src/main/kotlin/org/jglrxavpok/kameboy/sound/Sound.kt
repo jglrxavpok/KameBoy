@@ -136,10 +136,10 @@ class Sound(val memory: MemoryMapper) {
     val enveloppeDirection get()= arrayOf(enveloppeDirection1, enveloppeDirection2, false, enveloppeDirection4)
     val initialEnveloppeVolume get()= arrayOf(initialEnveloppeVolume1, initialEnveloppeVolume2, -1, initialEnveloppeVolume4)
 
-    var output: (Double, Double) -> Unit = {_,_->}
+    var output: (Int, Int) -> Unit = {_,_->}
 
-    private var leftChannel = 0.0
-    private var rightChannel = 0.0
+    private var leftChannel = 0
+    private var rightChannel = 0
 
     fun step(cycles: Int) {
         currentCycleCount += cycles
@@ -158,6 +158,8 @@ class Sound(val memory: MemoryMapper) {
 
     private fun outputSound() {
         // between -8.0V and +8.0V
+        leftChannel /= 4
+        rightChannel /= 4
         val leftVolume = (out1Volume+1) * leftChannel
         val rightVolume = (out2Volume+1) * rightChannel
         output(leftVolume, rightVolume)
@@ -183,12 +185,12 @@ class Sound(val memory: MemoryMapper) {
         }
     }
 
-    fun mix(voltage: Double, channelNumber: Int) {
+    fun mix(volume: Int, channelNumber: Int) {
         if(shouldGoTo(channelNumber, ChannelPosition.Left)) {
-            leftChannel += voltage
+            leftChannel += volume
         }
         if(shouldGoTo(channelNumber, ChannelPosition.Right)) {
-            rightChannel += voltage
+            rightChannel += volume
         }
     }
 

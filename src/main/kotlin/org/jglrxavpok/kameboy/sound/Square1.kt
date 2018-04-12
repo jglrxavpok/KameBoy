@@ -73,6 +73,7 @@ class Square1(sound: Sound): Channel(sound) {
     }
 
     override fun step(cycles: Int) {
+        super.step(cycles)
         timer.step(cycles)
     }
 
