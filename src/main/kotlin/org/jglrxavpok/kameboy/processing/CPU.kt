@@ -87,7 +87,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
         memory.write(0xFF49, 0xFF)   // OBP1
         memory.write(0xFF4A, 0x00)   // WY
         memory.write(0xFF4B, 0x00)   // WX
-        memory.write(0xFFFF, 0x01) // IE
+        //memory.write(0xFFFF, 0x01) // IE
+        memory.write(0xFFFF, 0x00) // IE
     }
 
     /**
@@ -257,12 +258,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
             0xF9 -> { ld(stackPointer, HL.getValue()); 8}
 
             0xF8 -> {
-                val n = nextByte().asSigned8()
-                ld(HL, stackPointer + n)
-                flagH = ((programCounter.getValue() and 0x0FFF) + n.asUnsigned16()) > 0x0FFF
-                flagC = (programCounter + n.asUnsigned16()) > 0xFFFF
-                flagZ = false
-                flagN = false
+                ld(HL, addsp(nextByte()))
                 12
             }
 
@@ -382,13 +378,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
             0x39 -> { addToRegister(HL, stackPointer.getValue()); 8}
 
             0xE8 -> {
-                val value = nextByte()
-                val result = stackPointer + value.asSigned8()
-                flagH = ((programCounter.getValue() and 0x0FFF) + value) > 0x0FFF
-                flagC = (programCounter + value) > 0xFFFF
-                flagZ = false
-                flagN = false
-                stackPointer.setValue(result)
+                stackPointer.setValue(addsp(nextByte()))
                 16
             }
 
@@ -611,6 +601,17 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
 
             else -> error("Invalid opcode ${Integer.toHexString(opcode)}")
         }
+    }
+
+    private fun addsp(value: Int): Int {
+        flagZ = false
+        flagN = false
+        val sp = stackPointer.getValue()
+        val arg = value.asSigned8()
+        val result = sp + arg
+        flagC = ((sp and 0xFF) + (arg and 0xFF)) and 0x100 != 0
+        flagH = ((sp and 0x0F) + (arg and 0x0F)) and 0x10 != 0
+        return result.asAddress()
     }
 
     private fun sbc(value: Int) {
@@ -876,17 +877,13 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
         val oldValue = register.getValue()
         register.setValue(register.getValue()-1)
         flagZ = register.getValue() == 0
-        flagH = halfCarry(oldValue, 1, register.getValue())
+        flagH = oldValue and 0x0F == 0x00
         flagN = true
-    }
-
-    private fun halfCarry(a: Int, b: Int, result: Int): Boolean {
-        return (((a xor b) xor result) and 0x10) == 0x10
     }
 
     private fun inc(register: SingleValueMemoryComponent) {
         val result = (register.getValue() + 1).asUnsigned8()
-        flagH = halfCarry(register.getValue(), 1, result)//register.getValue() and 0xF == 0xF
+        flagH = register.getValue() and 0xF == 0x0F
         flagZ = (result and 0xFF) == 0
         flagN = false
         register.setValue(result)
