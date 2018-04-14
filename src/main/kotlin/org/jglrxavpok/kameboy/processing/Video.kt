@@ -28,6 +28,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     val backgroundTileMapAddress get()= if(bgTileMapSelect) 0x9C00 else 0x9800
     val tileDataAddress get()= if(dataSelect) 0x8000 else 0x9000 // 0x8800
     val pixelData = IntArray(256*256)
+    val bgIndex = IntArray(256*256)
     val tileDataTable = TileDataTable(this, memory)
 
     val lcdControl = MemoryRegister("LCD Control", memory, 0xFF40)
@@ -41,7 +42,6 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     var bgDisplay by lcdControl.bitVar(0) // FIXME: GB only
 
     val lcdStatus = MemoryRegister("LCDC Status", memory, 0xFF41)
-    var coincidenceInterrupt by lcdStatus.bitVar(6)
     var mode2OamInterrupt by lcdStatus.bitVar(5)
     var mode1VBlankInterrupt by lcdStatus.bitVar(4)
     var mode0HBlankInterrupt by lcdStatus.bitVar(3)
@@ -63,7 +63,8 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                     isBackground: Boolean = false,
                     vMirror: Boolean = false,
                     hMirror: Boolean = false,
-                    tileHeight: Int = 8) {
+                    tileHeight: Int = 8,
+                    backgroundPriority: Boolean = false) {
         var screenY = row
         if(isBackground) { // background wraps
             screenY = wrapInBounds(row)
@@ -84,11 +85,21 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             val highColor = if(lineDataMS and (1 shl effectiveTileColumn) != 0) 1 else 0
             val lowColor = if(lineDataLS and (1 shl effectiveTileColumn) != 0) 1 else 0
             val pixelColorIndex = (highColor shl 1) + lowColor
+            if(backgroundPriority && isBackgroundColorWithPriority(bgIndex[screenY*256+screenX])) {
+                continue
+            }
             if(pixelColorIndex == 0 && !isBackground) // transparent pixel
                 continue
+            if(isBackground) {
+                bgIndex[screenY*256+screenX] = pixelColorIndex
+            }
             val color = pixelColor(pixelColorIndex, palette)
             target[screenY*256+screenX] = color
         }
+    }
+
+    private fun isBackgroundColorWithPriority(index: Int): Boolean {
+        return index in 1..3
     }
 
     private tailrec fun wrapInBounds(value: Int): Int {
@@ -167,11 +178,11 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
                             if(spriteSizeSelect) {
                                 if(posY+8 in line..(line+15)) {
-                                    drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16)
+                                    drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16, backgroundPriority = sprite.priority)
                                 }
                             } else {
                                 if(posY in line..(line+7)) {
-                                    drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror)
+                                    drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, backgroundPriority = sprite.priority)
                                 }
                             }
                 }
