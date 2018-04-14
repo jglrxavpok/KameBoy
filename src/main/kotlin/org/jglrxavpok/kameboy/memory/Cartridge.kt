@@ -28,7 +28,6 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
     val maskROMVersion = rawData[0x14C]
     val complementCheck = rawData[0x14D]
     val checksum = fromNibbles(rawData[0x14E], rawData[0x14F])
-    val cartrigeType = cartrigeTypeFromIndex(cartridgeTypeIndex)
     val romBankCount get()= when(romSizeIndex.asUnsigned()) {
      /*   0 -> 0
         1 -> 1
@@ -51,18 +50,21 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
         0x54 -> 96
         else -> error("Invalid rom size index $romSizeIndex")
     }
-    val ramBankCount = when(ramSizeIndex.asUnsigned()) {
+    val ramBankCount get()= when(ramSizeIndex.asUnsigned()) {
         0 -> 0
         1, 2 -> 1
         3 -> 4
         4 -> 16
         else -> error("Unknown ram size index $ramSizeIndex")
     }
-    val ramBanks = Array(ramBankCount+1) { index ->
+    val ramBanks = Array(ramBankCount) { index ->
         RamBank("Switchable Ram Bank #$index")
     }
     var selectedRAMBankIndex = 0
     val currentRAMBank get()= ramBanks[selectedRAMBankIndex]
+
+    val cartrigeType = cartrigeTypeFromIndex(cartridgeTypeIndex)
+
     override val name = "Cartridge (${cartrigeType.name})"
 
     fun cartrigeTypeFromIndex(index: Byte): CartridgeType = when(index.asUnsigned()) {
@@ -72,7 +74,6 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
 
 
         0x10 -> MBC3(this, NoBattery)
-
 
         0x13 -> MBC3(this, getSaveFileBattery())
         else -> error("Cartridge type $index not supported")

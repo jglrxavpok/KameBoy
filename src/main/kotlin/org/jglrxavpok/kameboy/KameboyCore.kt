@@ -29,7 +29,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var diffuseTextureUniform: Int
 
     init {
-        window = glfwCreateWindow(160*4, 144*4, "Kameboy - ${cartridge.title}", nullptr, nullptr)
+        val scale = 6
+        window = glfwCreateWindow(160*scale, 144*scale, "Kameboy - ${cartridge.title}", nullptr, nullptr)
         initInput()
         glfwShowWindow(window)
 

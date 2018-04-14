@@ -17,7 +17,6 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     }
     private var ramWriteEnabled = true
     init {
-        println("Loading RAM from battery")
         battery.loadRAM(cartridge)
     }
 
@@ -41,7 +40,6 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                 val enable = value and 0xF == 0b1010
                 if(ramWriteEnabled && !enable) {
                     battery.saveRAM(cartridge)
-                    println("Saving RAM to battery")
                 }
                 ramWriteEnabled = enable
             }
