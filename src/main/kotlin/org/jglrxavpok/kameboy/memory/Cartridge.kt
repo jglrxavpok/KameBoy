@@ -21,6 +21,9 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null): MemoryC
     val ramSizeIndex = rawData[0x0149]
     val isJapanese = rawData[0x014A].asUnsigned() == 0
     val oldLicenseCode = rawData[0x14B]
+
+    val usesSGBFunctions = oldLicenseCode.asUnsigned() == 0x33 && superGameBoyIndicator.asUnsigned() == 0x03
+
     val maskROMVersion = rawData[0x14C]
     val complementCheck = rawData[0x14D]
     val checksum = fromNibbles(rawData[0x14E], rawData[0x14F])

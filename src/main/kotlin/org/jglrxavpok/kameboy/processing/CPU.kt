@@ -7,7 +7,7 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.memory.*
 import org.jglrxavpok.kameboy.memory.specialRegs.FRegister
 
-class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
+class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val cartridge: Cartridge) {
 
     var halted = false
     var stopped = false
@@ -38,7 +38,11 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     fun reset() {
         // FIXME: GB only for the moment
-        A.setValue(0x01)
+        if(cartridge.isForColorGB) {
+            A.setValue(0x11)
+        } else {
+            A.setValue(0x01)
+        }
         F.setValue(0xB0)
         B.setValue(0x00)
         C.setValue(0x13)
@@ -68,7 +72,11 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
         memory.write(0xFF23, 0xBF)   // NR30
         memory.write(0xFF24, 0x77)   // NR50
         memory.write(0xFF25, 0xF3)   // NR51
-        memory.write(0xFF26, 0xF1)   // NR52 (GB only)
+        if(cartridge.usesSGBFunctions) {
+            memory.write(0xFF26, 0xF0)   // NR52 (SGB only)
+        } else {
+            memory.write(0xFF26, 0xF1)   // NR52 (GB only)
+        }
         memory.write(0xFF40, 0x91)   // LCDC
         memory.write(0xFF41, 0x85)   // STAT
         memory.write(0xFF42, 0x00)   // SCY
@@ -456,7 +464,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
                 val nextPart = nextByte()
                 when(nextPart) {
                     0x00 -> {
-                        if(memory.speedRegister.shouldPrepareSwitch) {
+                        if(cartridge.isForColorGB && memory.speedRegister.shouldPrepareSwitch) {
                             memory.speedRegister.setValue(0x00)
                             memory.currentSpeedFactor = -memory.currentSpeedFactor+3
                         } else {

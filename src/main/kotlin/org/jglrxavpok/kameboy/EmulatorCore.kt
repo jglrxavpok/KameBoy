@@ -24,7 +24,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
     }
 
     val mapper = MemoryMapper(cartridge, input, outputSerial)
-    val cpu = CPU(mapper, mapper.interruptManager)
+    val cpu = CPU(mapper, mapper.interruptManager, cartridge)
     val video = Video(mapper, mapper.interruptManager)
     val timer = GameBoyTimer(mapper)
 
