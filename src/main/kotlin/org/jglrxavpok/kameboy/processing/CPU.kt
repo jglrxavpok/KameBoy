@@ -449,7 +449,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
                 if(interruptManager.interruptsEnabled) {
                     halted = true
                 } else {
-                    if(cartridge.isForColorGB)
+                    if(!cartridge.isForColorGB)
                         stopPC = true
                 }
                 4
