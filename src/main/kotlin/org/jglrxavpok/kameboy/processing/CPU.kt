@@ -237,8 +237,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
             0x77 -> { ld_address(HL.getValue(), A.getValue()); 8}
             0xEA -> { ld_address(nextAddress(), A.getValue()); 16}
 
-            0xF2 -> { ld(A, memory.read(C +0xFF00)); 8}
-            0xE2 -> { ld_address(C + 0xFF00, A.getValue()); 8}
+            0xF2 -> { ld(A, memory.read(C.getValue().asUnsigned8() +0xFF00)); 8}
+            0xE2 -> { ld_address(C.getValue().asUnsigned8() + 0xFF00, A.getValue()); 8}
 
             0x3A -> { ld(A, HL.atPointed(memory)); HL--; 8}
             0x32 -> { ld_address(HL.getValue(), A.getValue()); HL--; 8}
@@ -927,7 +927,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
 
     private fun cp(value: Int) {
         flagZ = A.getValue() == value
-        flagH = (A.getValue() and 0xF) < (value and 0xF)
+        flagH = (A.getValue() and 0x0F) < (value and 0x0F)
         flagN = true
         flagC = (A.getValue() and 0xFF) < (value and 0xFF)
     }

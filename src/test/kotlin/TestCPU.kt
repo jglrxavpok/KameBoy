@@ -59,7 +59,7 @@ class TestCPU {
                 get() = 0xFF
         }
         val memory = MemoryMapper(cart, input, false)
-        val cpu = CPU(memory, memory.interruptManager)
+        val cpu = CPU(memory, memory.interruptManager, cart)
         cpu.reset()
         while(cpu.programCounter.getValue() < 0x15B) {
             cpu.step()
