@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("cpu_instrs/individual/03-op sp,hl.gb")/*, _DEV_BOOT_ROM()*/)
+    private val cartridge = Cartridge(_DEV_rom("Pokemon Red.gb")/*, _DEV_BOOT_ROM()*/)
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int

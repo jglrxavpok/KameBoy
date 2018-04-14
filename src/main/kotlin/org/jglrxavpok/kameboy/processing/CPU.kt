@@ -11,6 +11,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
 
     var halted = false
     var stopped = false
+    private var stopPC = false // used by HALT instruction
     private var requestedInterruptChange = false
     private var desiredInterruptState = false
     var stackPointer = Register("Stack Pointer", 0, sizeInBits = 16)
@@ -134,7 +135,6 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
                         interrupt(4)
                     }
                 }
-               // checkInterrupts()
             }
         }
     }
@@ -446,7 +446,12 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
             0x00 -> 4 // NOP
 
             0x76 -> {
-                halted = true
+                if(interruptManager.interruptsEnabled) {
+                    halted = true
+                } else {
+                    if(cartridge.isForColorGB)
+                        stopPC = true
+                }
                 4
             }
 
@@ -525,78 +530,134 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
                 4
             }
 
-            0x18 -> { jpRelative(nextByte()); 8}
+            0x18 -> { jpRelative(nextByte()); 12}
 
             0x20 -> {
                 val address = nextByte()
-                if(!flagZ) jpRelative(address)
-                8
+                if(!flagZ) {
+                    jpRelative(address)
+                    12
+                } else {
+                    8
+                }
             }
             0x28 -> {
                 val address = nextByte()
-                if(flagZ) jpRelative(address)
-                8
+                if(flagZ) {
+                    jpRelative(address)
+                    12
+                } else {
+                    8
+                }
             }
             0x30 -> {
                 val address = nextByte()
                 if(!flagC) {
                     jpRelative(address)
+                    12
+                } else {
+                    8
                 }
-                8
             }
             0x38 -> {
                 val address = nextByte()
                 if(flagC) {
                     jpRelative(address)
+                    12
+                } else {
+                    8
                 }
-                8
             }
 
             0xCD -> {
                 call(nextAddress())
-                12
+                24
             }
             0xC4 -> {
                 val address = nextAddress()
-                if(!flagZ) call(address)
-                12
+                if(!flagZ) {
+                    call(address)
+                    24
+                } else {
+                    12
+                }
             }
             0xCC -> {
                 val address = nextAddress()
-                if(flagZ) call(address)
-                12
+                if(flagZ) {
+                    call(address)
+                    24
+                } else {
+                    12
+                }
             }
             0xD4 -> {
                 val address = nextAddress()
-                if(!flagC) call(address)
-                12
+                if(!flagC) {
+                    call(address)
+                    24
+                } else {
+                    12
+                }
             }
             0xDC -> {
                 val address = nextAddress()
-                if(flagC) call(address)
-                12
+                if(flagC) {
+                    call(address)
+                    24
+                } else {
+                    12
+                }
             }
 
-            0xC7 -> { rst(0x00); 32}
-            0xCF -> { rst(0x08); 32}
-            0xD7 -> { rst(0x10); 32}
-            0xDF -> { rst(0x18); 32}
-            0xE7 -> { rst(0x20); 32}
-            0xEF -> { rst(0x28); 32}
-            0xF7 -> { rst(0x30); 32}
-            0xFF -> { rst(0x38); 32}
+            0xC7 -> { rst(0x00); 16}
+            0xCF -> { rst(0x08); 16}
+            0xD7 -> { rst(0x10); 16}
+            0xDF -> { rst(0x18); 16}
+            0xE7 -> { rst(0x20); 16}
+            0xEF -> { rst(0x28); 16}
+            0xF7 -> { rst(0x30); 16}
+            0xFF -> { rst(0x38); 16}
 
-            0xC9 -> { ret(); 8}
-            0xC0 -> { if(!flagZ) ret(); 8}
-            0xC8 -> { if(flagZ) ret(); 8}
-            0xD0 -> { if(!flagC) ret(); 8}
-            0xD8 -> { if(flagC) ret(); 8}
+            0xC9 -> { ret(); 16}
+            0xC0 -> {
+                if(!flagZ) {
+                    ret()
+                    20
+                } else {
+                    8
+                }
+            }
+            0xC8 -> {
+                if(flagZ) {
+                    ret()
+                    20
+                } else {
+                    8
+                }
+            }
+            0xD0 -> {
+                if (!flagC) {
+                    ret()
+                    20
+                } else {
+                    8
+                }
+            }
+            0xD8 -> {
+                if(flagC) {
+                    ret()
+                    20
+                } else {
+                    8
+                }
+            }
 
             0xD9 -> {
                 requestedInterruptChange = true
                 desiredInterruptState = true
                 ret()
-                8
+                16
             }
 
             else -> error("Invalid opcode ${Integer.toHexString(opcode)}")
@@ -966,7 +1027,11 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
 
     fun nextByte(): Int {
         val pc = programCounter.getValue()
-        programCounter++
+        if(stopPC) { // HALT causes the next instruction to be repeated on DMG/SGB
+            stopPC = false
+        } else {
+            programCounter++
+        }
         return memory.read(pc).asUnsigned8()
     }
 }
