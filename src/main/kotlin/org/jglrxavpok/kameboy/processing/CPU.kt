@@ -425,6 +425,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             }
 
             0x2F -> {
+                flagH = true
+                flagN = true
                 A.setValue(A.getValue().inv() and 0xFF)
                 4
             }
