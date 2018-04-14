@@ -280,15 +280,15 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             0x86 -> { add(HL.atPointed(memory)); 8}
             0xC6 -> { add(nextByte()); 8}
 
-            0x8F -> { add(A.getValue() + if(flagC) 1 else 0); 4}
-            0x88 -> { add(B.getValue() + if(flagC) 1 else 0); 4}
-            0x89 -> { add(C.getValue() + if(flagC) 1 else 0); 4}
-            0x8A -> { add(D.getValue() + if(flagC) 1 else 0); 4}
-            0x8B -> { add(E.getValue() + if(flagC) 1 else 0); 4}
-            0x8C -> { add(H.getValue() + if(flagC) 1 else 0); 4}
-            0x8D -> { add(L.getValue() + if(flagC) 1 else 0); 4}
-            0x8E -> { add(HL.atPointed(memory) + if(flagC) 1 else 0); 8}
-            0xCE -> { add(nextByte() + if(flagC) 1 else 0); 8}
+            0x8F -> { adc(A.getValue()); 4}
+            0x88 -> { adc(B.getValue()); 4}
+            0x89 -> { adc(C.getValue()); 4}
+            0x8A -> { adc(D.getValue()); 4}
+            0x8C -> { adc(H.getValue()); 4}
+            0x8B -> { adc(E.getValue()); 4}
+            0x8D -> { adc(L.getValue()); 4}
+            0x8E -> { adc(HL.atPointed(memory)); 8}
+            0xCE -> { adc(nextByte()); 8}
 
             0x97 -> { sub(A.getValue()); 4}
             0x90 -> { sub(B.getValue()); 4}
@@ -300,15 +300,15 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             0x96 -> { sub(HL.atPointed(memory)); 8}
             0xD6 -> { sub(nextByte()); 8}
 
-            0x9F -> { sub(A.getValue() + if(flagC) 1 else 0); 4}
-            0x98 -> { sub(B.getValue() + if(flagC) 1 else 0); 4}
-            0x99 -> { sub(C.getValue() + if(flagC) 1 else 0); 4}
-            0x9A -> { sub(D.getValue() + if(flagC) 1 else 0); 4}
-            0x9B -> { sub(E.getValue() + if(flagC) 1 else 0); 4}
-            0x9C -> { sub(H.getValue() + if(flagC) 1 else 0); 4}
-            0x9D -> { sub(L.getValue() + if(flagC) 1 else 0); 4}
-            0x9E -> { sub(HL.atPointed(memory) + if(flagC) 1 else 0); 8}
-            0xDE -> { sub(nextByte() + if(flagC) 1 else 0); 8}
+            0x9F -> { sbc(A.getValue()); 4}
+            0x98 -> { sbc(B.getValue()); 4}
+            0x99 -> { sbc(C.getValue()); 4}
+            0x9A -> { sbc(D.getValue()); 4}
+            0x9B -> { sbc(E.getValue()); 4}
+            0x9C -> { sbc(H.getValue()); 4}
+            0x9D -> { sbc(L.getValue()); 4}
+            0x9E -> { sbc(HL.atPointed(memory)); 8}
+            0xDE -> { sbc(nextByte()); 8}
 
             0xA7 -> { and(A.getValue()); 4}
             0xA0 -> { and(B.getValue()); 4}
@@ -601,6 +601,25 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
             else -> error("Invalid opcode ${Integer.toHexString(opcode)}")
         }
+    }
+
+    private fun sbc(value: Int) {
+        val carry = if(flagC) 1 else 0
+        val res = A.getValue() - value - carry
+        flagZ = res.asUnsigned8() == 0
+        flagN = true
+        flagC = res < 0
+        flagH = (A.getValue() xor value xor res) and (1 shl 4) != 0
+        A.setValue(res)
+    }
+
+    private fun adc(value: Int) {
+        val carry = if(flagC) 1 else 0
+        flagZ = (value + A.getValue() + carry).asUnsigned8() == 0
+        flagN = false
+        flagH = (A.getValue() and 0x0F) + (value and 0x0F) + carry > 0x0F
+        flagC = A.getValue() + value + carry > 0xFF
+        A.setValue(A.getValue() + value + carry)
     }
 
     private fun ret() {
