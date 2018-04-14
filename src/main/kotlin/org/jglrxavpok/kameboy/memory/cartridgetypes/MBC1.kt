@@ -2,9 +2,10 @@ package org.jglrxavpok.kameboy.memory.cartridgetypes
 
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.setBits
+import org.jglrxavpok.kameboy.memory.Battery
 import org.jglrxavpok.kameboy.memory.Cartridge
 
-class MBC1(val cartridge: Cartridge): CartridgeType() {
+class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     override val name = "MBC1"
     var mode = Mode.Rom16Ram8
     var currentBank = 1
@@ -13,6 +14,11 @@ class MBC1(val cartridge: Cartridge): CartridgeType() {
         val start = index*BankSize
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)
+    }
+    private var ramWriteEnabled = true
+    init {
+        println("Loading RAM from battery")
+        battery.loadRAM(cartridge)
     }
 
     override fun write(address: Int, value: Int) {
@@ -32,15 +38,24 @@ class MBC1(val cartridge: Cartridge): CartridgeType() {
                 }
             }
             in 0x0000..0x1FFF -> {
-                cartridge.currentRAMBank.enabled = value and 0xA != 0
-                // TODO: save to battery here if there is one
+                val enable = value and 0xF == 0b1010
+                if(ramWriteEnabled && !enable) {
+                    battery.saveRAM(cartridge)
+                    println("Saving RAM to battery")
+                }
+                ramWriteEnabled = enable
+            }
+            in 0xA000..0xBFFF -> {
+                if(ramWriteEnabled) {
+                    cartridge.currentRAMBank.write(address, value)
+                }
             }
             else -> error("Invalid address for MBC1 $address")
         }
     }
 
     override fun accepts(address: Int): Boolean {
-        return address in 0..0x8000
+        return address in 0..0x8000 || address in 0xA000..0xBFFF
     }
 
     override fun read(address: Int): Int {
@@ -53,6 +68,9 @@ class MBC1(val cartridge: Cartridge): CartridgeType() {
                     return 0xFF
                 val bank = banks[currentBank]
                 bank[address-0x4000].asUnsigned()
+            }
+            in 0xA000..0xBFFF -> {
+                return cartridge.currentRAMBank.read(address)
             }
             else -> 0xFF//error("Invalid read address for MBC1 $address")
         }

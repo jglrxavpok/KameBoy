@@ -7,8 +7,9 @@ import org.jglrxavpok.kameboy.memory.cartridgetypes.CartridgeType
 import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC1
 import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC3
 import org.jglrxavpok.kameboy.memory.cartridgetypes.ROMOnly
+import java.io.File
 
-class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null): MemoryComponent {
+class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val saveFile: File? = null): MemoryComponent {
     val hasBootRom = bootROM != null
     val bootRomComponent = RomWrapper(bootROM ?: ByteArray(0))
     val scrollingLogo = rawData.sliceArray(0x0104..0x0133)
@@ -66,10 +67,20 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null): MemoryC
 
     fun cartrigeTypeFromIndex(index: Byte): CartridgeType = when(index.asUnsigned()) {
         0 -> ROMOnly(this)
-        1, 2, 3 -> MBC1(this)
+        1, 2 -> MBC1(this, NoBattery)
+        3 -> MBC1(this, getSaveFileBattery())
 
-        0x13 -> MBC3(this)
+
+        0x10 -> MBC3(this, NoBattery)
+
+
+        0x13 -> MBC3(this, getSaveFileBattery())
         else -> error("Cartridge type $index not supported")
+    }
+
+    private fun getSaveFileBattery(): FileBasedBattery {
+        val file = saveFile ?: File("$title.sav")
+        return FileBasedBattery(file)
     }
 
     override fun write(address: Int, value: Int) {

@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = Cartridge(_DEV_rom("Pokemon Red.gb")/*, _DEV_BOOT_ROM()*/)
+    private val cartridge = _DEV_cart("Pokemon Red.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -149,6 +149,12 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     override var buttonState = 0xFF
     override var directionState = 0xFF
 
+    private fun _DEV_cart(name: String): Cartridge {
+        val saveFolder = File("./saves/")
+        if(!saveFolder.exists())
+            saveFolder.mkdirs()
+        return Cartridge(_DEV_rom(name), _DEV_BOOT_ROM(), File(saveFolder, name.takeWhile { it != '.' }+".sav"))
+    }
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 
     private fun _DEV_BOOT_ROM(): ByteArray? {

@@ -2,12 +2,13 @@ package org.jglrxavpok.kameboy.memory.cartridgetypes
 
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
+import org.jglrxavpok.kameboy.memory.Battery
 import org.jglrxavpok.kameboy.memory.Cartridge
 
 /**
  * TODO: better implementation of RTC
  */
-class MBC3(val cartridge: Cartridge): CartridgeType() {
+class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     override val name = "MBC3"
     private var enabled = true
     var mode = Mode.Ram
@@ -18,6 +19,12 @@ class MBC3(val cartridge: Cartridge): CartridgeType() {
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)
     }
+
+    init {
+        battery.loadRAM(cartridge)
+    }
+
+    private var ramWriteEnabled = true
 
     private var selectedClockRegister = 0
     private var rtcHaltStatus = 0
@@ -45,17 +52,22 @@ class MBC3(val cartridge: Cartridge): CartridgeType() {
             }
             in 0x0000..0x1FFF -> {
                 val status = (value and 0xF) == 0xA
-                cartridge.currentRAMBank.enabled = status
+                ramWriteEnabled = status
+                if(!ramWriteEnabled)
+                    battery.saveRAM(cartridge)
                 enabled = status
             }
-            else -> {
-                when {
-                    mode == Mode.Clock && address in 0xA000..0xBFFF -> {
+            in 0xA000..0xBFFF -> {
+                when (mode) {
+                    Mode.Clock -> {
                         writeRTC(address-0xA000, value)
-                        return
+                    }
+                    Mode.Ram -> {
+                        if(ramWriteEnabled)
+                            cartridge.currentRAMBank.write(address, value)
                     }
                 }
-                error("Invalid address for MBC3 $address")
+//                error("Invalid address for MBC3 $address")
             }
         }
     }
@@ -69,14 +81,17 @@ class MBC3(val cartridge: Cartridge): CartridgeType() {
                 val bank = banks[currentBank]
                 bank[address-0x4000].asUnsigned()
             }
-            else -> {
-                when {
-                    mode == Mode.Clock && address in 0xA000..0xBFFF -> {
-                        return readRTC(address-0xA000)
+            in 0xA000..0xBFFF -> {
+                return when (mode) {
+                    Mode.Clock -> {
+                        readRTC(address)
+                    }
+                    Mode.Ram -> {
+                        cartridge.currentRAMBank.read(address)
                     }
                 }
-                error("Invalid read address for MBC3 $address")
             }
+            else -> 0xFF
         }
     }
 
@@ -106,7 +121,7 @@ class MBC3(val cartridge: Cartridge): CartridgeType() {
     }
 
     override fun accepts(address: Int): Boolean {
-        return address in 0..0x8000 || (mode == Mode.Clock) && address in 0xA000..0xBFFF
+        return address in 0..0x8000 || address in 0xA000..0xBFFF
     }
 
     enum class Mode {
