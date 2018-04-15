@@ -3,7 +3,7 @@ package org.jglrxavpok.kameboy.memory
 class InterruptManager(val memory: MemoryComponent) {
 
     val IF = MemoryRegister("IF", memory, 0xFF0F)
-    var interruptsEnabled = true
+    var interruptsEnabled = false
 
     fun fireVBlank() {
         fireInterrupt(0)

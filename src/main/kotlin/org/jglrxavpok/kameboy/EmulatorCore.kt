@@ -103,6 +103,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
         println("Cartridge info: $cartridge")
         println("IF: ${Integer.toBinaryString(mapper.read(0xFF0F))}")
         println("IE: ${Integer.toBinaryString(mapper.read(0xFFFF))}")
+        println("IME: ${cpu.interruptManager.interruptsEnabled}")
         println("========")
     }
 

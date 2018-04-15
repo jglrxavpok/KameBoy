@@ -714,6 +714,11 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     }
 
     private fun jp(address: Int) {
+
+        // TODO: remove (DEV)
+        /*if(address == 0xC1B9) {
+            error("TEST FAILED ${A.getValue()}")
+        }*/
         programCounter.setValue(address)
     }
 
@@ -1000,8 +1005,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     }
 
     private fun pop(): Int {
-        val high = memory.read(stackPointer.getValue()).asUnsigned8()
-        val low = memory.read(stackPointer.getValue()+1).asUnsigned8()
+        val high = memory.read(stackPointer.getValue()+1).asUnsigned8()
+        val low = memory.read(stackPointer.getValue()).asUnsigned8()
         stackPointer++
         stackPointer++
         return ((high shl 8) or low).asUnsigned16()
@@ -1010,8 +1015,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     private fun push(register: SingleValueMemoryComponent) {
         stackPointer--
         stackPointer--
-        memory.write(stackPointer.getValue(), (register.getValue() shr 8).asUnsigned8())
-        memory.write(stackPointer.getValue()+1, register.getValue().asUnsigned8())
+        memory.write(stackPointer.getValue(), register.getValue().asUnsigned8())
+        memory.write(stackPointer.getValue()+1, (register.getValue() shr 8).asUnsigned8())
     }
 
     private fun ld_address(address: Int, value: Int) = memory.write(address, value)
