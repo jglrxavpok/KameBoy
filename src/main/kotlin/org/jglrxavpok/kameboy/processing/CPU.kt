@@ -140,6 +140,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     }
 
     private fun interrupt(interruptIndex: Int) {
+        stopPC = false // TODO: for testing
+
         interruptManager.interruptsEnabled = false
         interruptManager.reset(interruptIndex)
         call(0x40 + interruptIndex * 8)
