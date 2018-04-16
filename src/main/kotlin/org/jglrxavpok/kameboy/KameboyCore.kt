@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.helpful.nullptr
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
+import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.ui.KameboyAudio
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
@@ -16,8 +17,10 @@ import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 import org.lwjgl.opengl.GL30.glGenVertexArrays
+import java.awt.FlowLayout
 import java.io.File
 import java.nio.ByteBuffer
+import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
@@ -123,6 +126,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                 when(key) {
                     GLFW_KEY_F1 -> core.dumpInfos()
                     GLFW_KEY_F2 -> core.showBGMap()
+                    GLFW_KEY_F3 -> showMemoryContents()
                 }
             }
             val bit = when(key) {
@@ -144,6 +148,31 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         }
     }
 
+    private fun showMemoryContents() {
+        val frame by lazy { JFrame() }
+        frame.contentPane.removeAll()
+        val linesPanel = JPanel()
+        linesPanel.layout = BoxLayout(linesPanel, BoxLayout.Y_AXIS)
+
+        var address = 0
+        while(address <= 0xFFFF) {
+            val areaType = when(address) {
+                0xFFFF, 0xFF50, 0xFF4D -> Instructions.AreaType.SpecialRegister
+                in 0x8000 until 0xA000 -> Instructions.AreaType.VideoRam
+                in 0xA000 until 0xC000 -> Instructions.AreaType.Ram
+                in 0xFF00 until 0xFF4C -> Instructions.AreaType.IO
+
+                else -> Instructions.AreaType.Rom
+            }
+            val content = Instructions.readInstruction(core.mapper, address, areaType)
+            linesPanel.add(JLabel(content.desc))
+            address += content.size
+        }
+        frame.contentPane.add(JScrollPane(linesPanel))
+        frame.repaint()
+        frame.isVisible = true
+    }
+
     private fun isButtonKey(key: Int) = key in arrayOf(GLFW_KEY_Q, GLFW_KEY_W, GLFW_KEY_ENTER, GLFW_KEY_BACKSPACE)
     private fun isDirectionKey(key: Int) = key in arrayOf(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT)
 
@@ -154,7 +183,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val saveFolder = File("./saves/")
         if(!saveFolder.exists())
             saveFolder.mkdirs()
-        return Cartridge(_DEV_rom(name), _DEV_BOOT_ROM(), File(saveFolder, name.takeWhile { it != '.' }+".sav"))
+        return Cartridge(_DEV_rom(name), null/*_DEV_BOOT_ROM()*/, File(saveFolder, name.takeWhile { it != '.' }+".sav"))
     }
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 

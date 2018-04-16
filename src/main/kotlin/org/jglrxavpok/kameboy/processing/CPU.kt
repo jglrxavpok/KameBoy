@@ -119,7 +119,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     private fun checkInterrupts() {
         val interruptFlag = memory.read(0xFF0F)
         val interruptEnable = memory.read(0xFFFF)
-        if(interruptFlag != 0) {
+        if(interruptFlag and 0x1F != 0) {
             halted = false // always wake CPU up
             // https://kotcrab.com/blog/2016/04/22/what-i-learned-from-game-boy-emulator-development/
         }
@@ -448,9 +448,8 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
             0x00 -> 4 // NOP
 
             0x76 -> {
-                if(interruptManager.interruptsEnabled) {
-                    halted = true
-                } else {
+                halted = true
+                if(!interruptManager.interruptsEnabled) {
                     if(!cartridge.isForColorGB)
                         stopPC = true
                 }

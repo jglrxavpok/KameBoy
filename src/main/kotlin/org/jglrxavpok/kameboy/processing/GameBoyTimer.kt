@@ -6,14 +6,14 @@ import org.jglrxavpok.kameboy.memory.MemoryRegister
 class GameBoyTimer(val mapper: MemoryMapper) {
 
     companion object {
-        val DivCycleRate = 512 // 4194304 (cpu clock speed) /16384 (divider speed)
-        val TimerCounterRates = arrayOf(4194304 / 4096, 4194304 / 262144, 4194304 / 65536, 4194304 / 16384)// 4194304 (cpu clock speed) /x (timer speed)
+        val DivCycleRate = 4194304/4 / 16384 // 4194304 (cpu clock speed) /16384 (divider speed)
+        val TimerCounterRates = arrayOf(4194304/4 / 4096, 4194304/4 / 262144, 4194304/4 / 65536, 4194304/4 / 16384)// 4194304 (cpu clock speed) /x (timer speed)
     }
 
     private var currentDivCycle = 0
     private var currentTimerCycle = 0
     private val timerControl = MemoryRegister("TAC", mapper, 0xFF07)
-    private val timerStop by timerControl.bitVar(2)
+    private val timerRunning by timerControl.bitVar(2)
     private val clockSelect get()= timerControl.getValue() and 0b11
 
     fun step(cycles: Int) {
@@ -23,9 +23,9 @@ class GameBoyTimer(val mapper: MemoryMapper) {
             mapper.divRegister.inc()
         }
 
-        if(!timerStop) {
+        if(timerRunning) {
             currentTimerCycle += cycles/4
-            val timerRate = TimerCounterRates[clockSelect]*2
+            val timerRate = TimerCounterRates[clockSelect]
             if(currentTimerCycle >= timerRate) {
                 currentTimerCycle %= timerRate
                 mapper.timerRegister.inc()
