@@ -44,6 +44,8 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                 ramWriteEnabled = enable
             }
             in 0xA000..0xBFFF -> {
+                if(cartridge.ramBankCount == 0)
+                    return
                 if(ramWriteEnabled) {
                     cartridge.currentRAMBank.write(address, value)
                 }
@@ -68,6 +70,8 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                 bank[address-0x4000].asUnsigned()
             }
             in 0xA000..0xBFFF -> {
+                if(cartridge.ramBankCount == 0)
+                    return 0xFF
                 return cartridge.currentRAMBank.read(address)
             }
             else -> 0xFF//error("Invalid read address for MBC1 $address")

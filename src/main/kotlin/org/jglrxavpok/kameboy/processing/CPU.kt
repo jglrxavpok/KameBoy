@@ -119,7 +119,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     private fun checkInterrupts() {
         val interruptFlag = memory.read(0xFF0F)
         val interruptEnable = memory.read(0xFFFF)
-        if(interruptFlag and 0x1F != 0) {
+        if(interruptFlag and interruptEnable != 0) {
             halted = false // always wake CPU up
             // https://kotcrab.com/blog/2016/04/22/what-i-learned-from-game-boy-emulator-development/
         }
@@ -484,10 +484,10 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
                 4
             }
 
-            0x07 -> { rlc(A); 4}
-            0x17 -> { rl(A); 4}
-            0x0F -> { rrc(A); 4}
-            0x1F -> { rr(A); 4}
+            0x07 -> { rlc(A); flagZ = false; 4}
+            0x17 -> { rl(A); flagZ = false; 4}
+            0x0F -> { rrc(A); flagZ = false; 4}
+            0x1F -> { rr(A); flagZ = false; 4}
 
             0xC3 -> { jp(nextAddress()); 16}
             0xC2 -> {
@@ -747,7 +747,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
 
     private fun rl(register: SingleValueMemoryComponent) {
         val value = register.getValue()
-        val newC = value and 0b10000000 != 0
+        val newC = value and (1 shl 7) != 0
         flagN = false
         flagH = false
         val result = ((value shl 1) and 0xFF) or (if(flagC) 1 else 0)
@@ -758,13 +758,13 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
 
     private fun rlc(register: SingleValueMemoryComponent) {
         val value = register.getValue()
-        val newC = value and 0b10000000 != 0
+        val newC = value and (1 shl 7) != 0
         flagN = false
         flagH = false
         val result = ((value shl 1) and 0xFF) or (if(newC) 1 else 0)
         flagZ = result == 0
-        register.setValue(result)
         flagC = newC
+        register.setValue(result)
     }
 
     private fun executeCBOpcode(opcode: Int): Int {
@@ -977,7 +977,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     private fun and(value: Int) {
         val result = A.getValue().asUnsigned8() and value.asUnsigned8()
         A.setValue(result)
-        flagZ = A.getValue() == 0
+        flagZ = result == 0
         flagN = false
         flagC = false
         flagH = true

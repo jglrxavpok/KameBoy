@@ -16,6 +16,8 @@ class GameBoyTimer(val mapper: MemoryMapper) {
     private val timerRunning by timerControl.bitVar(2)
     private val clockSelect get()= timerControl.getValue() and 0b11
 
+    private var prevTimerRate = 0
+
     fun step(cycles: Int) {
         currentDivCycle += cycles/4
         if(currentDivCycle >= DivCycleRate) {
@@ -26,6 +28,11 @@ class GameBoyTimer(val mapper: MemoryMapper) {
         if(timerRunning) {
             currentTimerCycle += cycles/4
             val timerRate = TimerCounterRates[clockSelect]
+
+            if(clockSelect != prevTimerRate) {
+                prevTimerRate = clockSelect
+                currentTimerCycle = 0
+            }
             if(currentTimerCycle >= timerRate) {
                 currentTimerCycle %= timerRate
                 mapper.timerRegister.inc()
