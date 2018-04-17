@@ -145,15 +145,24 @@ class Sound(val memory: MemoryMapper) {
     fun step(cycles: Int) {
         currentCycleCount += cycles
         if(soundToggle.isOn) {
-            if(channel1.isSoundOn())
-                channel1.step(cycles)
-            if(channel2.isSoundOn())
-                channel2.step(cycles)
-            if(channel3.isSoundOn())
-                channel3.step(cycles)
-            if(channel4.isSoundOn())
-                channel4.step(cycles)
+            for(channelNumber in 1..4) {
+                val channel = channel(channelNumber)
+                if(channel.isSoundOn()) {
+                    channel.step(cycles)
+                    mix(channel.getCurrentOutput(), channelNumber)
+                }
+            }
             outputSound()
+        }
+    }
+
+    private fun channel(channelNumber: Int): Channel {
+        return when(channelNumber) {
+            1 -> channel1
+            2 -> channel2
+            3 -> channel3
+            4 -> channel4
+            else -> error("Wrong sound channel number $channelNumber")
         }
     }
 
@@ -163,7 +172,7 @@ class Sound(val memory: MemoryMapper) {
         rightChannel /= 4
         val leftVolume = (out1Volume+1) * leftChannel
         val rightVolume = (out2Volume+1) * rightChannel
-        output(leftVolume, rightVolume)
+        output(leftVolume.toByte().toInt(), rightVolume.toByte().toInt())
     }
 
     fun resetSound(soundNumber: Int) {

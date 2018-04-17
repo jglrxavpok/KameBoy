@@ -25,7 +25,7 @@ class Square2(sound: Sound): Channel(sound) {
 
     private var waveBitSelection = 0
     val timer = Timer { timer ->
-        val currentWaveform = WaveDuty[sound.wavePattern1Duty]
+        val currentWaveform = WaveDuty[sound.wavePattern2Duty]
         val isHigh = currentWaveform and (1 shl waveBitSelection)
         if(isHigh != 0) {
             output(High)
@@ -46,6 +46,7 @@ class Square2(sound: Sound): Channel(sound) {
 
     override fun reset() {
         super.reset()
+        waveBitSelection = 0
         timer.periodInCycles = sound.channel2Frequency.toInt().toClockCycles()
         timer.reset()
         disabled = false

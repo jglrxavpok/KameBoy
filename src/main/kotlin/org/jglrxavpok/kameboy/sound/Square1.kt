@@ -85,10 +85,10 @@ class Square1(sound: Sound): Channel(sound) {
         disabled = false
         sweepShadowRegister = sound.channel1Frequency.toInt()
         frameSequencer.reset()
-        //sweepFlag = sound.sweepPeriod != 0 || sound.numberOfSweeps != 0
-       /* if(sound.numberOfSweeps != 0) {
+        sweepFlag = sound.sweepPeriod != 0 || sound.numberOfSweeps != 0
+        if(sound.numberOfSweeps != 0) {
             calculateFrequency()
             checkOverflow()
-        }*/
+        }
     }
 }

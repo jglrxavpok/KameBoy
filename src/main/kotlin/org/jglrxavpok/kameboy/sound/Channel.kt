@@ -38,6 +38,7 @@ abstract class Channel(val sound: Sound) {
     protected var disabled = true
     private var clockLength = 0
     private var volume = 0
+    private var currentOutput: Int = 0
 
     private fun clockVolumeEnveloppe() {
         if(hasVolumeEnveloppe && sound.enveloppePeriod[channelNumber-1] != 0) {
@@ -71,7 +72,12 @@ abstract class Channel(val sound: Sound) {
 
     fun output(nibble: Int) {
         //val voltage = dac(nibble)
-        sound.mix(nibble, channelNumber)
+        currentOutput = nibble
+        //sound.mix(nibble, channelNumber)
+    }
+
+    fun getCurrentOutput(): Int {
+        return currentOutput
     }
 
     private fun dac(nibble: Int): Double {
