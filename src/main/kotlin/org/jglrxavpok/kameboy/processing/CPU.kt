@@ -264,7 +264,7 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
                 12
             }
 
-            0x08 -> { ld_address(nextAddress(), stackPointer.getValue()); 20}
+            0x08 -> { write16(nextAddress(), stackPointer.getValue()); 20}
 
             0xF5 -> { push(AF); 16}
             0xC5 -> { push(BC); 16}
@@ -665,6 +665,11 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
         }
     }
 
+    private fun write16(address: Int, value: Int) {
+        memory.write(address, value.asUnsigned8())
+        memory.write(address+1, (value shr 8).asUnsigned8())
+    }
+
     private fun addsp(value: Int): Int {
         flagZ = false
         flagN = false
@@ -1016,8 +1021,9 @@ class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val 
     private fun push(register: SingleValueMemoryComponent) {
         stackPointer--
         stackPointer--
-        memory.write(stackPointer.getValue(), register.getValue().asUnsigned8())
-        memory.write(stackPointer.getValue()+1, (register.getValue() shr 8).asUnsigned8())
+       /* memory.write(stackPointer.getValue(), register.getValue().asUnsigned8())
+        memory.write(stackPointer.getValue()+1, (register.getValue() shr 8).asUnsigned8())*/
+        write16(stackPointer.getValue(), register.getValue())
     }
 
     private fun ld_address(address: Int, value: Int) = memory.write(address, value)

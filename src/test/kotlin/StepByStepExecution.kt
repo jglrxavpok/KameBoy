@@ -7,7 +7,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("cpu_instrs/individual/02-interrupts.gb"))
+    val cartridge = Cartridge(rom("cpu_instrs/individual/07-jr,jp,call,ret,rst.gb"))
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF
