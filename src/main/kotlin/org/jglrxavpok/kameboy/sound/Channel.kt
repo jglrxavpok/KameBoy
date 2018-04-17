@@ -1,5 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
+import org.jglrxavpok.kameboy.helpful.toClockCycles
+
 abstract class Channel(val sound: Sound) {
 
     abstract val channelNumber: Int
@@ -12,13 +14,14 @@ abstract class Channel(val sound: Sound) {
         volume = sound.initialEnveloppeVolume[channelNumber-1]
         frameStep = 0
         frameSequencer.reset()
+        clockLength = 0
     }
 
     open fun step(cycles: Int) {
         frameSequencer.step(cycles)
     }
 
-    val frameSequencer = Timer((512/8* Sound.SecondsToCycles).toInt()) { frameSequencer ->
+    val frameSequencer = Timer((512/8).toClockCycles()) { frameSequencer ->
         when {
             frameStep % 2 == 0 -> {
                 clockLengthCounter()
@@ -44,7 +47,6 @@ abstract class Channel(val sound: Sound) {
             }
             if(volume == 0) {
                 disabled = true
-                reset()
             }
         }
     }
@@ -59,7 +61,6 @@ abstract class Channel(val sound: Sound) {
             if(clockLength <= 0) {
                 clockLength = 0
                 disabled = true
-                reset()
             }
         }
     }
@@ -80,6 +81,12 @@ abstract class Channel(val sound: Sound) {
 
 class Timer(val defaultPeriod: Int = Int.MAX_VALUE, val outputClock: (Timer) -> Unit) {
     var periodInCycles = defaultPeriod
+        set(value) {
+            field = if(value == 0)
+                8
+            else
+                value
+        }
 
     private var counter = 0
 

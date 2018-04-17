@@ -1,7 +1,6 @@
 package org.jglrxavpok.kameboy.memory
 
-import org.jglrxavpok.kameboy.helpful.hz2cycles
-import org.jglrxavpok.kameboy.helpful.setBits
+import org.jglrxavpok.kameboy.helpful.toClockCycles
 
 class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryMapper, val outputToConsole: Boolean) {
 
@@ -9,7 +8,7 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     private var byteToTransfer = 0xFF
     private var transferring = false
 
-    private val speed = 8192.hz2cycles
+    private val speed = 8192.toClockCycles()
 
     fun step(cycles: Int) {
         if(!transferring)

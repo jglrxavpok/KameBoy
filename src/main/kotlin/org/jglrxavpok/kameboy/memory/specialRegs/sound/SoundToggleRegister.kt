@@ -16,11 +16,15 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
         }
         // the order is important, write 0x00 **then** turn off
         super.write(address, valueToWrite)
+        if(!isOn && valueToWrite != 0) { // turning on
+            for(number in 1..4)
+                sound.resetSound(number)
+        }
         isOn = valueToWrite != 0
     }
 
     override fun read(address: Int): Int {
-        val allOf = super.read(address) and 0b10000000
+        val allOf = super.read(address) and (1 shl 7)
         var result = allOf
         if(sound.isSoundOn(1)) {
             result = result or (1 shl 0)

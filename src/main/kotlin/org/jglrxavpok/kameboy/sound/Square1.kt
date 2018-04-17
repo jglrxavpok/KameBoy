@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.helpful.setBits
+import org.jglrxavpok.kameboy.helpful.toClockCycles
 
 /**
  * Square 1 Channel
@@ -79,15 +80,15 @@ class Square1(sound: Sound): Channel(sound) {
 
     override fun reset() {
         super.reset()
-        timer.periodInCycles = (sound.channel1Frequency * Sound.SecondsToCycles).toInt()
+        timer.periodInCycles = sound.channel1Frequency.toInt().toClockCycles()
         timer.reset()
         disabled = false
         sweepShadowRegister = sound.channel1Frequency.toInt()
         frameSequencer.reset()
-        sweepFlag = sound.sweepPeriod != 0 || sound.numberOfSweeps != 0
-        if(sound.numberOfSweeps != 0) {
+        //sweepFlag = sound.sweepPeriod != 0 || sound.numberOfSweeps != 0
+       /* if(sound.numberOfSweeps != 0) {
             calculateFrequency()
             checkOverflow()
-        }
+        }*/
     }
 }

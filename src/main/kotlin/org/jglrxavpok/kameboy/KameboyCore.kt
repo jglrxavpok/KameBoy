@@ -24,7 +24,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("dmg_sound/dmg_sound.gb")
+    private val cartridge = _DEV_cart("dmg_sound/rom_singles/02-len ctr.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int

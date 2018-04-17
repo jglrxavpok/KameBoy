@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.helpful.setBits
+import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.sound.Sound.Companion.SecondsToCycles
 
 /**
@@ -45,9 +46,8 @@ class Square2(sound: Sound): Channel(sound) {
 
     override fun reset() {
         super.reset()
-        timer.periodInCycles = (sound.channel2Frequency * Sound.SecondsToCycles).toInt()
+        timer.periodInCycles = sound.channel2Frequency.toInt().toClockCycles()
         timer.reset()
         disabled = false
-        frameSequencer.reset()
     }
 }

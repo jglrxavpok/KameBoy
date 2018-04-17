@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.helpful.setBits
+import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.sound.Sound.Companion.SecondsToCycles
 
 /**
@@ -42,7 +43,7 @@ class Wave3(sound: Sound): Channel(sound) {
 
     override fun reset() {
         super.reset()
-        timer.periodInCycles = (sound.channel3Frequency * Sound.SecondsToCycles).toInt()
+        timer.periodInCycles = sound.channel3Frequency.toInt().toClockCycles()
         timer.reset()
         disabled = false
         waveBitSelection = 0

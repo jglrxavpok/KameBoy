@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.sound
 
+import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import org.jglrxavpok.kameboy.memory.Register
@@ -8,7 +9,7 @@ import org.jglrxavpok.kameboy.memory.specialRegs.sound.*
 class Sound(val memory: MemoryMapper) {
 
     companion object {
-        val SecondsToCycles = 1.0/4194304.0
+        val SecondsToCycles = 1.0/CpuClockSpeed
     }
 
     private var currentCycleCount = 0

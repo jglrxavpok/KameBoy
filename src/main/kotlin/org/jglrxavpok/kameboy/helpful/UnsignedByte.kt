@@ -43,6 +43,6 @@ fun Int.setBits(bitfield: Int, location: IntRange): Int {
     return result
 }
 
-val Int.hz2cycles get()= CpuClockSpeed / this
+fun Int.toClockCycles() = CpuClockSpeed / this
 
 val nullptr = MemoryUtil.NULL

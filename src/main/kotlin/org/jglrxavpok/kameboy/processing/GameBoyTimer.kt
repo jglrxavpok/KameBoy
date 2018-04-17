@@ -1,13 +1,14 @@
 package org.jglrxavpok.kameboy.processing
 
+import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 
 class GameBoyTimer(val mapper: MemoryMapper) {
 
     companion object {
-        val DivCycleRate = 4194304/4 / 16384 // 4194304 (cpu clock speed) /16384 (divider speed)
-        val TimerCounterRates = arrayOf(4194304/4 / 4096, 4194304/4 / 262144, 4194304/4 / 65536, 4194304/4 / 16384)// 4194304 (cpu clock speed) /x (timer speed)
+        val DivCycleRate = 16384.toClockCycles() // 4194304 (cpu clock speed) /16384 (divider speed)
+        val TimerCounterRates = arrayOf(4096.toClockCycles(), 262144.toClockCycles(), 65536.toClockCycles(), 16384.toClockCycles())// 4194304 (cpu clock speed) /x (timer speed)
     }
 
     private var currentDivCycle = 0
@@ -16,23 +17,16 @@ class GameBoyTimer(val mapper: MemoryMapper) {
     private val timerRunning by timerControl.bitVar(2)
     private val clockSelect get()= timerControl.getValue() and 0b11
 
-    private var prevTimerRate = 0
-
     fun step(cycles: Int) {
-        currentDivCycle += cycles/4
+        currentDivCycle += cycles
         if(currentDivCycle >= DivCycleRate) {
             currentDivCycle %= DivCycleRate
             mapper.divRegister.inc()
         }
 
         if(timerRunning) {
-            currentTimerCycle += cycles/4
+            currentTimerCycle += cycles
             val timerRate = TimerCounterRates[clockSelect]
-
-            if(clockSelect != prevTimerRate) {
-                prevTimerRate = clockSelect
-                currentTimerCycle = 0
-            }
             if(currentTimerCycle >= timerRate) {
                 currentTimerCycle %= timerRate
                 mapper.timerRegister.inc()
