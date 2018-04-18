@@ -38,7 +38,7 @@ class KameboyAudio(val sound: Sound) {
         line.start()
         buffer = ByteArray(line.bufferSize)
         divider = (CpuClockSpeed / FORMAT.sampleRate).toInt()
-        sound.output = this::playSample
+        //sound.output = this::playSample
     }
 
     private fun playSample(left: Int, right: Int) {

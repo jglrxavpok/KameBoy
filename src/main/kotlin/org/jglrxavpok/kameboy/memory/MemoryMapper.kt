@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.NRRegister
+import org.jglrxavpok.kameboy.memory.specialRegs.sound.NRx1
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.OrOnReadRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.SoundRegister
 import org.jglrxavpok.kameboy.sound.Sound
@@ -52,22 +53,22 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
             Register("Unknown FF0E"),
             IFRegister(),
             NRRegister(1,0, 0x80, sound),
-            sound.channel1Attributes,
+            NRx1(sound.channel1, 0x3F, sound),
             NRRegister(1, 2, 0x00, sound),
             NRRegister(1, 3, 0xFF, sound),
             NRRegister(1, 4, 0xBF, sound),
             SoundRegister(0xFF15, sound),
-            sound.channel2Attributes,
+            NRx1(sound.channel2, 0x3F, sound),
             NRRegister(2, 2, 0x00, sound),
             NRRegister(2, 3, 0xFF, sound),
             NRRegister(2, 4, 0xBF, sound),
             NRRegister(3, 0, 0x7F, sound),
-            sound.channel3SoundLengthRaw,
+            NRx1(sound.channel3, 0xFF, sound),
             NRRegister(3, 2, 0x9F, sound),
             NRRegister(3, 3, 0xFF, sound),
             NRRegister(3, 4, 0xBF, sound),
             SoundRegister(0xFF1F, sound),
-            sound.channel4SoundLengthReg,
+            NRx1(sound.channel4, 0xFF, sound),
             NRRegister(4, 2, 0x00, sound),
             NRRegister(4, 3, 0x00, sound),
             NRRegister(4, 4, 0xBF, sound),

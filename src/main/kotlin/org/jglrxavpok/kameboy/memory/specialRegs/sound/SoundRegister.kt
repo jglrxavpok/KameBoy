@@ -6,7 +6,8 @@ import org.jglrxavpok.kameboy.sound.Sound
 class SoundRegister(address: Int, val sound: Sound, orValue: Int = 0xFF): OrOnReadRegister(Integer.toHexString(address), orValue) {
 
     override fun write(address: Int, value: Int) {
-        if(sound.isOn())
-            super.write(address, value)
+        if(!sound.isOn())
+            return
+        super.write(address, value)
     }
 }

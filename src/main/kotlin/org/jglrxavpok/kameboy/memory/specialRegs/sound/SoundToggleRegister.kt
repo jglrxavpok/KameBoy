@@ -8,36 +8,38 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
     var isOn: Boolean = true
 
     override fun write(address: Int, value: Int) {
-        val valueToWrite = value and 0b10000000
+        val valueToWrite = value and (1 shl 7)
         if(valueToWrite == 0) { // power off APU
-            for(addr in 0xFF10..0xFF25) { // NR10-NR51
-                sound.memory.write(addr, 0x00)
+            if(isOn) {
+                for(addr in 0xFF10..0xFF25) { // NR10-NR51
+                    if(addr != 0xFF20) // NR41
+                        sound.memory.write(addr, 0x00)
+                }
+
+                for(number in 1..4) {
+                    sound.channel(number).stop()
+                }
             }
         }
         // the order is important, write 0x00 **then** turn off
         super.write(address, valueToWrite)
         if(!isOn && valueToWrite != 0) { // turning on
             for(number in 1..4)
-                sound.resetSound(number)
+                sound.channel(number).reset()
         }
         isOn = valueToWrite != 0
     }
 
     override fun read(address: Int): Int {
-        val allOf = super.read(address) and (1 shl 7)
+        val allOf = if(isOn) 1 shl 7 else 0
         var result = allOf
-        if(sound.isSoundOn(1)) {
-            result = result or (1 shl 0)
+        for(index in 1..4) {
+            val channel = sound.channel(index)
+            if(channel.channelEnabled) {
+                result = result or (1 shl (index-1))
+            }
         }
-        if(sound.isSoundOn(2)) {
-            result = result or (1 shl 1)
-        }
-        if(sound.isSoundOn(3)) {
-            result = result or (1 shl 2)
-        }
-        if(sound.isSoundOn(4)) {
-            result = result or (1 shl 3)
-        }
+        println("READ FROM NR52: ${Integer.toBinaryString(result)}")
         return result or 0x70
     }
 }
