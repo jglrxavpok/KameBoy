@@ -39,7 +39,7 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
                 result = result or (1 shl (index-1))
             }
         }
-        println("READ FROM NR52: ${Integer.toBinaryString(result)}")
+        //println("READ FROM NR52: ${Integer.toBinaryString(result)}")
         return result or 0x70
     }
 }

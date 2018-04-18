@@ -11,6 +11,7 @@ open class SquareChannel(memory: MemoryMapper, channelNumber: Int): SoundChannel
     }
     val dutySelect get()= (nr1.getValue() shr 6) and 0b11
     private var dutyBitSelect = 0
+    override val frequencyMultiplier = 4
 
     override fun onOutputClock(timer: Timer) {
         val dutyBit = Duty[dutySelect] and (1 shl dutyBitSelect) != 0

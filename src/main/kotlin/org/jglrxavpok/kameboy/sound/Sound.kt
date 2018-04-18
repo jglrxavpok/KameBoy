@@ -18,16 +18,37 @@ class Sound(val memory: MemoryMapper) {
     val outputSelect = NRRegister(5, 1, 0x00, this)
     val soundToggle = SoundToggleRegister(this)
 
+    var play: (Byte, Byte) -> Unit = {_,_->}
+
     fun channel(index: Int) = channels[index-1]
 
     fun step(cycles: Int) {
-        if(!isOn())
+        if(!isOn()) {
+            repeat(cycles) {
+                play(0, 0)
+            }
             return
-        for(index in 1..4) {
-            channel(index).step(cycles)
         }
+        repeat(cycles) {
+            var leftChannel = 0
+            var rightChannel = 0
+            for(index in 1..4) {
+                val channel = channel(index)
+                val waveform = channel(index).step(1)
+                if(outputSelect.getValue() and (1 shl (channel.channelNumber-1)) != 0) {
+                    leftChannel += waveform
+                }
+                if(outputSelect.getValue() and (1 shl (channel.channelNumber-1+4)) != 0) {
+                    rightChannel += waveform
+                }
+            }
+            leftChannel /= 4
+            rightChannel /= 4
+            leftChannel *= (channelControl.getValue() and 0b111)
+            rightChannel *= ((channelControl.getValue() shr 4) and 0b111)
 
-        // TODO: OUTPUT
+            play(leftChannel.toByte(), rightChannel.toByte())
+        }
     }
 
     fun isOn(): Boolean {

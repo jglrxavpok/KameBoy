@@ -17,10 +17,13 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
 
     var channelEnabled = false
     open val dacEnabled get()= (nr2.getValue() shr 3) != 0
+    protected abstract val frequencyMultiplier: Int
     open var frequency: Int = 0
         set(value) {
             field = value
-            timer.period = ((1.0/value) * EmulatorCore.CpuClockSpeed).toInt()
+            timer.period = ((2048-value)*frequencyMultiplier)//.toClockCycles()
+            if(channelNumber == 3)
+                timer.period /= 2
         }
     private var lengthCounter = length
     private var output: Int = 0
@@ -56,12 +59,15 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
 
     fun clockLength() {
         if(shouldClockLength) {
-            if(lengthCounter > 0)
+            if(lengthCounter > 0) {
                 lengthCounter--
-            if(lengthCounter <= 0) {
-                channelEnabled = false
-                println("LENGTH 0 in $channelNumber")
+                if(lengthCounter == 0) {
+                    channelEnabled = false
+                    //      println("LENGTH 0 in $channelNumber")
+                }
             }
+        } else {
+            lengthCounter = 0
         }
     }
 
@@ -79,7 +85,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
         if(newLength == 0)
             lengthCounter = length
 
-        println("LOADED LENGTH in $channelNumber: $lengthCounter")
+   //     println("LOADED LENGTH in $channelNumber: $lengthCounter")
     }
 
     abstract fun channelStep(cycles: Int)
@@ -101,7 +107,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     }
 
     protected fun output(nibble: Int) {
-        output = nibble
+        output = nibble and 0xF
     }
 
     fun addressNR(index: Int) = 0xFF10+(channelNumber-1)*0x5+index

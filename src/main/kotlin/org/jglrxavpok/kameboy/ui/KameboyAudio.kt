@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.ui
 
 import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
+import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.sound.Sound
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
@@ -37,18 +38,18 @@ class KameboyAudio(val sound: Sound) {
 
         line.start()
         buffer = ByteArray(line.bufferSize)
-        divider = (CpuClockSpeed / FORMAT.sampleRate).toInt()
-        //sound.output = this::playSample
+        divider = SAMPLE_RATE.toClockCycles()
+        sound.play = this::playSample
     }
 
-    private fun playSample(left: Int, right: Int) {
+    private fun playSample(left: Byte, right: Byte) {
         if (tick++ != 0) {
             tick %= divider
             return
         }
 
-        buffer[i++] = left.toByte()
-        buffer[i++] = right.toByte()
+        buffer[i++] = (left/8).toByte()
+        buffer[i++] = (right/8).toByte()
         if (i > BUFFER_SIZE / 2) {
             line.write(buffer, 0, i)
             i = 0

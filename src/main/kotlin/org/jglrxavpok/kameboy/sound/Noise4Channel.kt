@@ -14,6 +14,7 @@ class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMappe
     val widthMode7 by nr4.bitVar(3)
     private var lfsr = 0x7FFF
 
+    override val frequencyMultiplier = 0
     override var frequency: Int
         get() = ((1.0/timer.period)*CpuClockSpeed).toInt()
         set(value) {}
