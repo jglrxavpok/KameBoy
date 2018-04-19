@@ -46,3 +46,5 @@ fun Int.setBits(bitfield: Int, location: IntRange): Int {
 fun Int.toClockCycles() = CpuClockSpeed / this
 
 val nullptr = MemoryUtil.NULL
+
+fun Boolean.toBit() = if(this) 1 else 0

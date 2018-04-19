@@ -2,11 +2,12 @@ package org.jglrxavpok.kameboy
 
 import org.jglrxavpok.kameboy.helpful.nullptr
 import org.jglrxavpok.kameboy.helpful.setBits
+import org.jglrxavpok.kameboy.helpful.toBit
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.processing.video.Palettes
-import org.jglrxavpok.kameboy.ui.KameboyAudio
+import org.jglrxavpok.kameboy.ui.*
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL
@@ -26,7 +27,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("LoZ Link's Awakening.gb")
+    private val cartridge = _DEV_cart("Tetris.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -34,6 +35,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var diffuseTextureUniform: Int
     private val audioSystem: KameboyAudio
     private var paletteIndex = 0
+    private val joysticks = Array(10, ::Joystick)
 
     init {
         val scale = 6
@@ -157,6 +159,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                 isDirectionKey(key) -> directionState = directionState.setBits(released, bit..bit)
             }
         }
+
+        glfwSetJoystickCallback { id, event ->
+            if(event == GLFW_CONNECTED) {
+                println("Joystick $id connected, name is ${glfwGetJoystickName(id)}")
+                joysticks[id].connected = true
+            } else if(event == GLFW_DISCONNECTED) {
+                println("Joystick $id disconnected")
+                joysticks[id].connected = false
+            }
+        }
     }
 
     private fun changePalette(newIndex: Int) {
@@ -204,7 +216,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val saveFolder = File("./saves/")
         if(!saveFolder.exists())
             saveFolder.mkdirs()
-        return Cartridge(_DEV_rom(name), _DEV_BOOT_ROM(), File(saveFolder, name.takeWhile { it != '.' }+".sav"))
+        return Cartridge(_DEV_rom(name), /*_DEV_BOOT_ROM()*/null, File(saveFolder, name.takeWhile { it != '.' }+".sav"))
     }
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 
@@ -231,7 +243,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
         while(!glfwWindowShouldClose(window)) {
             glfwGetWindowSize(window, windowWPointer, windowHPointer)
-            glfwPollEvents()
+            pollEvents()
             glClearColor(0f, .8f, 0f, 1f)
             glClear(GL_COLOR_BUFFER_BIT)
             glViewport(0, 0, windowWPointer[0], windowHPointer[0])
@@ -247,6 +259,92 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             core.frame()
             glfwSwapBuffers(window)
         }
+    }
+
+    private fun handleButtonChange(button: Int, state: Boolean) {
+        /*
+        GLFW_KEY_RIGHT, GLFW_KEY_Q -> 0
+GLFW_KEY_LEFT, GLFW_KEY_W -> 1
+GLFW_KEY_UP, GLFW_KEY_BACKSPACE -> 2
+GLFW_KEY_DOWN, GLFW_KEY_ENTER -> 3
+         */
+        when(button) {
+            XBoxA, XBoxX -> {
+                buttonState = buttonState.setBits(1-state.toBit(), 0..0)
+            }
+            XBoxB, XBoxY -> {
+                buttonState = buttonState.setBits(1-state.toBit(), 1..1)
+            }
+            XBoxSelect -> {
+                buttonState = buttonState.setBits(1-state.toBit(), 2..2)
+            }
+            XBoxStart -> {
+                buttonState = buttonState.setBits(1-state.toBit(), 3..3)
+            }
+        }
+    }
+
+    private fun handleAxisChange(axis: Int, axisValue: Float) {
+        // XBOX 360 only for now
+        when(axis) {
+            XBoxLeftX -> {
+                if(axisValue >= 0.25f) {
+                    directionState = directionState.setBits(0, 0..0)
+                    directionState = directionState.setBits(1, 1..1)
+                } else if(axisValue <= -0.25f) {
+                    directionState = directionState.setBits(1, 0..0)
+                    directionState = directionState.setBits(0, 1..1)
+                } else {
+                    directionState = directionState.setBits(0b11, 0..1)
+                }
+            }
+            XBoxLeftY -> {
+                println("$axisValue")
+                if(axisValue >= 0.25f) {
+                    directionState = directionState.setBits(1, 2..2)
+                    directionState = directionState.setBits(0, 3..3)
+                } else if(axisValue <= -0.25f) {
+                    directionState = directionState.setBits(0, 2..2)
+                    directionState = directionState.setBits(1, 3..3)
+                } else {
+                    directionState = directionState.setBits(0b11, 2..3)
+                }
+            }
+        }
+    }
+
+    private fun pollEvents() {
+        glfwPollEvents()
+        joysticks.filter { glfwJoystickPresent(it.id) }
+                .forEach {
+                    it.savePreviousState()
+                    it.connected = true
+                    it.buttons = glfwGetJoystickButtons(it.id)!!
+                    it.axes = glfwGetJoystickAxes(it.id)!!
+                    it.hats = glfwGetJoystickHats(it.id)!!
+
+                    tailrec fun checkJoystickChanges() {
+                        val change = it.findFirstIntersection()
+                        if(change != null) {
+                            when(change.second) {
+                                Joystick.Component.AXIS -> {
+                                    val axis = change.first
+                                    val axisValue = it.axis(axis)
+
+                                    handleAxisChange(axis, axisValue)
+                                }
+
+                                Joystick.Component.BUTTON -> {
+                                    val button = change.first
+                                    val buttonState = it.button(button)
+                                    handleButtonChange(button, buttonState)
+                                }
+                            }
+                            checkJoystickChanges()
+                        }
+                    }
+                    checkJoystickChanges()
+                }
     }
 
     fun updateTexture(core: EmulatorCore, videoData: IntArray) {

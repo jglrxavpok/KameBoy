@@ -59,6 +59,8 @@ class KameboyAudio(val sound: Sound) {
     }
 
     private fun playSample(left: Int, right: Int) {
+
+        // TODO: periodically unqueue all buffers to be in sync
         if(tick++ != 0) {
             tick %= tickDivider
             return
