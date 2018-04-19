@@ -29,7 +29,7 @@ class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMappe
     override fun onOutputClock(timer: Timer) {
         val xorLow = (lfsr and 0x1) xor (lfsr and 0x2)
         lfsr = lfsr shr 1
-        lfsr = lfsr.setBits(xorLow , 15..15)
+        lfsr = lfsr or (xorLow shl 15)
         if(widthMode7) {
             lfsr = lfsr.setBits(xorLow, 6..6)
         }

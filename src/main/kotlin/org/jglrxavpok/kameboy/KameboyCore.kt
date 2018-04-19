@@ -24,7 +24,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("Pokemon Red.gb")
+    private val cartridge = _DEV_cart("LoZ Link's Awakening.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -204,7 +204,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         core.init()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
-      //  glfwSwapInterval(0)
+        glfwSwapInterval(1)
 
         while(!glfwWindowShouldClose(window)) {
             glfwGetWindowSize(window, windowWPointer, windowHPointer)

@@ -23,7 +23,7 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
 
         val sample = if(sampleIndex % 2 != 0) samples else samples shr 4
 
-        output((sample shr volumeControl) and 0xF)
+        output(((sample and 0xF) shr volumeControl) and 0xF)
     }
 
     override fun channelStep(cycles: Int) { }
