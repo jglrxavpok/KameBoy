@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
+import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import org.jglrxavpok.kameboy.memory.Register
@@ -18,7 +19,7 @@ class Sound(val memory: MemoryMapper) {
     val outputSelect = NRRegister(5, 1, 0x00, this)
     val soundToggle = SoundToggleRegister(this)
 
-    var play: (Byte, Byte) -> Unit = {_,_->}
+    var play: (Int, Int) -> Unit = {_,_->}
 
     fun channel(index: Int) = channels[index-1]
 
@@ -47,7 +48,7 @@ class Sound(val memory: MemoryMapper) {
             leftChannel *= (channelControl.getValue() and 0b111)
             rightChannel *= ((channelControl.getValue() shr 4) and 0b111)
 
-            play(leftChannel.toByte(), rightChannel.toByte())
+            play(leftChannel.asSigned8(), rightChannel.asSigned8())
         }
     }
 

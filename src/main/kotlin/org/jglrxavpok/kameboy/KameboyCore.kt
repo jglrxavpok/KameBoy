@@ -24,12 +24,13 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("LoZ Link's Awakening.gb")
+    private val cartridge = _DEV_cart("Pokemon Red.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
     private var diffuseTextureUniform: Int
+    private val audioSystem: KameboyAudio
 
     init {
         val scale = 6
@@ -44,7 +45,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
         textureID = prepareTexture()
         meshID = prepareRenderMesh()
-        val audio = KameboyAudio(core.mapper.sound) // TODO
+        audioSystem = KameboyAudio(core.mapper.sound)
 
         runEmulator()
         cleanup()
@@ -195,6 +196,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun cleanup() {
+        audioSystem.cleanup()
         glDeleteProgram(shaderID)
         glfwDestroyWindow(window)
         glfwTerminate()
@@ -202,6 +204,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     private fun runEmulator() {
         core.init()
+        audioSystem.start()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
         glfwSwapInterval(1)

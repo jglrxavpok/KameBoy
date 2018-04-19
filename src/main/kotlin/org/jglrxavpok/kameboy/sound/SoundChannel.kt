@@ -27,7 +27,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
         }
     private var lengthCounter = length
     private var output: Int = 0
-    private var volume: Int = 0
+    protected var volume: Int = 0
     private val initialVolume get() = (nr2.getValue() shr 4) and 0xF
     private val increaseVolume by nr2.bitVar(3)
     private val enveloppePeriod get()= nr2.getValue() and 0b111
@@ -46,6 +46,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     val timer = Timer(0) {
         onOutputClock(this)
     }
+    val correctVolume get()= if(enveloppePeriod == 0) initialVolume else volume
 
     abstract fun onOutputClock(timer: Timer)
 
@@ -55,6 +56,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
             lengthCounter = length
         timer.reset()
         volume = initialVolume
+        output = 0
     }
 
     fun clockLength() {
@@ -71,11 +73,16 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
         }
     }
 
+    private var volumeCounter = 0
+
     fun clockVolume() {
-        if(enveloppePeriod != 0) {
-            val newVolume = volume + volumeDirection
-            if(newVolume in 0..15) {
-                volume = newVolume
+        if(volumeCounter++ == enveloppePeriod) {
+            volumeCounter = 0
+            if(enveloppePeriod != 0) {
+                val newVolume = volume + volumeDirection
+                if(newVolume in 0..15) {
+                    volume = newVolume
+                }
             }
         }
     }
@@ -115,5 +122,6 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
 
     open fun reset() {
         frameSequencerStep = 0
+        output = 0
     }
 }

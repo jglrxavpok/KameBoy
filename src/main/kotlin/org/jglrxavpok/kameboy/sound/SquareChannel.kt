@@ -17,7 +17,7 @@ open class SquareChannel(memory: MemoryMapper, channelNumber: Int): SoundChannel
         val dutyBit = Duty[dutySelect] and (1 shl dutyBitSelect) != 0
         dutyBitSelect++
         dutyBitSelect %= 8
-        output(if(dutyBit) High else Low)
+        output(if(dutyBit) correctVolume else Low)
     }
 
     override fun channelStep(cycles: Int) { }

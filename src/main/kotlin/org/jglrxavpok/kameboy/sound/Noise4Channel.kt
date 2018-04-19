@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.sound.SquareChannel.Companion.High
+import org.jglrxavpok.kameboy.sound.SquareChannel.Companion.Low
 
 class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMapper) {
 
@@ -34,7 +35,8 @@ class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMappe
             lfsr = lfsr.setBits(xorLow, 6..6)
         }
 
-        output((1 - (lfsr and 1)) * High)
+        val bit0 = (1 - (lfsr and 1)) != 0
+        output(if(bit0) correctVolume else Low)
     }
 
     override fun channelStep(cycles: Int) { }
