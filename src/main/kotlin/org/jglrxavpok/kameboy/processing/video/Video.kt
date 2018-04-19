@@ -1,4 +1,4 @@
-package org.jglrxavpok.kameboy.processing
+package org.jglrxavpok.kameboy.processing.video
 
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
@@ -50,6 +50,8 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
 
     var currentClockCycles = 0
     var mode: VideoMode = VideoMode.VBlank
+
+    var dmgPalette: ColorPalette = DefaultPalette
 
     enum class VideoMode(val durationInCycles: Int) {
         HBlank(200),
@@ -111,10 +113,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     private fun pixelColor(index: Int, palette: MemoryRegister): Int {
         val data = palette.getValue() and (0b11 shl (index*2)) shr (index*2)
         return when(data) {
-            3 -> 0xFF000000.toInt()
-            2 -> 0xFF555555.toInt()
-            1 -> 0xFFAAAAAA.toInt()
-            0 -> 0xFFFFFFFF.toInt()
+            in 0..3 -> dmgPalette(data).toInt()
             else -> error("This is impossible!")
         }
     }

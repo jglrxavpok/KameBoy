@@ -1,4 +1,4 @@
-package org.jglrxavpok.kameboy.processing
+package org.jglrxavpok.kameboy.processing.video
 
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.memory.MemoryComponent

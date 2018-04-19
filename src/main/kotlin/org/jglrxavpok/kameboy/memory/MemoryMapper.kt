@@ -8,7 +8,7 @@ import org.jglrxavpok.kameboy.memory.specialRegs.sound.NRx1
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.OrOnReadRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.SoundRegister
 import org.jglrxavpok.kameboy.sound.Sound
-import org.jglrxavpok.kameboy.processing.SpriteAttributeTable
+import org.jglrxavpok.kameboy.processing.video.SpriteAttributeTable
 
 /**
  * TODO: Decouple sound/interrupts/gbc registers from MMU

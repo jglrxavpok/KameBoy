@@ -5,6 +5,7 @@ import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.processing.Instructions
+import org.jglrxavpok.kameboy.processing.video.Palettes
 import org.jglrxavpok.kameboy.ui.KameboyAudio
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
@@ -19,18 +20,20 @@ import org.lwjgl.opengl.GL30.glBindVertexArray
 import org.lwjgl.opengl.GL30.glGenVertexArrays
 import java.awt.FlowLayout
 import java.io.File
+import java.lang.Thread.yield
 import java.nio.ByteBuffer
 import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("Pokemon Red.gb")
+    private val cartridge = _DEV_cart("LoZ Link's Awakening.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
     private var diffuseTextureUniform: Int
     private val audioSystem: KameboyAudio
+    private var paletteIndex = 0
 
     init {
         val scale = 6
@@ -128,6 +131,13 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     GLFW_KEY_F1 -> core.dumpInfos()
                     GLFW_KEY_F2 -> core.showBGMap()
                     GLFW_KEY_F3 -> showMemoryContents()
+                    GLFW_KEY_PAGE_UP -> {
+                        changePalette(paletteIndex+1)
+                    }
+
+                    GLFW_KEY_PAGE_DOWN -> {
+                        changePalette(paletteIndex-1)
+                    }
                 }
             }
             val bit = when(key) {
@@ -147,6 +157,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                 isDirectionKey(key) -> directionState = directionState.setBits(released, bit..bit)
             }
         }
+    }
+
+    private fun changePalette(newIndex: Int) {
+        paletteIndex = newIndex
+        if(paletteIndex >= Palettes.size)
+            paletteIndex = 0
+        if(paletteIndex < 0)
+            paletteIndex = Palettes.size-1
+        core.video.dmgPalette = Palettes[paletteIndex]
+        println("Now using palette $paletteIndex")
     }
 
     private fun showMemoryContents() {

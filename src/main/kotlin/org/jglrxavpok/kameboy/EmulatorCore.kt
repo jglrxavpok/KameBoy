@@ -7,7 +7,7 @@ import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import org.jglrxavpok.kameboy.processing.CPU
 import org.jglrxavpok.kameboy.processing.GameBoyTimer
-import org.jglrxavpok.kameboy.processing.Video
+import org.jglrxavpok.kameboy.processing.video.Video
 import java.awt.image.BufferedImage
 import java.util.*
 import javax.swing.ImageIcon
