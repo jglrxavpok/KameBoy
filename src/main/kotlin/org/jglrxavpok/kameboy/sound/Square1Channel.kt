@@ -10,7 +10,7 @@ class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
     val sweepDirection get()= if(decreaseSweep) -1 else 1
     private var shadowRegister = 0
     private var sweepFlag = false
-    private var internalTimer = 0
+    private var internalTimer = 8
 
     override fun trigger() {
         super.trigger()
@@ -36,7 +36,7 @@ class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
     override fun clockSweep() {
         super.clockSweep()
         if(sweepFlag) {
-            if(--internalTimer == 0) {
+            if(internalTimer-- <= 0) {
                 internalTimer = if(sweepPeriod != 0) sweepPeriod else 8
                 val newFreq = calculateFrequency()
                 checkOverflow(newFreq)

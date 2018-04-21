@@ -83,13 +83,14 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
             } else if(screenX >= 256 || screenX < 0) {
                 continue
             }
+            if(backgroundPriority && isBackgroundColorWithPriority(bgIndex[screenY*256+screenX])) {
+                continue
+            }
             val effectiveTileColumn = if(hMirror) i else (7-i)
             val highColor = if(lineDataMS and (1 shl effectiveTileColumn) != 0) 1 else 0
             val lowColor = if(lineDataLS and (1 shl effectiveTileColumn) != 0) 1 else 0
             val pixelColorIndex = (highColor shl 1) + lowColor
-            if(backgroundPriority && isBackgroundColorWithPriority(bgIndex[screenY*256+screenX])) {
-                continue
-            }
+
             if(pixelColorIndex == 0 && !isBackground) // transparent pixel
                 continue
             if(isBackground) {
@@ -124,7 +125,7 @@ class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
     fun scanLine() {
         val line = lcdcY.getValue()
 
-        Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, 0xFFFF0000.toInt())
+        Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, dmgPalette(0).toInt())
 
         if(line < VBlankStartLine && lcdDisplayEnable) {
             if(bgDisplay) {

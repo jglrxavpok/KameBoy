@@ -74,7 +74,7 @@ class KameboyAudio(val sound: Sound) {
             val countProcessedBuffers = alGetSourcei(alSource, AL_BUFFERS_PROCESSED)
             if(countQueuedBuffers == MaxOpenALBufferCount && countProcessedBuffers == 0) {
                 try {
-                    sleep(1)
+                    sleep(2)
                 } catch (e: InterruptedException) {
                     running = false
                 }
@@ -113,7 +113,7 @@ class KameboyAudio(val sound: Sound) {
         alcDestroyContext(alContext)
     }
 
-    private inline fun getSamples(target: ByteBuffer, numSamples: Int): Int {
+    private fun getSamples(target: ByteBuffer, numSamples: Int): Int {
         var currentSample = 0
         val localIndexWrite = indexWrite // save in local memory to avoid concurrency issues
         while (currentSample < numSamples * 2 && ((localIndexWrite - indexRead) and INDEX_MASK) > 2)
@@ -147,14 +147,12 @@ class KameboyAudio(val sound: Sound) {
             return
         }
 
-        val numSamples = 1
         val localIndexRead = indexRead
-        if (numSamples * 2 + (indexWrite - localIndexRead and INDEX_MASK) >= MAX_SAMPLES * 2)
+        if (2 + (indexWrite - localIndexRead and INDEX_MASK) >= MAX_SAMPLES * 2)
             return
         data[indexWrite and INDEX_MASK] = left.toByte()
         data[(indexWrite+1) and INDEX_MASK] = right.toByte()
-        indexWrite += numSamples * 2
-        indexWrite = indexWrite and INDEX_MASK
+        indexWrite = (indexWrite+2) and INDEX_MASK
     }
 
     fun cleanup() {

@@ -40,14 +40,15 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
     fun step(): Int {
         val clockCycles = cpu.step()
         val speedFactor = mapper.currentSpeedFactor
+        val adjustedSpeed = clockCycles/speedFactor
         mapper.serialIO.step(clockCycles)
         timer.step(clockCycles)
 
         // video & sound are not affected by speed change
 
-        video.step(clockCycles/speedFactor)
-        mapper.sound.step(clockCycles/speedFactor)
-        return clockCycles/speedFactor
+        video.step(adjustedSpeed)
+        mapper.sound.step(adjustedSpeed)
+        return adjustedSpeed
     }
 
     fun init() {

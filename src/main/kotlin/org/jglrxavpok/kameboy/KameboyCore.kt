@@ -40,6 +40,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     init {
         val scale = 6
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy - ${cartridge.title}", nullptr, nullptr)
+        glfwSetWindowAspectRatio(window, 160, 144)
         initInput()
         glfwShowWindow(window)
 
