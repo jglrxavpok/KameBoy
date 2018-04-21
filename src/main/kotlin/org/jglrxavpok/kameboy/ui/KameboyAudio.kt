@@ -85,6 +85,8 @@ class KameboyAudio(val sound: Sound) {
     }
 
     private fun soundBuffer(): Int {
+        // TODO: read from end
+        // take a look at https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/AudioCommon
         val buffer = bufferPool.getOrNull() ?: newBuffer()
         val data = BufferUtils.createByteBuffer(index)
         for(i in 0 until index)

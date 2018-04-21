@@ -27,7 +27,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("Tetris.gb")
+    private val cartridge = _DEV_cart("Pokemon Red.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -216,7 +216,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val saveFolder = File("./saves/")
         if(!saveFolder.exists())
             saveFolder.mkdirs()
-        return Cartridge(_DEV_rom(name), /*_DEV_BOOT_ROM()*/null, File(saveFolder, name.takeWhile { it != '.' }+".sav"))
+        return Cartridge(_DEV_rom(name), _DEV_BOOT_ROM(), File(saveFolder, name.takeWhile { it != '.' }+".sav"))
     }
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 
