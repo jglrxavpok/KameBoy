@@ -11,9 +11,7 @@ import org.lwjgl.openal.ALC10.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.*
 import java.lang.Thread.sleep
-import java.lang.Thread.yield
 import java.nio.ByteBuffer
-import java.util.*
 import kotlin.concurrent.thread
 
 class KameboyAudio(val sound: Sound) {
@@ -23,7 +21,7 @@ class KameboyAudio(val sound: Sound) {
         val nullintarray: IntArray? = null
 
         val Format = AL_FORMAT_STEREO8
-        val SampleRate = 48000
+        val SampleRate = 22050
         const val MaxOpenALBufferCount = 3
 
         val tickDivider = SampleRate.toClockCycles()
@@ -55,11 +53,6 @@ class KameboyAudio(val sound: Sound) {
 
         val capa = ALC.createCapabilities(device)
         AL.createCapabilities(capa)
-        alListener3f(AL_POSITION, 0f, 0f, 0f)
-        alListener3f(AL_VELOCITY, 0f, 0f, 0f)
-
-        val orientation = floatArrayOf(0f,0f,1f,0f,1f,0f)
-        alListenerfv(AL_ORIENTATION, orientation)
 
         soundThread = thread(isDaemon = true, name = "OpenAL Audio Thread", block = this::soundLoop)
     }
@@ -68,11 +61,7 @@ class KameboyAudio(val sound: Sound) {
         val framesPerBuffer = SampleRate / 20 / MaxOpenALBufferCount
         var countQueuedBuffers = 0
         val alSource = alGenSources()
-        //alSourcef(alSource, AL_PITCH, 1f)
         alSourcef(alSource, AL_GAIN, 0.125f) // TODO: configurable
-        /*alSource3f(alSource, AL_POSITION, 0f, 0f, 0f)
-        alSource3f(alSource, AL_VELOCITY, 0f, 0f, 0f)
-        alSourcei(alSource, AL_LOOPING, AL_FALSE)*/
 
         val buffers = IntArray(MaxOpenALBufferCount)
         alGenBuffers(buffers)
@@ -80,16 +69,15 @@ class KameboyAudio(val sound: Sound) {
         var nextBuffer = 0
 
         val frameData = BufferUtils.createByteBuffer(framesPerBuffer*2)
-        while(true) { // TODO: stoppable
+        var running = true
+        while(running) { // TODO: stoppable
             val countProcessedBuffers = alGetSourcei(alSource, AL_BUFFERS_PROCESSED)
             if(countQueuedBuffers == MaxOpenALBufferCount && countProcessedBuffers == 0) {
                 try {
                     sleep(1)
                 } catch (e: InterruptedException) {
-                    alDeleteSources(alSource)
-                    return
+                    running = false
                 }
-                //yield()
                 continue
             }
 
@@ -119,6 +107,10 @@ class KameboyAudio(val sound: Sound) {
                 alSourcePlay(alSource)
             }
         }
+
+        alDeleteBuffers(buffers)
+        alDeleteSources(alSource)
+        alcDestroyContext(alContext)
     }
 
     private inline fun getSamples(target: ByteBuffer, numSamples: Int): Int {
@@ -137,12 +129,9 @@ class KameboyAudio(val sound: Sound) {
 
         val actualSamples = currentSample/2
         // padding
-        val s0 = data[(indexRead-2) and INDEX_MASK]
-        val s1 = data[(indexRead-1) and INDEX_MASK]
         while(currentSample < numSamples *2) {
-            target.put(s0)
-            target.put(s1)
-
+            target.put(0)
+            target.put(0)
             currentSample += 2
         }
 
@@ -153,7 +142,6 @@ class KameboyAudio(val sound: Sound) {
     }
 
     private fun playSample(left: Int, right: Int) {
-        // TODO: periodically unqueue all buffers to be in sync?
         if(tick++ != 0) {
             tick %= tickDivider
             return
@@ -171,7 +159,6 @@ class KameboyAudio(val sound: Sound) {
 
     fun cleanup() {
         soundThread.interrupt()
-        alcDestroyContext(alContext)
     }
 
 }

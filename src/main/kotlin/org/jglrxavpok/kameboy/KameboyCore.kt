@@ -241,6 +241,10 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val windowHPointer = IntArray(1)
         glfwSwapInterval(1)
 
+        var time = glfwGetTime()
+        var frames = 0
+        var totalTime = 0.0
+
         while(!glfwWindowShouldClose(window)) {
             glfwGetWindowSize(window, windowWPointer, windowHPointer)
             pollEvents()
@@ -258,6 +262,17 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
             core.frame()
             glfwSwapBuffers(window)
+
+            val newTime = glfwGetTime()
+            val deltaTime = newTime-time
+            time = newTime
+            frames++
+            totalTime += deltaTime
+            if(totalTime >= 1f) {
+                println("$frames fps")
+                frames = 0
+                totalTime %= 1f
+            }
         }
     }
 
