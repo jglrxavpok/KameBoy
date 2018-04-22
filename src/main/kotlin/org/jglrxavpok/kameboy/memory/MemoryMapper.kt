@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.memory
 
+import org.jglrxavpok.kameboy.Gameboy
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
@@ -10,12 +11,7 @@ import org.jglrxavpok.kameboy.processing.video.SpriteAttributeTable
 /**
  * TODO: Decouple sound/interrupts/gbc registers from MMU
  */
-class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false): MemoryComponent {
-
-    companion object {
-        val ExecutionEntryPoint = 0x100
-        val NintendoLogo = 0x104
-    }
+class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
 
     override val name = "Memory mapper (internal)"
 
@@ -26,14 +22,14 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
     val lyRegister = LYRegister(this)
     val divRegister = DivRegister()
     val timerRegister = TimerRegister(this)
-    val serialIO = SerialIO(interruptManager, this, outputSerial)
+    val serialIO = SerialIO(interruptManager, this, gameboy.outputSerial)
     val serialControlReg = SerialControllerRegister(serialIO)
     val serialDataReg = SerialDataRegister(serialIO, serialControlReg)
 
     var currentSpeedFactor: Int = 1
     val speedRegister = SpeedRegister(this)
     val ioPorts = arrayOf(
-            P1Register(input),
+            P1Register(gameboy.input),
             serialDataReg,
             serialControlReg,
             Register("Unknown FF03"),
@@ -151,31 +147,60 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
     }
     val bootRegister = OrOnReadRegister("BOOT register", 0xFF)
     val wavePatternRam = WavePatternRam(sound)
+    val wramBanks = Array<RAM>(8) { index ->
+        object: RAM(0x4000) {
+            override val name: String
+                get() = "WRAM Bank #$index"
+
+            override fun correctAddress(address: Int): Int {
+                if(index == 0)
+                    return address-0xC000
+                return address-0xD000
+            }
+        }
+    }
+    val wramBankSelect = WramBankSelectRegister()
+    val infraredRegister = InfraredRegister()
 
     fun map(address: Int): MemoryComponent = when(address.asAddress()) {
         // GBC registers
         0xFF4D -> speedRegister
+        0xFF56 -> infraredRegister
+        0xFF70 -> wramBankSelect
         // DMG registers
         in 0 until 0x8000 -> {
-            if(cartridgeData.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
-                cartridgeData.bootRomComponent
+            if(gameboy.cartridge.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
+                gameboy.cartridge.bootRomComponent
             } else {
                 if(address == 0xFF50) {
                     bootRegister
                 } else {
-                    cartridgeData
+                    gameboy.cartridge
                 }
             }
         }
         in 0x8000 until 0xA000 -> videoRAM
         in 0xA000 until 0xC000 -> {
-            if(cartridgeData.cartrigeType.accepts(address)) {
-                cartridgeData.cartrigeType
+            if(gameboy.cartridge.cartrigeType.accepts(address)) {
+                gameboy.cartridge.cartrigeType
             } else {
-                cartridgeData.currentRAMBank
+                gameboy.cartridge.currentRAMBank
             }
         }
-        in 0xC000..0xDFFF, in 0xE000..0xFDFF -> internalRAM
+        in 0xC000..0xCFFF, in 0xE000..0xEFFF -> {
+            if(gameboy.inCGBMode) {
+                wramBanks[0]
+            } else {
+                internalRAM
+            }
+        }
+        in 0xD000..0xDFFF, in 0xF000..0xFDFF -> {
+            if(gameboy.inCGBMode) {
+                wramBanks[wramBankSelect.getValue()]
+            } else {
+                internalRAM
+            }
+        }
         in 0xFE00 until 0xFEA0 -> spriteAttributeTable
         in 0xFEA0 until 0xFF00 -> empty0
         in 0xFF30..0xFF3F -> wavePatternRam

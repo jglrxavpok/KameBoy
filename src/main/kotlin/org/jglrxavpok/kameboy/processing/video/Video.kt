@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.processing.video
 
+import org.jglrxavpok.kameboy.Gameboy
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
@@ -8,12 +9,16 @@ import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import java.util.*
 
-class Video(val memory: MemoryMapper, val interruptManager: InterruptManager) {
+class Video(val gameboy: Gameboy) {
 
     companion object {
         val BackgroundTileMapSize = 32*32
         val VBlankStartLine = 144
     }
+
+    val memory: MemoryMapper = gameboy.mapper
+    val interruptManager: InterruptManager = gameboy.interruptManager
+
     val windowX = MemoryRegister("WindowX", memory, 0xFF4B)
     val windowY = MemoryRegister("WindowY", memory, 0xFF4A)
     val objPalette1Data = MemoryRegister("OBJ Palette 1 Data", memory, 0xFF49)

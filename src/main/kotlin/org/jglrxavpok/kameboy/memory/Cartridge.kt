@@ -14,7 +14,8 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
     val bootRomComponent = RomWrapper(bootROM ?: ByteArray(0))
     val scrollingLogo = rawData.sliceArray(0x0104..0x0133)
     val title = AsciiString(rawData.sliceArray(0x0134..0x0142))
-    val isForColorGB = rawData[0x0143].asUnsigned() == 0x80
+    val isOnlyForColorGB = rawData[0x0143].asUnsigned() == 0xC0
+    val isForColorGB = rawData[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
     val licenseCode = fromNibbles(rawData[0x0144], rawData[0x0145])
     val superGameBoyIndicator = rawData[0x0146]
     val cartridgeTypeIndex = rawData[0x0147]

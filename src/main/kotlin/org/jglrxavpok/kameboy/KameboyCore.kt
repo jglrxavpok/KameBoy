@@ -315,7 +315,6 @@ GLFW_KEY_DOWN, GLFW_KEY_ENTER -> 3
                 }
             }
             XBoxLeftY -> {
-                println("$axisValue")
                 if(axisValue >= 0.25f) {
                     directionState = directionState.setBits(1, 2..2)
                     directionState = directionState.setBits(0, 3..3)

@@ -23,10 +23,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
         val ClockCyclesPerFrame = CpuClockSpeed / VideoVSync
     }
 
-    val mapper = MemoryMapper(cartridge, input, outputSerial)
-    val cpu = CPU(mapper, mapper.interruptManager, cartridge)
-    val video = Video(mapper, mapper.interruptManager)
-    val timer = GameBoyTimer(mapper)
+    val gameboy = Gameboy(cartridge, input, outputSerial)
 
     fun frame() {
         var totalClockCycles = 0
@@ -34,26 +31,16 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
             val clockCycles = step()
             totalClockCycles += clockCycles
         }
-        renderRoutine(video.pixelData)
+        renderRoutine(gameboy.video.pixelData)
     }
 
     fun step(): Int {
-        val clockCycles = cpu.step()
-        val speedFactor = mapper.currentSpeedFactor
-        val adjustedSpeed = clockCycles/speedFactor
-        mapper.serialIO.step(clockCycles)
-        timer.step(clockCycles)
-
-        // video & sound are not affected by speed change
-
-        video.step(adjustedSpeed)
-        mapper.sound.step(adjustedSpeed)
-        return adjustedSpeed
+        return gameboy.step()
     }
 
     fun init() {
         if(!cartridge.hasBootRom) {
-            cpu.reset()
+            gameboy.reset()
         } else {
             println("Found BOOT Rom, loading it")
         }
@@ -74,37 +61,37 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
 
     fun dumpInfos() {
         println("========")
-        if(cpu.halted) {
+        if(gameboy.cpu.halted) {
             println("***CPU HALTED***")
         }
-        if(cpu.stopped) {
+        if(gameboy.cpu.stopped) {
             println("***!!CPU STOPPED!!***")
         }
-        printReg(cpu.AF)
-        println("Z: ${cpu.flagZ}")
-        println("N: ${cpu.flagN}")
-        println("H: ${cpu.flagH}")
-        println("C: ${cpu.flagC}")
-        printReg(cpu.BC)
-        printReg(cpu.DE)
-        printReg(cpu.HL)
-        printReg(cpu.stackPointer)
-        printReg(cpu.programCounter)
+        printReg(gameboy.cpu.AF)
+        println("Z: ${gameboy.cpu.flagZ}")
+        println("N: ${gameboy.cpu.flagN}")
+        println("H: ${gameboy.cpu.flagH}")
+        println("C: ${gameboy.cpu.flagC}")
+        printReg(gameboy.cpu.BC)
+        printReg(gameboy.cpu.DE)
+        printReg(gameboy.cpu.HL)
+        printReg(gameboy.cpu.stackPointer)
+        printReg(gameboy.cpu.programCounter)
         try {
-            printReg(cpu.atHL)
+            printReg(gameboy.cpu.atHL)
         } catch (e: Exception) {
             println("(HL) INVALID ADDRESS (${e.message})")
         }
-        println("LCDC: ${Integer.toHexString(mapper.read(0xFF40))}")
-        println("STAT: ${Integer.toHexString(mapper.read(0xFF41))}")
-        println("LY: ${Integer.toHexString(mapper.read(0xFF44))}")
-        println("Input: ${Integer.toHexString(mapper.read(0xFF00))}")
-        println("Instruction: ${Integer.toHexString(cpu.programCounter.atPointed(mapper))}")
-        println("PC (decimal): ${cpu.programCounter.getValue()}")
+        println("LCDC: ${Integer.toHexString(gameboy.mapper.read(0xFF40))}")
+        println("STAT: ${Integer.toHexString(gameboy.mapper.read(0xFF41))}")
+        println("LY: ${Integer.toHexString(gameboy.mapper.read(0xFF44))}")
+        println("Input: ${Integer.toHexString(gameboy.mapper.read(0xFF00))}")
+        println("Instruction: ${Integer.toHexString(gameboy.cpu.programCounter.atPointed(gameboy.mapper))}")
+        println("PC (decimal): ${gameboy.cpu.programCounter.getValue()}")
         println("Cartridge info: $cartridge")
-        println("IF: ${Integer.toBinaryString(mapper.read(0xFF0F))}")
-        println("IE: ${Integer.toBinaryString(mapper.read(0xFFFF))}")
-        println("IME: ${cpu.interruptManager.interruptsEnabled}")
+        println("IF: ${Integer.toBinaryString(gameboy.mapper.read(0xFF0F))}")
+        println("IE: ${Integer.toBinaryString(gameboy.mapper.read(0xFFFF))}")
+        println("IME: ${gameboy.cpu.interruptManager.interruptsEnabled}")
         println("========")
     }
 
@@ -114,7 +101,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
 
     fun showBGMap() {
         val data = IntArray(256*256)
-        val video = video
+        val video = gameboy.video
         for(row in 0..144) {
             for(x in 0..15) {
                 val tileNumber = x+(row/8)*16

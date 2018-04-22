@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.processing
 
+import org.jglrxavpok.kameboy.Gameboy
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned16
@@ -7,8 +8,11 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.memory.*
 import org.jglrxavpok.kameboy.memory.specialRegs.FRegister
 
-class CPU(val memory: MemoryMapper, val interruptManager: InterruptManager, val cartridge: Cartridge) {
+class CPU(val gameboy: Gameboy) {
 
+    val memory: MemoryMapper = gameboy.mapper
+    val interruptManager: InterruptManager = gameboy.interruptManager
+    val cartridge: Cartridge = gameboy.cartridge
     var halted = false
     var stopped = false
     private var stopPC = false // used by HALT instruction
