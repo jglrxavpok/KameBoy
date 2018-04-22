@@ -51,7 +51,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
         textureID = prepareTexture()
         meshID = prepareRenderMesh()
-        audioSystem = KameboyAudio(core.mapper.sound)
+        audioSystem = KameboyAudio(core.gameboy.mapper.sound)
 
         runEmulator()
         cleanup()
@@ -178,7 +178,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             paletteIndex = 0
         if(paletteIndex < 0)
             paletteIndex = Palettes.size-1
-        core.video.dmgPalette = Palettes[paletteIndex]
+        core.gameboy.video.dmgPalette = Palettes[paletteIndex]
         println("Now using palette $paletteIndex")
     }
 
@@ -198,7 +198,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
                 else -> Instructions.AreaType.Rom
             }
-            val content = Instructions.readInstruction(core.mapper, address, areaType)
+            val content = Instructions.readInstruction(core.gameboy.mapper, address, areaType)
             linesPanel.add(JLabel(content.desc))
             address += content.size
         }

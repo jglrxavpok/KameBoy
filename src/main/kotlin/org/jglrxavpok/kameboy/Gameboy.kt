@@ -9,6 +9,7 @@ import org.jglrxavpok.kameboy.processing.video.Video
 
 class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false) {
 
+    val isCGB = cartridge.isForColorGB // TODO maybe add a way to select?
     val inCGBMode = cartridge.isForColorGB
     val mapper = MemoryMapper(this)
     val interruptManager = mapper.interruptManager

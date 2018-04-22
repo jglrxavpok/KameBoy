@@ -2,9 +2,13 @@ package org.jglrxavpok.kameboy.memory
 
 import org.jglrxavpok.kameboy.Gameboy
 import org.jglrxavpok.kameboy.helpful.asAddress
-import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.*
+import org.jglrxavpok.kameboy.memory.specialRegs.video.CgbPaletteData
+import org.jglrxavpok.kameboy.memory.specialRegs.video.CgbPaletteIndex
+import org.jglrxavpok.kameboy.memory.specialRegs.video.Hdma5
+import org.jglrxavpok.kameboy.memory.specialRegs.video.VramSelect
+import org.jglrxavpok.kameboy.processing.video.PaletteMemory
 import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.video.SpriteAttributeTable
 
@@ -138,8 +142,15 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0xFF80
         }
     }
-    val videoRAM = object: RAM(8*1024) {
-        override val name = "Video RAM"
+    val vram0 = object: RAM(8*1024) {
+        override val name = "Video RAM #0"
+
+        override fun correctAddress(address: Int): Int {
+            return address-0x8000
+        }
+    }
+    val vram1 = object: RAM(8*1024) {
+        override val name = "Video RAM #1"
 
         override fun correctAddress(address: Int): Int {
             return address-0x8000
@@ -162,54 +173,88 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     val wramBankSelect = WramBankSelectRegister()
     val infraredRegister = InfraredRegister()
 
-    fun map(address: Int): MemoryComponent = when(address.asAddress()) {
-        // GBC registers
-        0xFF4D -> speedRegister
-        0xFF56 -> infraredRegister
-        0xFF70 -> wramBankSelect
+    val backgroundPaletteMemory = PaletteMemory("Background")
+    val spritePaletteMemory = PaletteMemory("Sprite")
+    val backgroundPaletteIndex = CgbPaletteIndex("Background Palette Index")
+    val backgroundPaletteData = CgbPaletteData("Background Palette Data", backgroundPaletteIndex, backgroundPaletteMemory)
+    val spritePaletteIndex = CgbPaletteIndex("Sprite Palette Index")
+    val spritePaletteData = CgbPaletteData("Sprite Palette Data", spritePaletteIndex, spritePaletteMemory)
+    val vramSelect = VramSelect()
+
+    val hdma1 = Register("HDMA 1")
+    val hdma2 = Register("HDMA 2")
+    val hdma3 = Register("HDMA 3")
+    val hdma4 = Register("HDMA 4")
+    val hdma5 = Hdma5(this)
+
+    fun map(address: Int): MemoryComponent {
+        if(gameboy.isCGB) {
+            val comp = when(address) {
+                // GBC registers
+                0xFF4D -> speedRegister
+                0xFF56 -> infraredRegister
+                0xFF70 -> wramBankSelect
+                0xFF68 -> backgroundPaletteIndex
+                0xFF69 -> backgroundPaletteData
+                0xFF6A -> spritePaletteIndex
+                0xFF6B -> spritePaletteData
+                0xFF4F -> vramSelect
+                0xFF51 -> hdma1
+                0xFF52 -> hdma2
+                0xFF53 -> hdma3
+                0xFF54 -> hdma4
+                0xFF55 -> hdma5
+                in 0x8000 until 0xA000 -> if(vramSelect[0]) vram1 else vram0
+                else -> this
+            }
+            if(comp != this)
+                return comp
+        }
+        return when(address.asAddress()) {
         // DMG registers
-        in 0 until 0x8000 -> {
-            if(gameboy.cartridge.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
-                gameboy.cartridge.bootRomComponent
-            } else {
-                if(address == 0xFF50) {
-                    bootRegister
+            in 0 until 0x8000 -> {
+                if(gameboy.cartridge.hasBootRom && address in 0..0xFF && read(0xFF50) != 0x1) {
+                    gameboy.cartridge.bootRomComponent
                 } else {
-                    gameboy.cartridge
+                    if(address == 0xFF50) {
+                        bootRegister
+                    } else {
+                        gameboy.cartridge
+                    }
                 }
             }
-        }
-        in 0x8000 until 0xA000 -> videoRAM
-        in 0xA000 until 0xC000 -> {
-            if(gameboy.cartridge.cartrigeType.accepts(address)) {
-                gameboy.cartridge.cartrigeType
-            } else {
-                gameboy.cartridge.currentRAMBank
+            in 0x8000 until 0xA000 -> vram0
+            in 0xA000 until 0xC000 -> {
+                if(gameboy.cartridge.cartrigeType.accepts(address)) {
+                    gameboy.cartridge.cartrigeType
+                } else {
+                    gameboy.cartridge.currentRAMBank
+                }
             }
-        }
-        in 0xC000..0xCFFF, in 0xE000..0xEFFF -> {
-            if(gameboy.inCGBMode) {
-                wramBanks[0]
-            } else {
-                internalRAM
+            in 0xC000..0xCFFF, in 0xE000..0xEFFF -> {
+                if(gameboy.inCGBMode) {
+                    wramBanks[0]
+                } else {
+                    internalRAM
+                }
             }
-        }
-        in 0xD000..0xDFFF, in 0xF000..0xFDFF -> {
-            if(gameboy.inCGBMode) {
-                wramBanks[wramBankSelect.getValue()]
-            } else {
-                internalRAM
+            in 0xD000..0xDFFF, in 0xF000..0xFDFF -> {
+                if(gameboy.inCGBMode) {
+                    wramBanks[wramBankSelect.getValue()]
+                } else {
+                    internalRAM
+                }
             }
-        }
-        in 0xFE00 until 0xFEA0 -> spriteAttributeTable
-        in 0xFEA0 until 0xFF00 -> empty0
-        in 0xFF30..0xFF3F -> wavePatternRam
-        in 0xFF00 until 0xFF4C -> ioPorts[address-0xFF00]
-        in 0xFF4C until 0xFF80 -> empty1
-        in 0xFF80 until 0xFFFF -> highRAM
-        0xFFFF -> interruptEnableRegister
+            in 0xFE00 until 0xFEA0 -> spriteAttributeTable
+            in 0xFEA0 until 0xFF00 -> empty0
+            in 0xFF30..0xFF3F -> wavePatternRam
+            in 0xFF00 until 0xFF4C -> ioPorts[address-0xFF00]
+            in 0xFF4C until 0xFF80 -> empty1
+            in 0xFF80 until 0xFFFF -> highRAM
+            0xFFFF -> interruptEnableRegister
 
-        else -> error("Invalid address ${Integer.toHexString(address)}")
+            else -> error("Invalid address ${Integer.toHexString(address)}")
+        }
     }
 
     override fun write(address: Int, value: Int) {

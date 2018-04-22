@@ -58,6 +58,18 @@ class Video(val gameboy: Gameboy) {
 
     var dmgPalette: ColorPalette = DefaultPalette
 
+    val cgbBgPalettes = Array<ColorPalette>(32) { paletteIndex ->
+        { index: Int ->
+            memory.backgroundPaletteMemory.getColorAt(index*2 + paletteIndex*8)
+        }
+    }
+
+    val cgbSpritePalettes = Array<ColorPalette>(32) { paletteIndex ->
+        { index: Int ->
+            memory.spritePaletteMemory.getColorAt(index*2 + paletteIndex*8)
+        }
+    }
+
     enum class VideoMode(val durationInCycles: Int) {
         HBlank(200),
         VBlank(100000),
@@ -65,13 +77,15 @@ class Video(val gameboy: Gameboy) {
         Mode3(170)
     }
 
-    fun drawTileRow(x: Int, row: Int, tileLocalRow: Int, tileAddress: Int, palette: MemoryRegister,
+    fun drawTileRow(x: Int, row: Int, tileLocalRow: Int, tileAddress: Int, palette: ColorPalette,
                     target: IntArray = pixelData,
                     isBackground: Boolean = false,
                     vMirror: Boolean = false,
                     hMirror: Boolean = false,
                     tileHeight: Int = 8,
-                    backgroundPriority: Boolean = false) {
+                    backgroundPriority: Boolean = false,
+                    inVram1: Boolean = false, // should fetch tile in VRAM bank 1 ?
+                    bgOamPriority: Boolean = false /* TODO: unused for now*/) {
         var screenY = row
         if(isBackground) { // background wraps
             screenY = wrapInBounds(row)
@@ -79,8 +93,9 @@ class Video(val gameboy: Gameboy) {
             return
         }
         val effectiveTileRow = if(vMirror) tileHeight-1-tileLocalRow else tileLocalRow
-        val lineDataLS = memory.read(tileAddress + effectiveTileRow*2)
-        val lineDataMS = memory.read(tileAddress + effectiveTileRow*2 +1)
+        val mem = if(inVram1) memory.vram1 else memory
+        val lineDataLS = mem.read(tileAddress + effectiveTileRow*2)
+        val lineDataMS = mem.read(tileAddress + effectiveTileRow*2 +1)
         for(i in 0..7) {
             var screenX = x + i
             if(isBackground) { // background wraps
@@ -88,8 +103,10 @@ class Video(val gameboy: Gameboy) {
             } else if(screenX >= 256 || screenX < 0) {
                 continue
             }
-            if(backgroundPriority && isBackgroundColorWithPriority(bgIndex[screenY*256+screenX])) {
-                continue
+            if(!(gameboy.inCGBMode && bgDisplay)) { // CGB with bit 0 of LCDC cleared puts priority to sprites
+                if(backgroundPriority && isBackgroundColorWithPriority(bgIndex[screenY*256+screenX])) {
+                    continue
+                }
             }
             val effectiveTileColumn = if(hMirror) i else (7-i)
             val highColor = if(lineDataMS and (1 shl effectiveTileColumn) != 0) 1 else 0
@@ -116,12 +133,8 @@ class Video(val gameboy: Gameboy) {
         return wrapInBounds(value+256)
     }
 
-    private fun pixelColor(index: Int, palette: MemoryRegister): Int {
-        val data = palette.getValue() and (0b11 shl (index*2)) shr (index*2)
-        return when(data) {
-            in 0..3 -> dmgPalette(data).toInt()
-            else -> error("This is impossible!")
-        }
+    private fun pixelColor(index: Int, palette: ColorPalette): Int {
+        return palette(index).toInt()
     }
 
     val WIDTH = 256
@@ -133,25 +146,64 @@ class Video(val gameboy: Gameboy) {
         Arrays.fill(pixelData, line*WIDTH, (line+1)*WIDTH, dmgPalette(0).toInt())
 
         if(line < VBlankStartLine && lcdDisplayEnable) {
-            if(bgDisplay) {
+            val shouldDisplayBackground = when {
+                !gameboy.isCGB -> bgDisplay
+                else -> {
+                    if(gameboy.inCGBMode) {
+                        true
+                    } else {
+                        bgDisplay
+                    }
+                }
+            }
+            if(shouldDisplayBackground) {
                 val scrolledY = wrapInBounds(line + scrollY.getValue())
                 for(x in 0 until 32) {
                     val scrolledX = wrapInBounds(x * 8 + scrollX.getValue())
-                    val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
-                    val tileAddress = tileDataAddress
-                    val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                    drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset, bgPaletteData, isBackground = true)
+                    if(gameboy.inCGBMode) {
+                        val tileNumber = memory.vram0.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
+                        val attribs = memory.vram1.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
+                        val tileAddress = tileDataAddress
+                        val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
+                        drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset,
+                                cgbBgPalettes[attribs and 0b111],
+                                isBackground = true,
+                                inVram1 = attribs and (1 shl 3) != 0,
+                                hMirror = attribs and (1 shl 5) != 0,
+                                vMirror = attribs and (1 shl 6) != 0,
+                                bgOamPriority = attribs and (1 shl 7) != 0)
+                    } else {
+                        val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
+                        val tileAddress = tileDataAddress
+                        val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
+                        drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset, this::bgPalette, isBackground = true)
+                    }
                 }
             }
-            if(windowDisplayEnable) {
+            val overrideWindow = gameboy.isCGB && !gameboy.inCGBMode && bgDisplay
+            if(windowDisplayEnable && !overrideWindow) {
                 val effectiveLine = line-windowY.getValue()
                 if(effectiveLine in 0..255) {
                     for(x in 0 until 32) {
                         val effectiveX = x*8-windowX.getValue()+7
-                        val tileNumber = memory.read(windowTileMapAddress + (effectiveLine / 8) * 32 + effectiveX/8)
-                        val tileAddress = tileDataAddress
-                        val offset = (if (dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                        drawTileRow(effectiveX, line, effectiveLine % 8, tileAddress + offset, bgPaletteData, isBackground = true)
+                        if(gameboy.inCGBMode) {
+                            val tileNumber = memory.vram0.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
+                            val attribs = memory.vram1.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
+                            val tileAddress = tileDataAddress
+                            val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
+                            drawTileRow(effectiveX, line, effectiveLine %8, tileAddress + offset,
+                                    cgbBgPalettes[attribs and 0b111],
+                                    isBackground = true,
+                                    inVram1 = attribs and (1 shl 3) != 0,
+                                    hMirror = attribs and (1 shl 5) != 0,
+                                    vMirror = attribs and (1 shl 6) != 0,
+                                    bgOamPriority = attribs and (1 shl 7) != 0)
+                        } else {
+                            val tileNumber = memory.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
+                            val tileAddress = tileDataAddress
+                            val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
+                            drawTileRow(effectiveX, line, effectiveLine %8, tileAddress + offset, this::bgPalette, isBackground = true)
+                        }
                     }
                 }
             }
@@ -174,7 +226,12 @@ class Video(val gameboy: Gameboy) {
                         }
                         /*.take(10)*/
                         .forEach { sprite ->
-                            val palette = if(sprite.paletteNumber) objPalette1Data else objPalette0Data
+                            val palette = when {
+                                gameboy.inCGBMode -> cgbSpritePalettes[sprite.cgbPaletteNumber]
+                                else -> {
+                                    if(sprite.dmgPaletteNumber) this::objPalette1 else this::objPalette0
+                                }
+                            }
                             val posY = sprite.positionY.getValue()-8-1
                             val posX = sprite.positionX.getValue()-8
                             val tileNumber = sprite.tileNumber.getValue()
@@ -183,15 +240,39 @@ class Video(val gameboy: Gameboy) {
 
                             if(spriteSizeSelect) {
                                 if(posY+8 in line..(line+15)) {
-                                    drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16, backgroundPriority = sprite.priority)
+                                    drawTileRow(posX, line, posY+8-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, tileHeight = 16, backgroundPriority = sprite.priority, inVram1 = sprite.inVram1 && gameboy.inCGBMode)
                                 }
                             } else {
                                 if(posY in line..(line+7)) {
-                                    drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, backgroundPriority = sprite.priority)
+                                    drawTileRow(posX, line, posY-line, tileAddress, palette, hMirror = sprite.hMirror, vMirror = !sprite.vMirror, backgroundPriority = sprite.priority, inVram1 = sprite.inVram1 && gameboy.inCGBMode)
                                 }
                             }
                 }
             }
+        }
+    }
+
+    fun bgPalette(index: Int): Long {
+        val data = bgPaletteData.getValue() and (0b11 shl (index*2)) shr (index*2)
+        return when(data) {
+            in 0..3 -> dmgPalette(data)
+            else -> error("This is impossible!")
+        }
+    }
+
+    private fun objPalette1(index: Int): Long {
+        val data = objPalette1Data.getValue() and (0b11 shl (index*2)) shr (index*2)
+        return when(data) {
+            in 0..3 -> dmgPalette(data)
+            else -> error("This is impossible!")
+        }
+    }
+
+    private fun objPalette0(index: Int): Long {
+        val data = objPalette0Data.getValue() and (0b11 shl (index*2)) shr (index*2)
+        return when(data) {
+            in 0..3 -> dmgPalette(data)
+            else -> error("This is impossible!")
         }
     }
 
@@ -251,14 +332,5 @@ class Video(val gameboy: Gameboy) {
         lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
 
         coincidenceFlag = lyCompare.getValue() == lcdcY.getValue()
-    }
-
-    fun drawLogo() {
-        for(line in 0 until VBlankStartLine) {
-            for(x in 0 until 32) {
-                val offset = (line/8)*32 + x
-                drawTileRow(x * 8, line, line%8, 0x104 + offset, bgPaletteData)
-            }
-        }
     }
 }
