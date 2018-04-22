@@ -8,6 +8,8 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
         val WaveTableStart = 0xFF30
         val Volumes = arrayOf(4, 0, 1, 2)
     }
+
+    private val patternMemory = IntArray(16)
     private var sampleIndex = 0
 
     override val frequencyMultiplier = 2
@@ -16,7 +18,7 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
 
     override fun onOutputClock(timer: Timer) {
         // select low or high nibble depending on sampleIndex (first is high)
-        val samples = memoryMapper.read(WaveTableStart + sampleIndex/2)
+        val samples = patternMemory[sampleIndex/2]
 
         sampleIndex++
         sampleIndex %= 32
@@ -31,5 +33,11 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
     override fun reset() {
         super.reset()
         sampleIndex = 0
+    }
+
+    override fun trigger() {
+        super.trigger()
+        memoryMapper.wavePatternRam.copyTo(patternMemory)
+        memoryMapper.wavePatternRam.clear()
     }
 }

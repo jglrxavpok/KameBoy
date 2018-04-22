@@ -3,10 +3,7 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.specialRegs.*
-import org.jglrxavpok.kameboy.memory.specialRegs.sound.NRRegister
-import org.jglrxavpok.kameboy.memory.specialRegs.sound.NRx1
-import org.jglrxavpok.kameboy.memory.specialRegs.sound.OrOnReadRegister
-import org.jglrxavpok.kameboy.memory.specialRegs.sound.SoundRegister
+import org.jglrxavpok.kameboy.memory.specialRegs.sound.*
 import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.video.SpriteAttributeTable
 
@@ -84,22 +81,22 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
             SoundRegister(0xFF2D, sound),
             SoundRegister(0xFF2E, sound),
             SoundRegister(0xFF2F, sound),
-            Register("Wave Pattern RAM 0"),
-            Register("Wave Pattern RAM 1"),
-            Register("Wave Pattern RAM 2"),
-            Register("Wave Pattern RAM 3"),
-            Register("Wave Pattern RAM 4"),
-            Register("Wave Pattern RAM 5"),
-            Register("Wave Pattern RAM 6"),
-            Register("Wave Pattern RAM 7"),
-            Register("Wave Pattern RAM 8"),
-            Register("Wave Pattern RAM 9"),
-            Register("Wave Pattern RAM A"),
-            Register("Wave Pattern RAM B"),
-            Register("Wave Pattern RAM C"),
-            Register("Wave Pattern RAM D"),
-            Register("Wave Pattern RAM E"),
-            Register("Wave Pattern RAM F"),
+            MemoryRegister("Wave Pattern RAM 0", this, 0xFF30),
+            MemoryRegister("Wave Pattern RAM 1", this, 0xFF31),
+            MemoryRegister("Wave Pattern RAM 2", this, 0xFF32),
+            MemoryRegister("Wave Pattern RAM 3", this, 0xFF33),
+            MemoryRegister("Wave Pattern RAM 4", this, 0xFF34),
+            MemoryRegister("Wave Pattern RAM 5", this, 0xFF35),
+            MemoryRegister("Wave Pattern RAM 6", this, 0xFF36),
+            MemoryRegister("Wave Pattern RAM 7", this, 0xFF37),
+            MemoryRegister("Wave Pattern RAM 8", this, 0xFF38),
+            MemoryRegister("Wave Pattern RAM 9", this, 0xFF39),
+            MemoryRegister("Wave Pattern RAM A", this, 0xFF3A),
+            MemoryRegister("Wave Pattern RAM B", this, 0xFF3B),
+            MemoryRegister("Wave Pattern RAM C", this, 0xFF3C),
+            MemoryRegister("Wave Pattern RAM D", this, 0xFF3D),
+            MemoryRegister("Wave Pattern RAM E", this, 0xFF3E),
+            MemoryRegister("Wave Pattern RAM F", this, 0xFF3F),
             Register("LCDC"),
             Register("STAT"),
             Register("SCY"),
@@ -153,6 +150,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
         }
     }
     val bootRegister = OrOnReadRegister("BOOT register", 0xFF)
+    val wavePatternRam = WavePatternRam(sound)
 
     fun map(address: Int): MemoryComponent = when(address.asAddress()) {
         // GBC registers
@@ -180,6 +178,7 @@ class MemoryMapper(val cartridgeData: Cartridge, val input: PlayerInput, val out
         in 0xC000..0xDFFF, in 0xE000..0xFDFF -> internalRAM
         in 0xFE00 until 0xFEA0 -> spriteAttributeTable
         in 0xFEA0 until 0xFF00 -> empty0
+        in 0xFF30..0xFF3F -> wavePatternRam
         in 0xFF00 until 0xFF4C -> ioPorts[address-0xFF00]
         in 0xFF4C until 0xFF80 -> empty1
         in 0xFF80 until 0xFFFF -> highRAM

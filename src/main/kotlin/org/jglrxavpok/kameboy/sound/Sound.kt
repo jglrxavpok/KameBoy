@@ -23,6 +23,10 @@ class Sound(val memory: MemoryMapper) {
 
     fun channel(index: Int) = channels[index-1]
 
+    init {
+        channel1.channelEnabled = true
+    }
+
     fun step(cycles: Int) {
         if(!isOn()) {
             repeat(cycles) {

@@ -35,7 +35,7 @@ class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
 
     override fun clockSweep() {
         super.clockSweep()
-        if(sweepFlag) {
+        if(sweepFlag && sweepPeriod != 0) {
             if(internalTimer-- <= 0) {
                 internalTimer = if(sweepPeriod != 0) sweepPeriod else 8
                 val newFreq = calculateFrequency()

@@ -12,13 +12,15 @@ open class NRRegister(val channelNumber: Int, val registerIndex: Int, orValue: I
     override fun write(address: Int, value: Int) {
         if(!sound.isOn())
             return
-        super.write(address, value)
+        super.write(address, value and 0b1111_1111)
         if(channelNumber == 5)
             return
         if(registerIndex == 4) {
             val channel = sound.channel(channelNumber)
             if(value and TriggerMask != 0) {
                 channel.trigger()
+            } else if(channel.channelEnabled) {
+                channel.stop()
             }
 
             // most significant bits of frequency

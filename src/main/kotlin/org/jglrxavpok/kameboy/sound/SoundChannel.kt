@@ -13,7 +13,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     val nr3 = MemoryRegister("NR${channelNumber}3", memoryMapper, addressNR(3))
     val nr4 = MemoryRegister("NR${channelNumber}4", memoryMapper, addressNR(4))
 
-    val shouldClockLength by nr4.bitVar(6)
+    var shouldClockLength by nr4.bitVar(6)
 
     var channelEnabled = false
     open val dacEnabled get()= (nr2.getValue() shr 3) != 0
@@ -76,7 +76,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     private var volumeCounter = 0
 
     fun clockVolume() {
-        if(volumeCounter++ == enveloppePeriod) {
+        if(volumeCounter++ >= enveloppePeriod) {
             volumeCounter = 0
             if(enveloppePeriod != 0) {
                 val newVolume = volume + volumeDirection
