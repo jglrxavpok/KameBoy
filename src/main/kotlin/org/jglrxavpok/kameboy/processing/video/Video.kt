@@ -60,7 +60,7 @@ class Video(val gameboy: Gameboy) {
 
     val cgbBgPalettes = Array<ColorPalette>(32) { paletteIndex ->
         { index: Int ->
-            memory.backgroundPaletteMemory.getColorAt(index*2 + paletteIndex*8)
+            memory.backgroundPaletteMemory.getColorAt(index*2+paletteIndex*8)
         }
     }
 
@@ -161,7 +161,7 @@ class Video(val gameboy: Gameboy) {
                 for(x in 0 until 32) {
                     val scrolledX = wrapInBounds(x * 8 + scrollX.getValue())
                     if(gameboy.inCGBMode) {
-                        val tileNumber = memory.vram0.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
+                        val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
                         val attribs = memory.vram1.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
                         val tileAddress = tileDataAddress
                         val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
@@ -187,7 +187,7 @@ class Video(val gameboy: Gameboy) {
                     for(x in 0 until 32) {
                         val effectiveX = x*8-windowX.getValue()+7
                         if(gameboy.inCGBMode) {
-                            val tileNumber = memory.vram0.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
+                            val tileNumber = memory.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
                             val attribs = memory.vram1.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
                             val tileAddress = tileDataAddress
                             val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10

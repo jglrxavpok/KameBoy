@@ -11,14 +11,13 @@ class PaletteMemory(name: String): MemoryComponent {
     fun getColorAt(startAddress: Int): Long {
         val low = read(startAddress)
         val high = read(startAddress+1)
-        val redIntensity = low and 0b11111
-        val greenIntensity = (low shr 5) or (high and 0b11)
-        val blueIntensity = high shr 3
-        val rgb =
-                (((redIntensity shl 16) / 32f) * 255).toInt()
-                + (((greenIntensity shl 8) / 32f) * 255).toInt()
-                + (((blueIntensity shl 0) / 32f) * 255).toInt()
-        return 0xFF000000 + rgb
+        val redIntensity = low and 0x1F
+        val greenIntensity = (((low shr 5) and 0b111) or ((high and 0b11) shl 3)) and 0x1F
+        val blueIntensity = (high shr 3) and 0x1F
+        val red = ((redIntensity / 0x1F.toFloat()) * 255).toLong()
+        val green = ((greenIntensity / 0x1F.toFloat()) * 255).toLong()
+        val blue = ((blueIntensity / 0x1F.toFloat()) * 255).toLong()
+        return 0xFF000000 or (red shl 16) or (green shl 8) or (blue shl 0)
     }
 
     override fun write(address: Int, value: Int) {

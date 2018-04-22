@@ -188,8 +188,8 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     val hdma5 = Hdma5(this)
 
     fun map(address: Int): MemoryComponent {
-        if(gameboy.isCGB) {
-            val comp = when(address) {
+        if(gameboy.inCGBMode) {
+            val comp = when(address.asAddress()) {
                 // GBC registers
                 0xFF4D -> speedRegister
                 0xFF56 -> infraredRegister
