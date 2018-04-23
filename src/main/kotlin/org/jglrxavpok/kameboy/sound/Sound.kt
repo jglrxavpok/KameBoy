@@ -29,32 +29,31 @@ class Sound(val memory: MemoryMapper) {
 
     fun step(cycles: Int) {
         if(!isOn()) {
-            repeat(cycles) {
+            for(i in 0 until cycles) {
                 play(0, 0)
             }
             return
         }
-        repeat(cycles) {
-            var leftChannel = 0
-            var rightChannel = 0
-            val outputSelectValue = outputSelect.getValue()
-            for(channel in channels) {
-                val waveform = channel.step(1)
-                if(outputSelectValue and (1 shl (channel.channelNumber-1)) != 0) {
-                    leftChannel += waveform
-                }
-                if(outputSelectValue and (1 shl (channel.channelNumber-1+4)) != 0) {
-                    rightChannel += waveform
-                }
+        val outputSelectValue = outputSelect.getValue()
+        val channelControlValue = channelControl.getValue()
+        var leftChannel = 0
+        var rightChannel = 0
+        for(channel in channels) {
+            val waveform = channel.step(cycles)
+            if(outputSelectValue and (1 shl (channel.channelNumber-1)) != 0) {
+                leftChannel += waveform
             }
-            leftChannel /= 4
-            rightChannel /= 4
-            val channelControlValue = channelControl.getValue()
-            leftChannel *= (channelControlValue and 0b111)
-            rightChannel *= ((channelControlValue shr 4) and 0b111)
-
-            play(leftChannel.asSigned8(), rightChannel.asSigned8())
+            if(outputSelectValue and (1 shl (channel.channelNumber-1+4)) != 0) {
+                rightChannel += waveform
+            }
         }
+        leftChannel /= 4
+        rightChannel /= 4
+        leftChannel *= (channelControlValue and 0b111)
+        rightChannel *= ((channelControlValue shr 4) and 0b111)
+
+        for(i in 0 until cycles)
+            play(leftChannel.asSigned8(), rightChannel.asSigned8())
     }
 
     fun isOn(): Boolean {

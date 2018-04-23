@@ -28,8 +28,6 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
         output(((sample and 0xF) shr volumeControl) and 0xF)
     }
 
-    override fun channelStep(cycles: Int) { }
-
     override fun reset() {
         super.reset()
         sampleIndex = 0

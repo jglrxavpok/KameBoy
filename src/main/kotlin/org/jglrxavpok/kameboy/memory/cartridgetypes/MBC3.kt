@@ -24,8 +24,6 @@ class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
         battery.loadRAM(cartridge)
     }
 
-    private var ramWriteEnabled = true
-
     private var selectedClockRegister = 0
     private var rtcHaltStatus = 0
     private var startTime = (System.currentTimeMillis()/1000).toInt()
@@ -51,11 +49,11 @@ class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                 // TODO
             }
             in 0x0000..0x1FFF -> {
-                val status = (value and 0xF) == 0xA
-                ramWriteEnabled = status
-                if(!ramWriteEnabled)
+                val enable = value and 0xF == 0b1010
+                if(enabled && !enable && mode==Mode.Ram) {
                     battery.saveRAM(cartridge)
-                enabled = status
+                }
+                enabled = enable
             }
             in 0xA000..0xBFFF -> {
                 when (mode) {
@@ -63,7 +61,7 @@ class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                         writeRTC(address-0xA000, value)
                     }
                     Mode.Ram -> {
-                        if(ramWriteEnabled)
+                        if(enabled)
                             cartridge.currentRAMBank.write(address, value)
                     }
                 }
@@ -98,9 +96,9 @@ class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     private fun writeRTC(addr: Int, value: Int) {
         when(selectedClockRegister) {
             0x0C -> {
-                rtcHaltStatus = value and (0b01000000)
-                if(value and 0b10000000 == 0) {
-                    startTime += 0b1111_1111*60*60*24
+                rtcHaltStatus = value and (0b0100_0000)
+                if(value and 0b1000_0000 == 0) {
+                    startTime = (System.currentTimeMillis()/1000).toInt()
                 }
             }
         }
@@ -130,6 +128,6 @@ class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     }
 
     override fun toString(): String {
-        return "MBC1(CurrentBank=$currentBank)"
+        return "MBC3(CurrentBank=$currentBank, Battery=$battery)"
     }
 }

@@ -95,13 +95,11 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
    //     println("LOADED LENGTH in $channelNumber: $lengthCounter")
     }
 
-    abstract fun channelStep(cycles: Int)
     open fun clockSweep() { }
 
     fun step(cycles: Int): Int {
         frameSequencer.step(cycles)
         timer.step(cycles)
-        channelStep(cycles)
         if(!dacEnabled)
             channelEnabled = false
         if(!channelEnabled)

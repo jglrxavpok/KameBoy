@@ -20,8 +20,6 @@ open class SquareChannel(memory: MemoryMapper, channelNumber: Int): SoundChannel
         output(if(dutyBit) correctVolume else Low)
     }
 
-    override fun channelStep(cycles: Int) { }
-
     override fun reset() {
         super.reset()
         //dutyBitSelect = 0

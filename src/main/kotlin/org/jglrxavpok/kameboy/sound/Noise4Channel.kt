@@ -39,5 +39,4 @@ class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMappe
         output(if(bit0) correctVolume else Low)
     }
 
-    override fun channelStep(cycles: Int) { }
 }

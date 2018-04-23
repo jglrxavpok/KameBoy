@@ -58,13 +58,13 @@ class Video(val gameboy: Gameboy) {
 
     var dmgPalette: ColorPalette = DefaultPalette
 
-    val cgbBgPalettes = Array<ColorPalette>(32) { paletteIndex ->
+    val cgbBgPalettes = Array<ColorPalette>(8) { paletteIndex ->
         { index: Int ->
             memory.backgroundPaletteMemory.getColorAt(index*2+paletteIndex*8)
         }
     }
 
-    val cgbSpritePalettes = Array<ColorPalette>(32) { paletteIndex ->
+    val cgbSpritePalettes = Array<ColorPalette>(8) { paletteIndex ->
         { index: Int ->
             memory.spritePaletteMemory.getColorAt(index*2 + paletteIndex*8)
         }

@@ -84,6 +84,6 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     }
 
     override fun toString(): String {
-        return "MBC1(CurrentBank=$currentBank)"
+        return "MBC1(CurrentBank=$currentBank, Battery=$battery)"
     }
 }

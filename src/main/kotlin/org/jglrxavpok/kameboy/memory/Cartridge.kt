@@ -74,7 +74,8 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
         3 -> MBC1(this, getSaveFileBattery())
 
 
-        0x10 -> MBC3(this, NoBattery)
+        0x10 -> MBC3(this, getSaveFileBattery()/* TODO: TIMER+RAM*/)
+        0x11 -> MBC3(this, NoBattery)
 
         0x13 -> MBC3(this, getSaveFileBattery())
         else -> error("Cartridge type $index not supported")

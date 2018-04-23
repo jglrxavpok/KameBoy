@@ -43,7 +43,7 @@ class SpriteAttributeTable: MemoryComponent {
         val priority by attributes.bitVar(7)
 
         val visible get()= positionX.getValue() != 0 && positionY.getValue() != 0
-        val cgbPaletteNumber get()= attributes.getValue() and 0b11
+        val cgbPaletteNumber get()= attributes.getValue() and 0b111
         val inVram1 by attributes.bitVar(3)
 
         override fun compareTo(other: Sprite): Int {
