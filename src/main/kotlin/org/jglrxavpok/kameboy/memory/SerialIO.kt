@@ -13,12 +13,12 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     fun step(cycles: Int) {
         if(!transferring)
             return
-        currentCycle += cycles/4
+        currentCycle += cycles
         if(currentCycle >= speed) {
             currentCycle %= speed
             // reset transfer flag
             val readValue = memoryMapper.read(0xFF02)
-            memoryMapper.write(0xFF02, readValue and 0b01111111)
+            memoryMapper.write(0xFF02, readValue and 0b0111_1111)
 
             if(outputToConsole)
                 print(byteToTransfer.toChar())
