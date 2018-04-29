@@ -59,15 +59,53 @@ class Video(val gameboy: Gameboy) {
     var dmgPalette: ColorPalette = DefaultPalette
 
     val cgbBgPalettes = Array<ColorPalette>(8) { paletteIndex ->
-        { index: Int ->
-            memory.backgroundPaletteMemory.getColorAt(index*2+paletteIndex*8)
+        object: ColorPalette() {
+            override fun color(index: Int) = memory.backgroundPaletteMemory.getColorAt(index * 2 + paletteIndex * 8)
+            override val name = "CGB BG Palette (Internal) #$paletteIndex"
         }
     }
 
     val cgbSpritePalettes = Array<ColorPalette>(8) { paletteIndex ->
-        { index: Int ->
-            memory.spritePaletteMemory.getColorAt(index*2 + paletteIndex*8)
+        object: ColorPalette() {
+            override fun color(index: Int) = memory.spritePaletteMemory.getColorAt(index*2 + paletteIndex*8)
+            override val name = "CGB Sprite Palette (Internal) #$paletteIndex"
         }
+    }
+
+    val bgPalette = object: ColorPalette() {
+        override fun color(index: Int): Long {
+            val data = bgPaletteData.getValue() and (0b11 shl (index*2)) shr (index*2)
+            return when(data) {
+                in 0..3 -> dmgPalette(data)
+                else -> error("This is impossible!")
+            }
+        }
+
+        override val name = "DMG BG Palette (Internal)"
+    }
+
+    val obj0Palette = object: ColorPalette() {
+        override fun color(index: Int): Long {
+            val data = objPalette0Data.getValue() and (0b11 shl (index*2)) shr (index*2)
+            return when(data) {
+                in 0..3 -> dmgPalette(data)
+                else -> error("This is impossible!")
+            }
+        }
+
+        override val name = "DMG OBJ0 Palette (Internal)"
+    }
+
+    val obj1Palette = object: ColorPalette() {
+        override fun color(index: Int): Long {
+            val data = objPalette1Data.getValue() and (0b11 shl (index*2)) shr (index*2)
+            return when(data) {
+                in 0..3 -> dmgPalette(data)
+                else -> error("This is impossible!")
+            }
+        }
+
+        override val name = "DMG OBJ1 Palette (Internal)"
     }
 
     enum class VideoMode(val durationInCycles: Int) {
@@ -176,7 +214,7 @@ class Video(val gameboy: Gameboy) {
                         val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
                         val tileAddress = tileDataAddress
                         val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                        drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset, this::bgPalette, isBackground = true)
+                        drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset, bgPalette, isBackground = true)
                     }
                 }
             }
@@ -202,7 +240,7 @@ class Video(val gameboy: Gameboy) {
                             val tileNumber = memory.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
                             val tileAddress = tileDataAddress
                             val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
-                            drawTileRow(effectiveX, line, effectiveLine %8, tileAddress + offset, this::bgPalette, isBackground = true)
+                            drawTileRow(effectiveX, line, effectiveLine %8, tileAddress + offset, bgPalette, isBackground = true)
                         }
                     }
                 }
@@ -229,7 +267,7 @@ class Video(val gameboy: Gameboy) {
                             val palette = when {
                                 gameboy.inCGBMode -> cgbSpritePalettes[sprite.cgbPaletteNumber]
                                 else -> {
-                                    if(sprite.dmgPaletteNumber) this::objPalette1 else this::objPalette0
+                                    if(sprite.dmgPaletteNumber) obj1Palette else obj0Palette
                                 }
                             }
                             val posY = sprite.positionY.getValue()-8-1
@@ -249,30 +287,6 @@ class Video(val gameboy: Gameboy) {
                             }
                 }
             }
-        }
-    }
-
-    fun bgPalette(index: Int): Long {
-        val data = bgPaletteData.getValue() and (0b11 shl (index*2)) shr (index*2)
-        return when(data) {
-            in 0..3 -> dmgPalette(data)
-            else -> error("This is impossible!")
-        }
-    }
-
-    private fun objPalette1(index: Int): Long {
-        val data = objPalette1Data.getValue() and (0b11 shl (index*2)) shr (index*2)
-        return when(data) {
-            in 0..3 -> dmgPalette(data)
-            else -> error("This is impossible!")
-        }
-    }
-
-    private fun objPalette0(index: Int): Long {
-        val data = objPalette0Data.getValue() and (0b11 shl (index*2)) shr (index*2)
-        return when(data) {
-            in 0..3 -> dmgPalette(data)
-            else -> error("This is impossible!")
         }
     }
 

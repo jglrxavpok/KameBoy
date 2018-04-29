@@ -8,6 +8,9 @@ import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.processing.video.Palettes
 import org.jglrxavpok.kameboy.ui.*
+import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
+import org.jglrxavpok.kameboy.ui.options.OptionsWindow
+import org.jglrxavpok.kameboy.ui.options.SoundOptions
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL
@@ -19,15 +22,14 @@ import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.glBindVertexArray
 import org.lwjgl.opengl.GL30.glGenVertexArrays
-import java.awt.FlowLayout
+import java.awt.Toolkit
 import java.io.File
-import java.lang.Thread.yield
 import java.nio.ByteBuffer
 import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("Pokemon Gold.gbc")
+    private val cartridge = _DEV_cart("Pokemon Red.gb")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -42,6 +44,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy - ${cartridge.title}", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
         initInput()
+        positionWindows()
         glfwShowWindow(window)
 
         glfwMakeContextCurrent(window)
@@ -55,6 +58,26 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
         runEmulator()
         cleanup()
+    }
+
+    private fun positionWindows() {
+        GraphicsOptions.paletteSelection.addActionListener { _ ->
+            val index = GraphicsOptions.paletteSelection.selectedIndex
+            changePalette(index)
+        }
+
+        val width = IntArray(1)
+        val height = IntArray(1)
+        glfwGetWindowSize(window, width, height)
+        val spacing = 5
+        val totalWidth = width[0] + OptionsWindow.width + spacing
+        val videoMode = Toolkit.getDefaultToolkit().screenSize
+        val x = videoMode.width/2-totalWidth/2
+        val y = videoMode.height/2- maxOf(height[0], OptionsWindow.height)/2
+
+        glfwSetWindowPos(window, x, y)
+        OptionsWindow.setLocation(x+width[0]+spacing, y)
+        OptionsWindow.isVisible = true
     }
 
     private fun prepareRenderMesh(): Int {
@@ -135,11 +158,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     GLFW_KEY_F2 -> core.showBGMap()
                     GLFW_KEY_F3 -> showMemoryContents()
                     GLFW_KEY_PAGE_UP -> {
-                        changePalette(paletteIndex+1)
+                        changePalette(paletteIndex-1)
                     }
 
                     GLFW_KEY_PAGE_DOWN -> {
-                        changePalette(paletteIndex-1)
+                        changePalette(paletteIndex+1)
                     }
                 }
             }
@@ -178,6 +201,9 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             paletteIndex = 0
         if(paletteIndex < 0)
             paletteIndex = Palettes.size-1
+
+        GraphicsOptions.paletteSelection.selectedIndex = paletteIndex
+        GraphicsOptions.paletteSelection.repaint()
         core.gameboy.video.dmgPalette = Palettes[paletteIndex]
         println("Now using palette $paletteIndex")
     }
@@ -229,6 +255,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun cleanup() {
+        OptionsWindow.dispose()
         audioSystem.cleanup()
         glDeleteProgram(shaderID)
         glfwDestroyWindow(window)
@@ -278,12 +305,6 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun handleButtonChange(button: Int, state: Boolean) {
-        /*
-        GLFW_KEY_RIGHT, GLFW_KEY_Q -> 0
-GLFW_KEY_LEFT, GLFW_KEY_W -> 1
-GLFW_KEY_UP, GLFW_KEY_BACKSPACE -> 2
-GLFW_KEY_DOWN, GLFW_KEY_ENTER -> 3
-         */
         when(button) {
             XBoxA, XBoxX -> {
                 buttonState = buttonState.setBits(1-state.toBit(), 0..0)
@@ -304,25 +325,29 @@ GLFW_KEY_DOWN, GLFW_KEY_ENTER -> 3
         // XBOX 360 only for now
         when(axis) {
             XBoxLeftX -> {
-                if(axisValue >= 0.25f) {
-                    directionState = directionState.setBits(0, 0..0)
-                    directionState = directionState.setBits(1, 1..1)
-                } else if(axisValue <= -0.25f) {
-                    directionState = directionState.setBits(1, 0..0)
-                    directionState = directionState.setBits(0, 1..1)
-                } else {
-                    directionState = directionState.setBits(0b11, 0..1)
+                when {
+                    axisValue >= 0.25f -> {
+                        directionState = directionState.setBits(0, 0..0)
+                        directionState = directionState.setBits(1, 1..1)
+                    }
+                    axisValue <= -0.25f -> {
+                        directionState = directionState.setBits(1, 0..0)
+                        directionState = directionState.setBits(0, 1..1)
+                    }
+                    else -> directionState = directionState.setBits(0b11, 0..1)
                 }
             }
             XBoxLeftY -> {
-                if(axisValue >= 0.25f) {
-                    directionState = directionState.setBits(1, 2..2)
-                    directionState = directionState.setBits(0, 3..3)
-                } else if(axisValue <= -0.25f) {
-                    directionState = directionState.setBits(0, 2..2)
-                    directionState = directionState.setBits(1, 3..3)
-                } else {
-                    directionState = directionState.setBits(0b11, 2..3)
+                when {
+                    axisValue >= 0.25f -> {
+                        directionState = directionState.setBits(1, 2..2)
+                        directionState = directionState.setBits(0, 3..3)
+                    }
+                    axisValue <= -0.25f -> {
+                        directionState = directionState.setBits(0, 2..2)
+                        directionState = directionState.setBits(1, 3..3)
+                    }
+                    else -> directionState = directionState.setBits(0b11, 2..3)
                 }
             }
         }

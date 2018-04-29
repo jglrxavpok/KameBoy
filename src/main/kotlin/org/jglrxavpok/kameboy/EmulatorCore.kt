@@ -107,7 +107,7 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
                 val tileNumber = x+(row/8)*16
                 val offset = tileNumber
                 val tileAddress = video.tileDataAddress + (if(video.dataSelect) offset else offset.asSigned8())*0x10
-                video.drawTileRow(x*8, row, row%8, tileAddress, video::bgPalette, target = data)
+                video.drawTileRow(x*8, row, row%8, tileAddress, video.bgPalette, target = data)
             }
         }
         val result = BufferedImage(256,256, BufferedImage.TYPE_INT_ARGB)
