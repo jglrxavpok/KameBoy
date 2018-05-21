@@ -25,9 +25,9 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
 
     val gameboy = Gameboy(cartridge, input, outputSerial)
 
-    fun frame() {
+    fun frame(catchupSpeed: Double = 1.0) {
         var totalClockCycles = 0
-        while(totalClockCycles < ClockCyclesPerFrame) {
+        while(totalClockCycles < ClockCyclesPerFrame*catchupSpeed) {
             val clockCycles = step()
             totalClockCycles += clockCycles
         }

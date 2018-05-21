@@ -272,8 +272,12 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         var time = glfwGetTime()
         var frames = 0
         var totalTime = 0.0
+        val optimalTime = 1f/120f
+        var lastTime = glfwGetTime()-1/60f
 
         while(!glfwWindowShouldClose(window)) {
+            val delta = glfwGetTime()-lastTime
+            lastTime = glfwGetTime()
             glfwGetWindowSize(window, windowWPointer, windowHPointer)
             pollEvents()
             glClearColor(0f, .8f, 0f, 1f)
@@ -288,7 +292,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             glBindVertexArray(meshID)
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
 
-            core.frame()
+            core.frame(catchupSpeed = delta/optimalTime)
             glfwSwapBuffers(window)
 
             val newTime = glfwGetTime()
