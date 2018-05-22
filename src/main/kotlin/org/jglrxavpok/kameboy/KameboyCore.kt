@@ -29,7 +29,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("Pokemon Red.gb")
+    private val cartridge = _DEV_cart("Pokemon Gold.gbc")
     private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
@@ -267,13 +267,13 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         audioSystem.start()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
-        glfwSwapInterval(1)
+        glfwSwapInterval(0)
 
         var time = glfwGetTime()
         var frames = 0
         var totalTime = 0.0
-        val optimalTime = 1f/120f
-        var lastTime = glfwGetTime()-1/60f
+        val optimalTime = 1f/EmulatorCore.VideoVSync
+        var lastTime = glfwGetTime()-optimalTime
 
         while(!glfwWindowShouldClose(window)) {
             val delta = glfwGetTime()-lastTime
@@ -292,7 +292,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             glBindVertexArray(meshID)
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
 
-            core.frame(catchupSpeed = delta/optimalTime)
+            val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
+            core.frame(catchupSpeed)
             glfwSwapBuffers(window)
 
             val newTime = glfwGetTime()

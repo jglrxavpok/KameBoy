@@ -6,9 +6,11 @@ import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
 import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.memory.specialRegs.sound.*
+import org.jglrxavpok.kameboy.ui.options.SoundOptions
 
 class Sound(val memory: MemoryMapper) {
 
+    val gameboy = memory.gameboy
     val channel1 = Square1Channel(memory)
     val channel2 = SquareChannel(memory, 2)
     val channel3 = Wave3Channel(memory)
@@ -34,26 +36,41 @@ class Sound(val memory: MemoryMapper) {
             }
             return
         }
-        val outputSelectValue = outputSelect.getValue()
-        val channelControlValue = channelControl.getValue()
+
         var leftChannel = 0
         var rightChannel = 0
-        for(channel in channels) {
-            val waveform = channel.step(cycles)
-            if(outputSelectValue and (1 shl (channel.channelNumber-1)) != 0) {
-                leftChannel += waveform
+
+        fun stepAudio(cycles: Int) {
+            val outputSelectValue = outputSelect.getValue()
+            val channelControlValue = channelControl.getValue()
+            for(channel in channels) {
+                val waveform = channel.step(cycles)
+                if(outputSelectValue and (1 shl (channel.channelNumber-1)) != 0) {
+                    leftChannel += waveform
+                }
+                if(outputSelectValue and (1 shl (channel.channelNumber-1+4)) != 0) {
+                    rightChannel += waveform
+                }
             }
-            if(outputSelectValue and (1 shl (channel.channelNumber-1+4)) != 0) {
-                rightChannel += waveform
+            leftChannel /= 4
+            rightChannel /= 4
+            leftChannel *= (channelControlValue and 0b111)
+            rightChannel *= ((channelControlValue shr 4) and 0b111)
+        }
+
+        if(SoundOptions.skipAudioCycles) {
+            stepAudio(cycles)
+            repeat(cycles) {
+                play(leftChannel.asSigned8(), rightChannel.asSigned8())
+            }
+        } else {
+            repeat(cycles) {
+                leftChannel = 0
+                rightChannel = 0
+                stepAudio(1)
+                play(leftChannel.asSigned8(), rightChannel.asSigned8())
             }
         }
-        leftChannel /= 4
-        rightChannel /= 4
-        leftChannel *= (channelControlValue and 0b111)
-        rightChannel *= ((channelControlValue shr 4) and 0b111)
-
-        for(i in 0 until cycles)
-            play(leftChannel.asSigned8(), rightChannel.asSigned8())
     }
 
     fun isOn(): Boolean {
