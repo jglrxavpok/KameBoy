@@ -14,9 +14,8 @@ object GraphicsOptions : JPanel() {
 
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        sub {
+        sub("Gameboy DMG Palette") {
             layout = FlowLayout()
-            add(JLabel("DMG Palette: "))
             add(paletteSelection)
         }
     }

@@ -26,15 +26,13 @@ object SoundOptions : JPanel() {
         skipAudioButton.toolTipText = "Better performance (can drastically improve FPS) but worse sound fidelity"
         dontSkipAudioButton.toolTipText = "Heavily impacts performance but provides a better sound fidelity"
 
-        sub {
+        sub("Volume") {
             layout = FlowLayout()
-            add(JLabel("Volume"))
             add(volumeSlider)
         }
 
-        sub {
+        sub("Sound fidelity") {
             layout = FlowLayout()
-            add(JLabel("Sound fidelity"))
             for(button in skipAudioButtons)
                 add(button)
         }
