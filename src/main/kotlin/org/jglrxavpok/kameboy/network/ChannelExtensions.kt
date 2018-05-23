@@ -7,7 +7,7 @@ import io.netty.channel.ChannelHandlerContext
 
 
 fun ChannelHandlerContext.writeAndFlushPacket(packet: AbstractPacket) {
-    this.channel().writeAndFlush(packet)
+    this.channel().writeAndFlushPacket(packet)
 }
 
 fun Channel.writeAndFlushPacket(packet: AbstractPacket) {
