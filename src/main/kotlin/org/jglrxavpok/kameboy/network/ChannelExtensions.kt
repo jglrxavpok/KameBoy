@@ -30,7 +30,7 @@ fun ByteBuf.writeString(string: String) {
     val codePoints = string.codePoints()
     val count = codePoints.count()
     writeLong(count)
-    codePoints.forEach { writeInt(it) }
+    string.codePoints().forEach { writeInt(it) }
 }
 
 fun ByteBuf.readString(): String {

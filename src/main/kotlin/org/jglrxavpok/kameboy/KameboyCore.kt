@@ -5,6 +5,8 @@ import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.helpful.toBit
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
+import org.jglrxavpok.kameboy.network.guest.GuestSession
+import org.jglrxavpok.kameboy.network.host.Server
 import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.processing.video.Palettes
 import org.jglrxavpok.kameboy.ui.*
@@ -260,6 +262,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun cleanup() {
+        GuestSession.disconnect()
+        Server.stop()
         OptionsWindow.dispose()
         audioSystem.cleanup()
         glDeleteProgram(shaderID)
