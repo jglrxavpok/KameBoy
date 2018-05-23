@@ -15,7 +15,7 @@ object NoBattery: Battery {
 
 class FileBasedBattery(val backingFile: File): Battery {
     override fun loadRAM(cartridge: Cartridge) {
-        println("Loading RAM from battery")
+    //    println("Loading RAM from battery")
         if(backingFile.exists()) {
             val contents = backingFile.readBytes()
             tailrec fun fillRAM(index: Int, offset: Int): Unit = when(index) {
@@ -31,7 +31,7 @@ class FileBasedBattery(val backingFile: File): Battery {
     }
 
     override fun saveRAM(cartridge: Cartridge) {
-        println("Saving RAM to battery")
+     //   println("Saving RAM to battery")
         backingFile.createNewFile()
         val out = backingFile.outputStream().buffered()
         out.use {

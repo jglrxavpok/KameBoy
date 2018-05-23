@@ -2,6 +2,7 @@ package org.jglrxavpok.kameboy.network
 
 import io.netty.channel.ChannelHandlerContext
 import org.jglrxavpok.kameboy.network.guest.packets.GuestInfos
+import org.jglrxavpok.kameboy.network.packets.SerialPacket
 import sun.rmi.runtime.Log
 import java.util.HashMap
 
@@ -19,6 +20,10 @@ object PacketRegistry {
         packets[NetworkSide.Host] = HashMap()
 
         registerPacket(NetworkSide.Guest, 0x0, GuestInfos.Handler)
+        registerPacket(NetworkSide.Guest, 0x1, SerialPacket.Handler)
+
+
+        registerPacket(NetworkSide.Host, 0x1, SerialPacket.Handler)
     }
 
     fun getPacketId(packet: Class<out AbstractPacket>): Int {

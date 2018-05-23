@@ -20,9 +20,9 @@ fun Channel.writeAndFlushPacket(packet: AbstractPacket) {
     channel.writeAndFlush(nettyPacket).addListener { future ->
         if (!future.isSuccess) {
             future.cause().printStackTrace()
-        } else {
-            println("success! $packet")
         }
+
+        buffer.release()
     }
 }
 

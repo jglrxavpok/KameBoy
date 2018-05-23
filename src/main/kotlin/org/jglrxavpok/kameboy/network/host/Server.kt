@@ -7,21 +7,27 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
+import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
+import org.jglrxavpok.kameboy.memory.SerialPeripheral
 import org.jglrxavpok.kameboy.network.ChannelHandler
 import org.jglrxavpok.kameboy.network.PacketDecoder
 import org.jglrxavpok.kameboy.network.PacketEncoder
+import org.jglrxavpok.kameboy.network.guest.GuestSession
+import org.jglrxavpok.kameboy.network.packets.SerialPacket
+import org.jglrxavpok.kameboy.network.writeAndFlushPacket
 
 
-object Server {
-
+object Server: SerialPeripheral {
     private var listener: (ConnectionStatus) -> Unit = {}
+
     private var serverChannel: Channel? = null
+
+    val clientChannels = mutableListOf<Channel>()
     var state = ConnectionStatus.Shutdown
         set(value) {
             field = value
             listener(value)
         }
-
     fun start(port: Int, stateLister: (ConnectionStatus) -> Unit) {
         val bossGroup = NioEventLoopGroup() // (1)
         val workerGroup = NioEventLoopGroup()
@@ -47,6 +53,10 @@ object Server {
                 }
             }.sync() // (7)
 
+            val serial = CoreInstance.core.gameboy.mapper.serialIO
+            serial.connectedPeripherals.remove(this)
+            serial.connectedPeripherals += this
+
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
             // shut down your server.
@@ -62,6 +72,12 @@ object Server {
     fun stop() {
         serverChannel?.close()
         serverChannel = null
+    }
+
+    override fun transfer(byte: Int) {
+        clientChannels.forEach {
+            it.writeAndFlushPacket(SerialPacket(byte))
+        }
     }
 
     enum class ConnectionStatus {

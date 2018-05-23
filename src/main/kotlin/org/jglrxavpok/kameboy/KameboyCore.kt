@@ -32,7 +32,8 @@ import javax.swing.*
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
     val cartridge = _DEV_cart("Pokemon Gold.gbc")
-    val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+    val outputSerial = "-outputserial" in args
+    val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
@@ -311,7 +312,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             frames++
             totalTime += deltaTime
             if(totalTime >= 1f) {
-                println("$frames fps")
+                if(outputSerial)
+                    println("$frames fps")
                 frames = 0
                 totalTime %= 1f
             }

@@ -10,23 +10,25 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
 import org.jglrxavpok.kameboy.KameboyMain
+import org.jglrxavpok.kameboy.memory.SerialPeripheral
 import org.jglrxavpok.kameboy.network.*
 import org.jglrxavpok.kameboy.network.guest.packets.GuestInfos
 import org.jglrxavpok.kameboy.network.host.Server
+import org.jglrxavpok.kameboy.network.packets.SerialPacket
 import java.net.ConnectException
 
 
-object GuestSession: INetworkHandler {
+object GuestSession: INetworkHandler, SerialPeripheral {
     override val side = NetworkSide.Guest
 
     private var channel: Channel? = null
+
     private var listener: (Server.ConnectionStatus) -> Unit = {}
     private var state: Server.ConnectionStatus = Server.ConnectionStatus.Shutdown
         set(value) {
             field = value
             listener(state)
         }
-
     fun connect(host: String, port: Int, listener: (Server.ConnectionStatus) -> Unit) {
         val workerGroup = NioEventLoopGroup()
         this.listener = listener
@@ -73,13 +75,20 @@ object GuestSession: INetworkHandler {
     override fun onConnexionEstablished(ctx: ChannelHandlerContext) {
         channel = ctx.channel()
         state = Server.ConnectionStatus.Running
-        ctx.writeAndFlushPacket(GuestInfos(CoreInstance.core.cartridge.title))
-        println("sending infos")
+        val core = CoreInstance.core
+        ctx.writeAndFlushPacket(GuestInfos(core.cartridge.title))
+        val serial = core.gameboy.mapper.serialIO
+        serial.connectedPeripherals.remove(this)
+        serial.connectedPeripherals.add(this)
     }
 
     override fun exception(cause: Throwable) {
         if(cause is ConnectException) {
             state = Server.ConnectionStatus.NoConnection
         }
+    }
+
+    override fun transfer(byte: Int) {
+        channel?.writeAndFlushPacket(SerialPacket(byte))
     }
 }
