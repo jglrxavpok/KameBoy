@@ -15,6 +15,8 @@ class ServerNetHandler : INetworkHandler {
     override fun handlePacket(ctx: ChannelHandlerContext, packet: AbstractPacket) {
     }
 
-    override fun onConnexionEstablished(ctx: ChannelHandlerContext) {}
+    override fun onConnexionEstablished(ctx: ChannelHandlerContext) {
+        println("got guest!") // TODO
+    }
 
 }

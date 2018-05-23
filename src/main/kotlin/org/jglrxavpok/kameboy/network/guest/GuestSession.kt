@@ -8,7 +8,10 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
+import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
+import org.jglrxavpok.kameboy.KameboyMain
 import org.jglrxavpok.kameboy.network.*
+import org.jglrxavpok.kameboy.network.guest.packets.GuestInfos
 import org.jglrxavpok.kameboy.network.host.Server
 import java.net.ConnectException
 
@@ -70,6 +73,8 @@ object GuestSession: INetworkHandler {
     override fun onConnexionEstablished(ctx: ChannelHandlerContext) {
         channel = ctx.channel()
         state = Server.ConnectionStatus.Running
+        ctx.writeAndFlushPacket(GuestInfos(CoreInstance.core.cartridge.title))
+        println("sending infos")
     }
 
     override fun exception(cause: Throwable) {

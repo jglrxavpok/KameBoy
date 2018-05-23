@@ -6,11 +6,11 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 
 
-fun ChannelHandlerContext.writeAndFlush(packet: AbstractPacket) {
+fun ChannelHandlerContext.writeAndFlushPacket(packet: AbstractPacket) {
     this.channel().writeAndFlush(packet)
 }
 
-fun Channel.writeAndFlush(packet: AbstractPacket) {
+fun Channel.writeAndFlushPacket(packet: AbstractPacket) {
     val channel = this
     val id = PacketRegistry.getPacketId(packet.javaClass)
     val side = PacketRegistry.getPacketSide(packet.javaClass)
@@ -20,6 +20,8 @@ fun Channel.writeAndFlush(packet: AbstractPacket) {
     channel.writeAndFlush(nettyPacket).addListener { future ->
         if (!future.isSuccess) {
             future.cause().printStackTrace()
+        } else {
+            println("success! $packet")
         }
     }
 }

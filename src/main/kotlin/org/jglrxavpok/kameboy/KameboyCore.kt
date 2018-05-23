@@ -29,17 +29,22 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    private val cartridge = _DEV_cart("Pokemon Gold.gbc")
-    private val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+    val cartridge = _DEV_cart("Pokemon Gold.gbc")
+    val core = EmulatorCore(cartridge, this, outputSerial = "-outputserial" in args, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
     private var diffuseTextureUniform: Int
-    private val audioSystem: KameboyAudio
+    val audioSystem: KameboyAudio
     private var paletteIndex = 0
     private val joysticks = Array(10, ::Joystick)
 
+    companion object {
+        lateinit var CoreInstance: KameboyCore
+    }
+
     init {
+        CoreInstance = this
         val scale = 6
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy - ${cartridge.title}", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
