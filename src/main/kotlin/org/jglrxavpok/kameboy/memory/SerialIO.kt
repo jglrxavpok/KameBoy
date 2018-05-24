@@ -53,7 +53,7 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
 
     fun receive(value: Int) {
         received = value
-        if(!isInternalClock && transferring) {
+        if(!isInternalClock /*&& transferring*/) {
             val readValue = memoryMapper.read(0xFF02)
             memoryMapper.write(0xFF02, readValue and 0b0111_1111)
 
