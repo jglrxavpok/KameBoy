@@ -14,6 +14,7 @@ import org.jglrxavpok.kameboy.memory.SerialPeripheral
 import org.jglrxavpok.kameboy.network.*
 import org.jglrxavpok.kameboy.network.guest.packets.GuestInfos
 import org.jglrxavpok.kameboy.network.host.Server
+import org.jglrxavpok.kameboy.network.packets.SerialConfirmation
 import org.jglrxavpok.kameboy.network.packets.SerialPacket
 import java.net.ConnectException
 
@@ -90,5 +91,13 @@ object GuestSession: INetworkHandler, SerialPeripheral {
 
     override fun transfer(byte: Int) {
         channel?.writeAndFlushPacket(SerialPacket(byte))
+    }
+
+    fun isRunning(): Boolean {
+        return state == Server.ConnectionStatus.Running
+    }
+
+    fun confirmTransfer() {
+        channel?.writeAndFlushPacket(SerialConfirmation())
     }
 }

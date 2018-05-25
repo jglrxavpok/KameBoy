@@ -1,49 +1,58 @@
 package org.jglrxavpok.kameboy.memory
 
+import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.helpful.toClockCycles
+import org.jglrxavpok.kameboy.network.guest.GuestSession
+import org.jglrxavpok.kameboy.network.host.Server
 
 class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryMapper, outputToConsole: Boolean) {
 
     private var currentCycle = 0
-    private var byteToTransfer = 0xFF
+    private var data = 0xFF
     private var transferring = false
-    private var received = 0xFF
     val connectedPeripherals = mutableListOf<SerialPeripheral>()
 
-    private val speed = 8192.toClockCycles()
+    private val frequency = 8192
 
     private val controlRegister = MemoryRegister("SC", memoryMapper, 0xFF02)
-    private val isInternalClock by controlRegister.bitVar(0)
+    val isInternalClock by controlRegister.bitVar(0)
+    private val fastClock by controlRegister.bitVar(1)
+
+    // for synchronisation
+    private var newlyReceived = 0
 
     init {
         if(outputToConsole)
             connectedPeripherals += ConsoleOutputPeripheral
     }
 
-    var last = System.currentTimeMillis()
-
     fun step(cycles: Int) {
-        if(System.currentTimeMillis()-last > 1000) {
-            println(">> is internal clock: $isInternalClock")
-            last = System.currentTimeMillis()
-        }
         if(!transferring || !isInternalClock)
             return
         currentCycle += cycles
-        if(currentCycle >= speed) {
-            currentCycle %= speed
-            // reset transfer flag
-            val readValue = memoryMapper.read(0xFF02)
-            memoryMapper.write(0xFF02, readValue and 0b0111_1111)
+        val gameboy = memoryMapper.gameboy
+        val speedMultiplier = when {
+            !gameboy.inCGBMode -> 1
+            !fastClock -> memoryMapper.currentSpeedFactor
+            fastClock -> memoryMapper.currentSpeedFactor * 32
+            else -> 1
+        }
+        val period = (frequency * speedMultiplier).toClockCycles()
+        if(currentCycle >= period) {
+            currentCycle %= period
 
-            connectedPeripherals.forEach { it.transfer(byteToTransfer) }
+            actualTransfer()
 
             transferring = false
         }
     }
 
+    private fun actualTransfer() {
+        connectedPeripherals.forEach { it.transfer(data) }
+    }
+
     fun transfer(value: Int) {
-        byteToTransfer = value
+        data = value
     }
 
     fun startTransfer() {
@@ -52,22 +61,34 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     }
 
     fun receive(value: Int) {
-        received = value
-        if(!isInternalClock /*&& transferring*/) {
-            val readValue = memoryMapper.read(0xFF02)
-            memoryMapper.write(0xFF02, readValue and 0b0111_1111)
-
-            connectedPeripherals.forEach { it.transfer(byteToTransfer) }
-
-            transferring = false
-           // interruptManager.fireSerialIOTransferComplete()
+        newlyReceived = value
+        if(isInternalClock) {
+            sendConfirmation()
+            confirmTransfer()
+        } else {
+            actualTransfer()
         }
+    }
+
+    private fun sendConfirmation() {
+        if(Server.isRunning())
+            Server.confirmTransfer()
+        else if(GuestSession.isRunning())
+            GuestSession.confirmTransfer()
+    }
+
+    fun confirmTransfer() {
+        // reset transfer flag
+        val sc = memoryMapper.read(0xFF02)
+        memoryMapper.write(0xFF02, sc.setBits(0, 7..7))
+
+        data = newlyReceived
         interruptManager.fireSerialIOTransferComplete()
     }
 
     fun readFromTransfer(): Int {
         val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral }.isNotEmpty()
-        return if(isConnected) received else 0xFF
+        return if(isConnected) data else 0xFF
     }
 }
 

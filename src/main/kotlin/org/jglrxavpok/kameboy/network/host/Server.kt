@@ -13,6 +13,7 @@ import org.jglrxavpok.kameboy.network.ChannelHandler
 import org.jglrxavpok.kameboy.network.PacketDecoder
 import org.jglrxavpok.kameboy.network.PacketEncoder
 import org.jglrxavpok.kameboy.network.guest.GuestSession
+import org.jglrxavpok.kameboy.network.packets.SerialConfirmation
 import org.jglrxavpok.kameboy.network.packets.SerialPacket
 import org.jglrxavpok.kameboy.network.writeAndFlushPacket
 
@@ -78,6 +79,16 @@ object Server: SerialPeripheral {
         clientChannels.forEach {
             it.writeAndFlushPacket(SerialPacket(byte))
         }
+    }
+
+    fun confirmTransfer() {
+        clientChannels.forEach {
+            it.writeAndFlushPacket(SerialConfirmation())
+        }
+    }
+
+    fun isRunning(): Boolean {
+        return state == ConnectionStatus.Running
     }
 
     enum class ConnectionStatus {

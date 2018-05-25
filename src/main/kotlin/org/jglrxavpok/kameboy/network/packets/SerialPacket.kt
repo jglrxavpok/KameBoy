@@ -15,19 +15,20 @@ class SerialPacket(var byte: Int): AbstractPacket() {
     internal constructor(): this(0)
 
     override fun decodeFrom(buffer: ByteBuf) {
-        byte = buffer.readInt().asUnsigned8()
+        byte = buffer.readInt()
     }
 
     override fun encodeInto(buffer: ByteBuf) {
-        buffer.writeInt(byte.asUnsigned8())
+        buffer.writeInt(byte)
     }
 
     object Handler: PacketHandler<SerialPacket> {
         override fun handlePacket(packet: SerialPacket, ctx: ChannelHandlerContext, netHandler: INetworkHandler) {
             val core = CoreInstance.core
             val serialIO = core.gameboy.mapper.serialIO
-            serialIO.receive(packet.byte)
-            println(">> (${netHandler.side.name}) Received ${packet.byte}")
+            serialIO.receive(packet.byte.asUnsigned8())
+            val type = if(serialIO.isInternalClock) "Master" else "Slave"
+            println(">> ($type) Received ${packet.byte}")
         }
     }
 }
