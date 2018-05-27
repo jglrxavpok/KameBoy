@@ -25,6 +25,7 @@ class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial
         timer.step(clockCycles)
 
         // video & sound are not affected by speed change
+        cartridge.cartrigeType.tick(adjustedSpeed) // external crystals (eg. MBC3)
 
         video.step(adjustedSpeed)
         mapper.sound.step(adjustedSpeed)

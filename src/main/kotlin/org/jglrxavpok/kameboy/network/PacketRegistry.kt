@@ -19,14 +19,11 @@ object PacketRegistry {
     init {
         packets[NetworkSide.Guest] = HashMap()
         packets[NetworkSide.Host] = HashMap()
+        packets[NetworkSide.Common] = HashMap()
 
         registerPacket(NetworkSide.Guest, 0x0, GuestInfos.Handler)
-        registerPacket(NetworkSide.Guest, 0x1, SerialPacket.Handler)
-        registerPacket(NetworkSide.Guest, 0x2, SerialConfirmation.Handler)
-
-
-        registerPacket(NetworkSide.Host, 0x1, SerialPacket.Handler)
-        registerPacket(NetworkSide.Host, 0x2, SerialConfirmation.Handler)
+        registerPacket(NetworkSide.Common, 0x1, SerialPacket.Handler)
+        registerPacket(NetworkSide.Common, 0x2, SerialConfirmation.Handler)
     }
 
     fun getPacketId(packet: Class<out AbstractPacket>): Int {

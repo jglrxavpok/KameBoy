@@ -7,6 +7,8 @@ import org.jglrxavpok.kameboy.memory.MemoryComponent
 
 abstract class CartridgeType: MemoryComponent {
     abstract fun accepts(address: Int): Boolean
+
+    open fun tick(cycles: Int) { }
 }
 
 class ROMOnly(val cartridge: Cartridge): CartridgeType() {

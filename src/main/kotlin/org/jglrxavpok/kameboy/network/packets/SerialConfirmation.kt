@@ -18,7 +18,6 @@ class SerialConfirmation: AbstractPacket() {
             val serial = core.gameboy.mapper.serialIO
             serial.confirmTransfer()
         }
-
     }
 
 }

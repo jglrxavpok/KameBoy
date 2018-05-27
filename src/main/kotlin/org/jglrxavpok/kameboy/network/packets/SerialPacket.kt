@@ -2,9 +2,7 @@ package org.jglrxavpok.kameboy.network.packets
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
-import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
-import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.network.AbstractPacket
 import org.jglrxavpok.kameboy.network.INetworkHandler
@@ -26,9 +24,9 @@ class SerialPacket(var byte: Int): AbstractPacket() {
         override fun handlePacket(packet: SerialPacket, ctx: ChannelHandlerContext, netHandler: INetworkHandler) {
             val core = CoreInstance.core
             val serialIO = core.gameboy.mapper.serialIO
-            serialIO.receive(packet.byte.asUnsigned8())
-            val type = if(serialIO.isInternalClock) "Master" else "Slave"
+            val type = if(serialIO.hasInternalClock) "Master" else "Slave"
             println(">> ($type) Received ${packet.byte}")
+            serialIO.receive(packet.byte.asUnsigned8())
         }
     }
 }

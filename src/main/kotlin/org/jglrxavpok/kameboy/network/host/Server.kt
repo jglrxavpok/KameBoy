@@ -23,7 +23,8 @@ object Server: SerialPeripheral {
 
     private var serverChannel: Channel? = null
 
-    val clientChannels = mutableListOf<Channel>()
+    var clientChannel: Channel? = null
+
     var state = ConnectionStatus.Shutdown
         set(value) {
             field = value
@@ -55,8 +56,8 @@ object Server: SerialPeripheral {
             }.sync() // (7)
 
             val serial = CoreInstance.core.gameboy.mapper.serialIO
-            serial.connectedPeripherals.remove(this)
-            serial.connectedPeripherals += this
+            if(this !in serial.connectedPeripherals)
+                serial.connectedPeripherals += this
 
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
@@ -76,15 +77,11 @@ object Server: SerialPeripheral {
     }
 
     override fun transfer(byte: Int) {
-        clientChannels.forEach {
-            it.writeAndFlushPacket(SerialPacket(byte))
-        }
+        clientChannel?.writeAndFlushPacket(SerialPacket(byte))
     }
 
     fun confirmTransfer() {
-        clientChannels.forEach {
-            it.writeAndFlushPacket(SerialConfirmation())
-        }
+        clientChannel?.writeAndFlushPacket(SerialConfirmation())
     }
 
     fun isRunning(): Boolean {

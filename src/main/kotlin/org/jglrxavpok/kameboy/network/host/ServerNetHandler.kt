@@ -15,7 +15,7 @@ class ServerNetHandler : INetworkHandler {
     }
 
     override fun onConnexionEstablished(ctx: ChannelHandlerContext) {
-        Server.clientChannels += ctx.channel()
+        Server.clientChannel = ctx.channel()
     }
 
 }

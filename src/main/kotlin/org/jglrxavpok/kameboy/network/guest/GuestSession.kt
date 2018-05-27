@@ -79,8 +79,8 @@ object GuestSession: INetworkHandler, SerialPeripheral {
         val core = CoreInstance.core
         ctx.writeAndFlushPacket(GuestInfos(core.cartridge.title))
         val serial = core.gameboy.mapper.serialIO
-        serial.connectedPeripherals.remove(this)
-        serial.connectedPeripherals.add(this)
+        if(this !in serial.connectedPeripherals)
+            serial.connectedPeripherals.add(this)
     }
 
     override fun exception(cause: Throwable) {
