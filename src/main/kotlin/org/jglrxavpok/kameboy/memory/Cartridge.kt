@@ -80,6 +80,13 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
         0x12 -> MBC3(this, NoBattery)
         0x13 -> MBC3(this, getSaveFileBattery())
 
+        0x19 -> MBC5(this, NoBattery, NoRumble)
+        0x1A -> MBC5(this, NoBattery, NoRumble)
+        0x1B -> MBC5(this, getSaveFileBattery(), NoRumble)
+        0x1C -> MBC5(this, NoBattery, ControllerRumble)
+        0x1D -> MBC5(this, NoBattery, ControllerRumble)
+        0x1E -> MBC5(this, getSaveFileBattery(), ControllerRumble)
+
         else -> error("Cartridge type $index not supported")
     }
 
