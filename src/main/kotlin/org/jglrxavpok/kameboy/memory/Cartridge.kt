@@ -3,10 +3,7 @@ package org.jglrxavpok.kameboy.memory
 import org.jglrxavpok.kameboy.helpful.AsciiString
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.fromNibbles
-import org.jglrxavpok.kameboy.memory.cartridgetypes.CartridgeType
-import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC1
-import org.jglrxavpok.kameboy.memory.cartridgetypes.MBC3
-import org.jglrxavpok.kameboy.memory.cartridgetypes.ROMOnly
+import org.jglrxavpok.kameboy.memory.cartridgetypes.*
 import java.io.File
 
 class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val saveFile: File? = null): MemoryComponent {
@@ -73,11 +70,16 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
         1, 2 -> MBC1(this, NoBattery)
         3 -> MBC1(this, getSaveFileBattery())
 
+        5 -> MBC2(this, NoBattery)
+        6 -> MBC2(this, getSaveFileBattery())
 
-        0x10 -> MBC3(this, getSaveFileBattery()/* TODO: TIMER+RAM*/)
+
+        0x0F -> MBC3(this, getSaveFileBattery())
+        0x10 -> MBC3(this, getSaveFileBattery())
         0x11 -> MBC3(this, NoBattery)
-
+        0x12 -> MBC3(this, NoBattery)
         0x13 -> MBC3(this, getSaveFileBattery())
+
         else -> error("Cartridge type $index not supported")
     }
 
