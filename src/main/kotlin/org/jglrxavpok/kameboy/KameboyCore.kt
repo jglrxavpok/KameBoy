@@ -31,7 +31,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    val cartridge = _DEV_cart("Pokemon Cristal.gbc")
+    val cartridge = _DEV_cart("Pokemon Gold.gbc")
     val outputSerial = "-outputserial" in args
     val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
@@ -408,7 +408,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         glBindTexture(GL_TEXTURE_2D, textureID)
         for((index, color) in videoData.withIndex()) {
             val correctFormatColor = color and 0xFFFFFF
-            data[index] = correctFormatColor or (0xFF shl 24)
+            data[index] = correctFormatColor // or 0xFF
         }
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, data)
     }
