@@ -24,7 +24,6 @@ class Video(val gameboy: Gameboy) {
     val objPalette1Data = MemoryRegister("OBJ Palette 1 Data", memory, 0xFF49)
     val objPalette0Data = MemoryRegister("OBJ Palette 0 Data", memory, 0xFF48)
     val bgPaletteData = MemoryRegister("BG Palette Data", memory, 0xFF47)
-    // TODO: CGB palettes + VRAM bank
     val lyCompare = MemoryRegister("LYC", memory, 0xFF45)
     val lcdcY = memory.lyRegister
     val scrollX = MemoryRegister("ScrollX", memory, 0xFF43)
@@ -141,7 +140,7 @@ class Video(val gameboy: Gameboy) {
             } else if(screenX >= 256 || screenX < 0) {
                 continue
             }
-            if(!(gameboy.inCGBMode && bgDisplay)) { // CGB with bit 0 of LCDC cleared puts priority to sprites
+            if(!(gameboy.inCGBMode && !bgDisplay)) { // CGB with bit 0 of LCDC cleared puts priority to sprites
                 if(backgroundPriority && isBackgroundColorWithPriority(bgIndex[screenY*256+screenX])) {
                     continue
                 }
@@ -219,7 +218,8 @@ class Video(val gameboy: Gameboy) {
                 }
             }
             val overrideWindow = gameboy.isCGB && !gameboy.inCGBMode && bgDisplay
-            if(windowDisplayEnable && !overrideWindow) {
+            val windowIsVisible = windowX.getValue() in 0..166 && windowY.getValue() in 0..143
+            if((windowDisplayEnable || overrideWindow) && windowIsVisible) {
                 val effectiveLine = line-windowY.getValue()
                 if(effectiveLine in 0..255) {
                     for(x in 0 until 32) {

@@ -22,7 +22,7 @@ class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMappe
 
     override fun trigger() {
         super.trigger()
-        timer.period = DivisorToPeriod[nr3.getValue() and 0b111] shl ((nr3.getValue() shr 4) and 0xF)
+        timer.period = DivisorToPeriod[nr3.getValue() and 0b111] shr ((nr3.getValue() shr 4) and 0xF)
         timer.reset()
         lfsr = 0x7FFF
     }

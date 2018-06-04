@@ -23,7 +23,7 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
         sampleIndex++
         sampleIndex %= 32
 
-        val sample = if(sampleIndex % 2 != 0) samples else samples shr 4
+        val sample = if(sampleIndex % 2 != 0) samples else (samples shr 4)
 
         output(((sample and 0xF) shr volumeControl) and 0xF)
     }

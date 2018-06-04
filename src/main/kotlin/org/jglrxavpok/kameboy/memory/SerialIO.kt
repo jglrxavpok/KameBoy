@@ -96,7 +96,11 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
 
     fun readFromTransfer(): Int {
         val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral }.isNotEmpty()
-        return if(isConnected) data else 0xFF
+        return when {
+            isConnected -> data
+            !hasInternalClock -> 0x0
+            else -> 0xFF
+        }
     }
 }
 

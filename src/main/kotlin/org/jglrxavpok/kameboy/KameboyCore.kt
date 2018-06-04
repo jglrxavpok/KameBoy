@@ -31,7 +31,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    val cartridge = _DEV_cart("Pokemon Gold.gbc")
+    val cartridge = _DEV_cart("Puyo Puyo.gb")
     val outputSerial = "-outputserial" in args
     val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
@@ -244,8 +244,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private fun isButtonKey(key: Int) = key in arrayOf(GLFW_KEY_Q, GLFW_KEY_W, GLFW_KEY_ENTER, GLFW_KEY_BACKSPACE)
     private fun isDirectionKey(key: Int) = key in arrayOf(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT)
 
-    override var buttonState = 0xFF
-    override var directionState = 0xFF
+    override var buttonState = 0x0F
+    override var directionState = 0x0F
 
     private fun _DEV_cart(name: String): Cartridge {
         val saveFolder = File("./saves/")

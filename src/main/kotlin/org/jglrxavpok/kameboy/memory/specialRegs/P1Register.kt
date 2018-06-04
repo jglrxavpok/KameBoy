@@ -10,11 +10,11 @@ class P1Register(val input: PlayerInput): Register("P1") {
 
     override fun getValue(): Int {
         val selection = when {
-            selectButtonKeys && selectDirectionKeys -> 0x30
+            selectDirectionKeys -> 0x10
             selectButtonKeys -> 0x20
-            else -> 0x10
+            else -> 0x00
         }
-        val pressState = if(selectButtonKeys) input.buttonState else if(selectDirectionKeys) input.directionState else 0xFF
+        val pressState = if(selectButtonKeys) input.buttonState else if(selectDirectionKeys) input.directionState else 0xF
         return (0xC0 or selection) or pressState
     }
 

@@ -21,7 +21,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     open var frequency: Int = 0
         set(value) {
             field = value
-            timer.period = ((2048-value)*frequencyMultiplier)//.toClockCycles()
+            timer.period = ((2048-value)*frequencyMultiplier)
             if(channelNumber == 3)
                 timer.period /= 2
         }
@@ -43,7 +43,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
         frameSequencerStep %= 8
     }
 
-    val timer = Timer(0) {
+    val timer = Timer(2048) {
         onOutputClock(this)
     }
     val correctVolume get()= if(enveloppePeriod == 0) initialVolume else volume

@@ -3,7 +3,7 @@ package org.jglrxavpok.kameboy.memory.specialRegs
 import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.memory.SerialIO
 
-class SerialControllerRegister(val serialIO: SerialIO): Register("SC") {
+class SerialControllerRegister(val serialIO: SerialIO): Register("SC", registerValue = 0x7E) {
 
     override fun write(address: Int, value: Int) {
         super.write(address, value)
@@ -14,5 +14,4 @@ class SerialControllerRegister(val serialIO: SerialIO): Register("SC") {
             }
         }
     }
-
 }

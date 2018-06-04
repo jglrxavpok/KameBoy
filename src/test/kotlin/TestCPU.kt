@@ -54,9 +54,9 @@ class TestCPU {
         val cart = Cartridge(data)
         val input = object: PlayerInput {
             override val buttonState: Int
-                get() = 0xFF
+                get() = 0xF
             override val directionState: Int
-                get() = 0xFF
+                get() = 0xF
         }
         val memory = MemoryMapper(cart, input, false)
         val cpu = CPU(memory, memory.interruptManager, cart)
