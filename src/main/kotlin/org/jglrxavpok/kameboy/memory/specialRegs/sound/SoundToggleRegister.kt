@@ -22,7 +22,7 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
             }
         }
         // the order is important, write 0x00 **then** turn off
-        super.write(address, valueToWrite)
+        //super.write(address, valueToWrite)
         if(!isOn && valueToWrite != 0) { // turning on
             for(number in 1..4)
                 sound.channel(number).reset()

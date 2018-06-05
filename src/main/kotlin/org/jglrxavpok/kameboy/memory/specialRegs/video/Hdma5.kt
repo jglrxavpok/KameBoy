@@ -25,6 +25,6 @@ class Hdma5(val memory: MemoryMapper) : Register("HDMA 5") {
     }
 
     override fun read(address: Int): Int {
-        return 0b0111_1111 // TODO: all transfers are immediate for the moment
+        return 0xFF // TODO: all transfers are immediate for the moment
     }
 }

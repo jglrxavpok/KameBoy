@@ -18,16 +18,16 @@ import kotlin.concurrent.scheduleAtFixedRate
 class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
     companion object {
         val CpuClockSpeed = 4194304 // Clock cycles / second
-        val VideoVSync = 59.73 // updates per second
-
-        val ClockCyclesPerFrame = CpuClockSpeed / VideoVSync
+        val DMGVideoVSync = 59.73 // updates per second
+        val CGBVideoVSync = 61.1 // updates per second
     }
 
     val gameboy = Gameboy(cartridge, input, outputSerial)
+    val clockCyclesPerFrame = CpuClockSpeed / (if(cartridge.isForColorGB) CGBVideoVSync else DMGVideoVSync)
 
     fun frame(catchupSpeed: Double = 1.0) {
         var totalClockCycles = 0
-        while(totalClockCycles < ClockCyclesPerFrame*catchupSpeed) {
+        while(totalClockCycles < clockCyclesPerFrame*catchupSpeed) {
             val clockCycles = step()
             totalClockCycles += clockCycles
         }

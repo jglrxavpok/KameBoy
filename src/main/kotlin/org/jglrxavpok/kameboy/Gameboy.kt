@@ -21,12 +21,11 @@ class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial
         val clockCycles = cpu.step()
         val speedFactor = mapper.currentSpeedFactor
         val adjustedSpeed = clockCycles/speedFactor
-        mapper.serialIO.step(clockCycles)
         timer.step(clockCycles)
 
         // video & sound are not affected by speed change
         cartridge.cartrigeType.tick(adjustedSpeed) // external crystals (eg. MBC3)
-
+        mapper.serialIO.step(adjustedSpeed)
         video.step(adjustedSpeed)
         mapper.sound.step(adjustedSpeed)
         return adjustedSpeed

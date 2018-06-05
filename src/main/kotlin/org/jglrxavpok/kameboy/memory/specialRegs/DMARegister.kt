@@ -17,6 +17,6 @@ class DMARegister(val memoryMapper: MemoryMapper): Register("DMA") {
     }
 
     override fun getValue(): Int {
-        return -1 // read only
+        return 0xFF // read only
     }
 }

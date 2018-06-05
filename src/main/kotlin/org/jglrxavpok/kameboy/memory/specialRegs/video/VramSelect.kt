@@ -9,6 +9,6 @@ class VramSelect: Register("Vram Select") {
     }
 
     override fun read(address: Int): Int {
-        return super.read(address) and 1
+        return (super.read(address) and 1) or 0b1111_1110
     }
 }

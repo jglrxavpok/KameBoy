@@ -287,7 +287,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         var time = glfwGetTime()
         var frames = 0
         var totalTime = 0.0
-        val optimalTime = 1f/EmulatorCore.VideoVSync
+        val videoSyncTime = if(cartridge.isForColorGB) EmulatorCore.CGBVideoVSync else EmulatorCore.DMGVideoVSync
+        val optimalTime = 1f/videoSyncTime
         var lastTime = glfwGetTime()-optimalTime
 
         while(!glfwWindowShouldClose(window)) {
