@@ -43,7 +43,7 @@ class Video(val gameboy: Gameboy) {
     var bgTileMapSelect by lcdControl.bitVar(3)
     var spriteSizeSelect by lcdControl.bitVar(2)
     var spriteDisplayEnable by lcdControl.bitVar(1)
-    var bgDisplay by lcdControl.bitVar(0) // FIXME: GB only
+    var bgDisplay by lcdControl.bitVar(0)
 
     val lcdStatus = MemoryRegister("LCDC Status", memory, 0xFF41)
     var mode2OamInterrupt by lcdStatus.bitVar(5)

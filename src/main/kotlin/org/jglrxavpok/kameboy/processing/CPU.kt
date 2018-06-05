@@ -42,7 +42,6 @@ class CPU(val gameboy: Gameboy) {
     var flagC by F.bitVar(4)
 
     fun reset() {
-        // FIXME: GB only for the moment
         if(cartridge.isForColorGB) {
             A.setValue(0x11)
         } else {
@@ -724,11 +723,6 @@ class CPU(val gameboy: Gameboy) {
     }
 
     private fun jp(address: Int) {
-
-        // TODO: remove (DEV)
-        /*if(address == 0xC1B9) {
-            error("TEST FAILED ${A.getValue()}")
-        }*/
         programCounter.setValue(address)
     }
 

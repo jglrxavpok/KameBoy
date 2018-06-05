@@ -77,7 +77,7 @@ class KameboyAudio(val sound: Sound) {
 
         val frameData = BufferUtils.createByteBuffer(framesPerBuffer*2)
         var running = true
-        while(running) { // TODO: stoppable
+        while(running) {
             val countProcessedBuffers = alGetSourcei(alSource, AL_BUFFERS_PROCESSED)
             if(countQueuedBuffers == MaxOpenALBufferCount && countProcessedBuffers == 0) {
                 try {

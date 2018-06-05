@@ -1,3 +1,4 @@
+import org.jglrxavpok.kameboy.Gameboy
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
@@ -58,8 +59,9 @@ class TestCPU {
             override val directionState: Int
                 get() = 0xF
         }
-        val memory = MemoryMapper(cart, input, false)
-        val cpu = CPU(memory, memory.interruptManager, cart)
+        val gameboy = Gameboy(cart, input, false)
+        val memory = MemoryMapper(gameboy)
+        val cpu = CPU(gameboy)
         cpu.reset()
         while(cpu.programCounter.getValue() < 0x15B) {
             cpu.step()

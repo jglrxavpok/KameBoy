@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy
 
+import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.nullptr
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.helpful.toBit
@@ -31,7 +32,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    val cartridge = _DEV_cart("Puyo Puyo.gb")
+    val cartridge = _DEV_cart("Pokemon Gold.gbc")
     val outputSerial = "-outputserial" in args
     val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
@@ -251,12 +252,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val saveFolder = File("./saves/")
         if(!saveFolder.exists())
             saveFolder.mkdirs()
-        return Cartridge(_DEV_rom(name), /*_DEV_BOOT_ROM()*/null, File(saveFolder, name.takeWhile { it != '.' }+".sav"))
+        val romContents = _DEV_rom(name)
+        val isOnlyForColorGB = romContents[0x0143].asUnsigned() == 0xC0
+        val isForColorGB = romContents[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
+        return Cartridge(romContents, _DEV_BOOT_ROM(isForColorGB), File(saveFolder, name.takeWhile { it != '.' }+".sav"))
     }
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 
-    private fun _DEV_BOOT_ROM(): ByteArray? {
-        val bootRomFile = File("DMG_ROM.bin")
+    private fun _DEV_BOOT_ROM(cgb: Boolean): ByteArray? {
+        val filename = if(cgb) "CGB_ROM.bin" else "DMG_ROM.bin"
+        val bootRomFile = File(filename)
         if(!bootRomFile.exists())
             return null
         return bootRomFile.readBytes()

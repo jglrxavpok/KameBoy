@@ -2,12 +2,13 @@ import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import java.awt.image.BufferedImage
+import java.io.File
 import javax.swing.ImageIcon
 import javax.swing.JFrame
 import javax.swing.JLabel
 
 fun main(args: Array<String>) {
-    val cartridge = Cartridge(rom("cpu_instrs/individual/07-jr,jp,call,ret,rst.gb"))
+    val cartridge = Cartridge(rom("Pokemon Gold.gbc"), File("CGB_ROM.bin").readBytes())
     val input = object: PlayerInput {
         override val buttonState = 0xF
         override val directionState = 0xF
@@ -20,8 +21,8 @@ private fun rom(name: String) = StepByStepExecution::class.java.getResourceAsStr
 
 class StepByStepExecution(val emulatorCore: EmulatorCore) {
 
-    val cpu = emulatorCore.cpu
-    val memory = emulatorCore.mapper
+    val cpu = emulatorCore.gameboy.cpu
+    val memory = emulatorCore.gameboy.mapper
 
     init {
         emulatorCore.init()
@@ -37,18 +38,18 @@ class StepByStepExecution(val emulatorCore: EmulatorCore) {
         if(line != null) {
             val rgb = when {
                 "pic" in line -> {
-                    emulatorCore.video.pixelData
+                    emulatorCore.gameboy.video.pixelData
                 }
 
                 "bgmap" in line -> {
                     val data = IntArray(16*32 * 16*32)
-                    val video = emulatorCore.video
+                    val video = emulatorCore.gameboy.video
                     for(row in 0..(15*16)) {
                         for(x in 0..15) {
                             val tileNumber = x+(row/8)*16
                             val offset = tileNumber * 0x10
                             val tileAddress = video.tileDataAddress + offset
-                            video.drawTileRow(x*8, row, row%8, tileAddress, video.bgPaletteData, target = data)
+                            video.drawTileRow(x*8, row, row%8, tileAddress, video.bgPalette, target = data)
                         }
                     }
                     data

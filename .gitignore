@@ -30,5 +30,6 @@ resources/roms/
 
 # GB Boot ROM
 DMG_ROM.bin
+CGB_ROM.bin
 
 saves/

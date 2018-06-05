@@ -66,6 +66,7 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
 
     fun receive(value: Int) {
         newlyReceived = value
+        data = value
         if(hasInternalClock) {
             sendConfirmation()
             confirmTransfer()
@@ -98,8 +99,8 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
         val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral }.isNotEmpty()
         return when {
             isConnected -> data
-            !hasInternalClock -> 0x0
-            else -> 0xFF
+            hasInternalClock -> 0xFF
+            else -> 0x0
         }
     }
 }
