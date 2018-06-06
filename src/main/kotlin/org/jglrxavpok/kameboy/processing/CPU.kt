@@ -138,6 +138,7 @@ class CPU(val gameboy: Gameboy) {
                         interrupt(4)
                     }
                 }
+                checkInterrupts()
             }
         }
     }
@@ -229,7 +230,7 @@ class CPU(val gameboy: Gameboy) {
             0x36 -> { ld_address(HL.getValue(), nextByte()); 12}
 
             0xFA -> { ld(A, memory.read(nextAddress())); 16}
-            0x3E -> { ld(A, nextByte()); 16}
+            0x3E -> { ld(A, nextByte()); 8}
 
             0x47 -> { ld(B, A.getValue()); 4}
             0x4F -> { ld(C, A.getValue()); 4}
@@ -424,7 +425,7 @@ class CPU(val gameboy: Gameboy) {
                 if (regA == 0) flagZ = true
 
                 A.setValue(regA)
-                8
+                4
             }
 
             0x2F -> {

@@ -23,7 +23,12 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     override fun write(address: Int, value: Int) {
         when(address) {
             in 0x6000..0x7FFF -> {
-                mode = if(value == 1) Mode.Rom4Ram32 else Mode.Rom16Ram8
+                mode = if(value == 1) {
+                    cartridge.selectedRAMBankIndex = 0
+                    Mode.Rom4Ram32
+                } else {
+                    Mode.Rom16Ram8
+                }
             }
             in 0x2000..0x3FFF -> {
                 val bank = value and 0b00011111

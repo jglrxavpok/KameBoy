@@ -40,7 +40,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             divRegister,
             timerRegister,
             Register("TMA"),
-            Register("TAC"),
+            TacRegister(gameboy),
             UnknownRegister(0xFF08),
             UnknownRegister(0xFF09),
             UnknownRegister(0xFF0A),
@@ -213,7 +213,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
         return when(address.asAddress()) {
         // DMG registers
             in 0 until 0x8000 -> {
-                if(gameboy.cartridge.hasBootRom && address in 0 until gameboy.cartridge.bootROM!!.size && address !in 0x100..0x1FF && read(0xFF50) != 0x11) {
+                if(gameboy.cartridge.hasBootRom && address in 0 until gameboy.cartridge.bootROM!!.size && address !in 0x100..0x1FF && read(0xFF50) and 0xF != 0x1) {
                     gameboy.cartridge.bootRomComponent
                 } else {
                     if(address == 0xFF50) {

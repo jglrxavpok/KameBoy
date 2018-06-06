@@ -23,6 +23,8 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
     }
 
     val gameboy = Gameboy(cartridge, input, outputSerial)
+
+    @JvmField
     val clockCyclesPerFrame = CpuClockSpeed / (if(cartridge.isForColorGB) CGBVideoVSync else DMGVideoVSync)
 
     fun frame(catchupSpeed: Double = 1.0) {

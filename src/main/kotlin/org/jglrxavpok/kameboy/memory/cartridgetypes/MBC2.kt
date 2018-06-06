@@ -28,6 +28,8 @@ class MBC2(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
             }
             in 0x0000..0x1FFF -> {
                 val enable = value and 0xF == 0b1010
+                if(value and (1 shl 4) != 0)
+                    return
                 if(ramWriteEnabled && !enable) {
                     battery.saveRAM(cartridge)
                 }
@@ -37,7 +39,7 @@ class MBC2(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                 if(cartridge.ramBankCount == 0)
                     return
                 if(ramWriteEnabled) {
-                    cartridge.currentRAMBank.write(address, value)
+                    cartridge.ramBanks[0].write(address, value)
                 }
             }
         }
@@ -61,7 +63,7 @@ class MBC2(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
             in 0xA000..0xBFFF -> {
                 if(cartridge.ramBankCount == 0)
                     return 0xFF
-                return cartridge.currentRAMBank.read(address)
+                return cartridge.ramBanks[0].read(address)
             }
             else -> 0xFF
         }

@@ -33,4 +33,9 @@ class GameBoyTimer(val mapper: MemoryMapper) {
             }
         }
     }
+
+    fun resetTimer() {
+        if(timerRunning)
+            currentTimerCycle = 0
+    }
 }
