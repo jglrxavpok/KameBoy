@@ -880,7 +880,7 @@ class CPU(val gameboy: Gameboy) {
         flagZ = value and (1 shl bit) == 0
         flagH = true
         flagN = false
-        return if(register == atHL) 16 else 8
+        return if(register == atHL) 12 else 8
     }
 
     private fun srl(register: SingleValueMemoryComponent) {

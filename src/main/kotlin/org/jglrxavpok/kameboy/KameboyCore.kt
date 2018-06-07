@@ -32,7 +32,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    val cartridge = _DEV_cart("Pokemon Cristal.gbc")
+    val cartridge = _DEV_cart("LoZ Link's Awakening DX.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
     val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
@@ -248,14 +248,19 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     override var buttonState = 0x0F
     override var directionState = 0x0F
 
-    private fun _DEV_cart(name: String): Cartridge {
+    private fun _DEV_cart(name: String, useBootRom: Boolean = false): Cartridge {
         val saveFolder = File("./saves/")
         if(!saveFolder.exists())
             saveFolder.mkdirs()
         val romContents = _DEV_rom(name)
-        val isOnlyForColorGB = romContents[0x0143].asUnsigned() == 0xC0
-        val isForColorGB = romContents[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
-        return Cartridge(romContents, _DEV_BOOT_ROM(isForColorGB), File(saveFolder, name.takeWhile { it != '.' }+".sav"))
+        val bootRom = if(useBootRom) {
+            val isOnlyForColorGB = romContents[0x0143].asUnsigned() == 0xC0
+            val isForColorGB = romContents[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
+            _DEV_BOOT_ROM(isForColorGB)
+        } else {
+            null
+        }
+        return Cartridge(romContents, bootRom, File(saveFolder, name.takeWhile { it != '.' }+".sav"))
     }
     private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 

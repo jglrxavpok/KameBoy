@@ -19,16 +19,16 @@ class GameBoyTimer(val mapper: MemoryMapper) {
 
     fun step(cycles: Int) {
         currentDivCycle += cycles
-        if(currentDivCycle >= DivCycleRate) {
-            currentDivCycle %= DivCycleRate
+        while(currentDivCycle >= DivCycleRate) {
+            currentDivCycle -= DivCycleRate
             mapper.divRegister.inc()
         }
 
         if(timerRunning) {
             currentTimerCycle += cycles
             val timerRate = TimerCounterRates[clockSelect]
-            if(currentTimerCycle >= timerRate) {
-                currentTimerCycle %= timerRate
+            while(currentTimerCycle >= timerRate) {
+                currentTimerCycle -= timerRate
                 mapper.timerRegister.inc()
             }
         }

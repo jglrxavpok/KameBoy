@@ -56,6 +56,7 @@ class Video(val gameboy: Gameboy) {
     var mode: VideoMode = VideoMode.VBlank
 
     var dmgPalette: ColorPalette = DefaultPalette
+    private var displayWasEnabled = false
 
     val cgbBgPalettes = Array<ColorPalette>(8) { paletteIndex ->
         object: ColorPalette() {
@@ -298,8 +299,16 @@ class Video(val gameboy: Gameboy) {
             lcdStatus.setValue(lcdStatus.getValue().setBits(mode.ordinal, 0..1))
             lcdcY.setValue(0)
             currentClockCycles = 456
+
+            if(displayWasEnabled) {
+                pixelData.fill(0x000000)
+                bgIndex.fill(0)
+            }
+
+            displayWasEnabled = false
             return
         }
+        displayWasEnabled = lcdDisplayEnable
         val line = lcdcY.getValue()
         /*if(coincidenceInterrupt && line == lyCompare.getValue()) {
             interruptManager.fireLCDC()
@@ -331,8 +340,8 @@ class Video(val gameboy: Gameboy) {
             mode = VideoMode.VBlank
         }
 
-        if(currentClockCycles >= 456) {
-            currentClockCycles %= 456
+        while(currentClockCycles >= 456) {
+            currentClockCycles -= 456
             if(line < VBlankStartLine) {
                 scanLine()
             }
