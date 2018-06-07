@@ -28,6 +28,7 @@ class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial
         mapper.serialIO.step(adjustedSpeed)
         video.step(adjustedSpeed)
         mapper.sound.step(adjustedSpeed)
+        mapper.step(adjustedSpeed)
         return adjustedSpeed
     }
 

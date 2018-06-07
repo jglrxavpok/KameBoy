@@ -38,8 +38,8 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
             else -> 1
         }
         val period = (frequency * speedMultiplier /8).toClockCycles()
-        if(currentCycle >= period) {
-            currentCycle %= period
+        while(currentCycle >= period) {
+            currentCycle -= period
 
             actualTransfer()
 

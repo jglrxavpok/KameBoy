@@ -11,6 +11,7 @@ import org.jglrxavpok.kameboy.memory.specialRegs.video.VramSelect
 import org.jglrxavpok.kameboy.processing.video.PaletteMemory
 import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.video.SpriteAttributeTable
+import org.jglrxavpok.kameboy.processing.video.Video
 
 /**
  * TODO: Decouple sound/interrupts/gbc registers from MMU
@@ -187,6 +188,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     val hdma4 = Register("HDMA 4")
     val hdma5 = Hdma5(this)
 
+    fun step(cycles: Int) {
+        hdma5.step(cycles)
+    }
+
     fun map(address: Int): MemoryComponent {
         if(gameboy.inCGBMode) {
             val comp = when(address.asAddress()) {
@@ -195,16 +200,25 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
                 0xFF56 -> infraredRegister
                 0xFF70 -> wramBankSelect
                 0xFF68 -> backgroundPaletteIndex
-                0xFF69 -> backgroundPaletteData
+                0xFF69 -> when(gameboy.video.mode) { Video.VideoMode.Mode3 -> UnaccessibleMemory
+                    else -> backgroundPaletteData
+                }
                 0xFF6A -> spritePaletteIndex
-                0xFF6B -> spritePaletteData
+                0xFF6B -> when(gameboy.video.mode) { Video.VideoMode.Mode3 -> UnaccessibleMemory
+                    else -> spritePaletteData
+                }
                 0xFF4F -> vramSelect
                 0xFF51 -> hdma1
                 0xFF52 -> hdma2
                 0xFF53 -> hdma3
                 0xFF54 -> hdma4
                 0xFF55 -> hdma5
-                in 0x8000 until 0xA000 -> if(vramSelect[0]) vram1 else vram0
+                in 0x8000 until 0xA000 ->
+                    if(gameboy.video.mode == Video.VideoMode.Mode3) {
+                        UnaccessibleMemory
+                    } else {
+                        if(vramSelect[0]) vram1 else vram0
+                    }
                 else -> this
             }
             if(comp != this)
@@ -223,7 +237,13 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
                     }
                 }
             }
-            in 0x8000 until 0xA000 -> vram0
+            in 0x8000 until 0xA000 -> {
+                if(gameboy.video.mode == Video.VideoMode.Mode3) {
+                    UnaccessibleMemory
+                } else {
+                    vram0
+                }
+            }
             in 0xA000 until 0xC000 -> {
                 if(gameboy.cartridge.cartrigeType.accepts(address)) {
                     gameboy.cartridge.cartrigeType
@@ -245,7 +265,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
                     internalRAM
                 }
             }
-            in 0xFE00 until 0xFEA0 -> spriteAttributeTable
+            in 0xFE00 until 0xFEA0 -> when(gameboy.video.mode) {
+                Video.VideoMode.Mode2, Video.VideoMode.Mode3 -> UnaccessibleMemory
+                else -> spriteAttributeTable
+            }
             in 0xFEA0 until 0xFF00 -> empty0
             in 0xFF30..0xFF3F -> wavePatternRam
             in 0xFF00 until 0xFF4C -> ioPorts[address-0xFF00]

@@ -32,7 +32,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    val cartridge = _DEV_cart("LoZ Link's Awakening DX.gbc", useBootRom = true)
+    val cartridge = _DEV_cart("Pokemon Gold.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
     val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
