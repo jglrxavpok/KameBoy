@@ -23,10 +23,13 @@ class Sound(val memory: MemoryMapper) {
 
     var play: (Int, Int) -> Unit = {_,_->}
 
-    fun channel(index: Int) = channels[index-1]
+    inline fun channel(index: Int) = channels[index-1]
 
     init {
         channel1.channelEnabled = true
+        channel2.channelEnabled = true
+        channel3.channelEnabled = true
+        channel4.channelEnabled = true
     }
 
     fun step(cycles: Int) {
@@ -39,10 +42,10 @@ class Sound(val memory: MemoryMapper) {
 
         var leftChannel = 0
         var rightChannel = 0
+        val outputSelectValue = outputSelect.getValue()
+        val channelControlValue = channelControl.getValue()
 
         fun stepAudio(cycles: Int) {
-            val outputSelectValue = outputSelect.getValue()
-            val channelControlValue = channelControl.getValue()
             for(channel in channels) {
                 val waveform = channel.step(cycles)
                 if(outputSelectValue and (1 shl (channel.channelNumber-1)) != 0) {

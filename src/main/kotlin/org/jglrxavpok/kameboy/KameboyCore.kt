@@ -13,7 +13,6 @@ import org.jglrxavpok.kameboy.processing.video.Palettes
 import org.jglrxavpok.kameboy.ui.*
 import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
 import org.jglrxavpok.kameboy.ui.options.OptionsWindow
-import org.jglrxavpok.kameboy.ui.options.SoundOptions
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.opengl.GL
@@ -32,7 +31,7 @@ import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
-    val cartridge = _DEV_cart("Pokemon Gold.gbc", useBootRom = true)
+    val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
     val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
@@ -49,6 +48,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     init {
         CoreInstance = this
+        Config.load()
         val scale = 6
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy - ${cartridge.title}", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
@@ -191,6 +191,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                 isButtonKey(key) -> buttonState = buttonState.setBits(released, bit..bit)
                 isDirectionKey(key) -> directionState = directionState.setBits(released, bit..bit)
             }
+            if(released == 0)
+                core.gameboy.interruptManager.firePinPressed()
         }
 
         glfwSetJoystickCallback { id, event ->
@@ -273,6 +275,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun cleanup() {
+        Config.save()
         GuestSession.disconnect()
         Server.stop()
         OptionsWindow.dispose()
@@ -295,22 +298,23 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val videoSyncTime = if(cartridge.isForColorGB) EmulatorCore.CGBVideoVSync else EmulatorCore.DMGVideoVSync
         val optimalTime = 1f/videoSyncTime
         var lastTime = glfwGetTime()-optimalTime
+        glClearColor(0f, .8f, 0f, 1f)
+
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, textureID)
+        glUseProgram(shaderID)
+        glUniform1i(diffuseTextureUniform, 0)
+
+        glBindVertexArray(meshID)
 
         while(!glfwWindowShouldClose(window)) {
             val delta = glfwGetTime()-lastTime
             lastTime = glfwGetTime()
             glfwGetWindowSize(window, windowWPointer, windowHPointer)
             pollEvents()
-            glClearColor(0f, .8f, 0f, 1f)
             glClear(GL_COLOR_BUFFER_BIT)
             glViewport(0, 0, windowWPointer[0], windowHPointer[0])
 
-            glActiveTexture(GL_TEXTURE0)
-            glBindTexture(GL_TEXTURE_2D, textureID)
-            glUseProgram(shaderID)
-            glUniform1i(diffuseTextureUniform, 0)
-
-            glBindVertexArray(meshID)
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
 
             val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
@@ -331,21 +335,24 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         }
     }
 
-    private fun handleButtonChange(button: Int, state: Boolean) {
+    private fun handleButtonChange(button: Int, pressed: Boolean) {
         when(button) {
             XBoxA, XBoxX -> {
-                buttonState = buttonState.setBits(1-state.toBit(), 0..0)
+                buttonState = buttonState.setBits(1-pressed.toBit(), 0..0)
             }
             XBoxB, XBoxY -> {
-                buttonState = buttonState.setBits(1-state.toBit(), 1..1)
+                buttonState = buttonState.setBits(1-pressed.toBit(), 1..1)
             }
             XBoxSelect -> {
-                buttonState = buttonState.setBits(1-state.toBit(), 2..2)
+                buttonState = buttonState.setBits(1-pressed.toBit(), 2..2)
             }
             XBoxStart -> {
-                buttonState = buttonState.setBits(1-state.toBit(), 3..3)
+                buttonState = buttonState.setBits(1-pressed.toBit(), 3..3)
             }
         }
+
+        if(pressed)
+            core.gameboy.interruptManager.firePinPressed()
     }
 
     private fun handleAxisChange(axis: Int, axisValue: Float) {
@@ -356,12 +363,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     axisValue >= 0.25f -> {
                         directionState = directionState.setBits(0, 0..0)
                         directionState = directionState.setBits(1, 1..1)
+                        core.gameboy.interruptManager.firePinPressed()
                     }
                     axisValue <= -0.25f -> {
                         directionState = directionState.setBits(1, 0..0)
                         directionState = directionState.setBits(0, 1..1)
+                        core.gameboy.interruptManager.firePinPressed()
                     }
-                    else -> directionState = directionState.setBits(0b11, 0..1)
+                    else -> {
+                        directionState = directionState.setBits(0b11, 0..1)
+                    }
                 }
             }
             XBoxLeftY -> {
@@ -369,12 +380,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     axisValue >= 0.25f -> {
                         directionState = directionState.setBits(1, 2..2)
                         directionState = directionState.setBits(0, 3..3)
+                        core.gameboy.interruptManager.firePinPressed()
                     }
                     axisValue <= -0.25f -> {
                         directionState = directionState.setBits(0, 2..2)
                         directionState = directionState.setBits(1, 3..3)
+                        core.gameboy.interruptManager.firePinPressed()
                     }
-                    else -> directionState = directionState.setBits(0b11, 2..3)
+                    else -> {
+                        directionState = directionState.setBits(0b11, 2..3)
+                    }
                 }
             }
         }

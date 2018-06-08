@@ -32,7 +32,7 @@ class TestVideo {
                 frame.isVisible = true
                 if(!pressedUp) {
                     pressedUp = true
-                    this.gameboy.mapper.interruptManager.firePinReleased()
+                    this.gameboy.mapper.interruptManager.firePinPressed()
                     frameCount = 0
                 } else {
                     this.stop()

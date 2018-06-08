@@ -6,6 +6,8 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
 
     companion object {
         val WaveTableStart = 0xFF30
+
+        @JvmStatic
         val Volumes = arrayOf(4, 0, 1, 2)
     }
 
@@ -14,7 +16,7 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
 
     override val frequencyMultiplier = 2
     val volumeControl get()= Volumes[(nr2.getValue() shr 5) and 0b11]
-    override val dacEnabled get()= (nr3.getValue() and (1 shl 7)) != 0
+    override val dacEnabled by nr3.bitVar(7)
 
     override fun onOutputClock(timer: Timer) {
         // select low or high nibble depending on sampleIndex (first is high)

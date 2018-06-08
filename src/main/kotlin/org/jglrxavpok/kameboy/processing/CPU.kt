@@ -116,7 +116,7 @@ class CPU(val gameboy: Gameboy) {
             println("Found error in opcode ${Integer.toHexString(opcode)} at PC ${Integer.toHexString(position)}")
             e.printStackTrace()
         }
-        return 1
+        return 4
     }
 
     private fun checkInterrupts() {
@@ -853,6 +853,7 @@ class CPU(val gameboy: Gameboy) {
         }
     }
 
+    @JvmField
     val registerList = listOf(B, C, D, E, H, L, atHL, A)
 
     private fun res(opcode: Int): Int {

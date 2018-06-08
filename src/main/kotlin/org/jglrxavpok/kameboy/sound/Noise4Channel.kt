@@ -3,12 +3,12 @@ package org.jglrxavpok.kameboy.sound
 import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.MemoryMapper
-import org.jglrxavpok.kameboy.sound.SquareChannel.Companion.High
 import org.jglrxavpok.kameboy.sound.SquareChannel.Companion.Low
 
 class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMapper) {
 
     companion object {
+        @JvmStatic
         val DivisorToPeriod = arrayOf(8, 16, 32, 48, 64, 80, 96, 112)
     }
 
