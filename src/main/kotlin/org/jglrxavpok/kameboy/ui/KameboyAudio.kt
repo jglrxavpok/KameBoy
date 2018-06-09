@@ -62,7 +62,6 @@ class KameboyAudio(val sound: Sound) {
         val framesPerBuffer = SampleRate / 20 / MaxOpenALBufferCount
         var countQueuedBuffers = 0
         val alSource = alGenSources()
-        //alSourcef(alSource, AL_GAIN, 0.125f) // TODO: default value ? / save value
 
         val buffers = IntArray(MaxOpenALBufferCount)
         alGenBuffers(buffers)

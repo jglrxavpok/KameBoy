@@ -66,7 +66,6 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
 
     fun receive(value: Int) {
         newlyReceived = value
-        data = value
         if(hasInternalClock) {
             sendConfirmation()
             confirmTransfer()
