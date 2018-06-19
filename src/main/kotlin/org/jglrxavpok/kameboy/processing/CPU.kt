@@ -119,7 +119,7 @@ class CPU(val gameboy: Gameboy) {
         return 4
     }
 
-    private fun checkInterrupts() {
+    private tailrec fun checkInterrupts() {
         val interruptFlag = memory.read(0xFF0F)
         val interruptEnable = memory.read(0xFFFF)
         if(interruptFlag and interruptEnable != 0) {

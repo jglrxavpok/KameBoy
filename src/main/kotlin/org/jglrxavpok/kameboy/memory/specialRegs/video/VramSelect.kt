@@ -2,7 +2,7 @@ package org.jglrxavpok.kameboy.memory.specialRegs.video
 
 import org.jglrxavpok.kameboy.memory.Register
 
-class VramSelect: Register("Vram Select") {
+class VramSelect: Register("Vram Select", registerValue = 1) {
 
     override fun write(address: Int, value: Int) {
         super.write(address, value and 1)

@@ -6,6 +6,11 @@ import org.jglrxavpok.kameboy.ui.Rendering
 
 class PaletteMemory(name: String): MemoryComponent {
 
+    companion object {
+        val SameBoyCurve = intArrayOf(
+                0,2,4,7,12,18,25,34,42,52,62,73,85,97,109,121,134,146,158,170,182,193,203,213,221,230,237,243,248,251,253,255
+        )
+    }
     private val internalData = IntArray(64) { 0 }
 
     override val name = "$name Palette Memory"
@@ -15,9 +20,6 @@ class PaletteMemory(name: String): MemoryComponent {
         val high = read(startAddress+1)
 
         // SameBoy
-        val curve = intArrayOf(
-                0,2,4,7,12,18,25,34,42,52,62,73,85,97,109,121,134,146,158,170,182,193,203,213,221,230,237,243,248,251,253,255
-        )
         val blueIntensity = low and 0x1F
         val greenIntensity = (((low shr 5) and 0b111) or ((high and 0b11) shl 3)) and 0x1F
         val redIntensity = (high shr 2) and 0x1F
@@ -25,10 +27,12 @@ class PaletteMemory(name: String): MemoryComponent {
 
         // val rgb = (red shl 16) or (green shl 8) or (blue shl 0)
         val rgb = when(Config[Rendering.CGBColorCurve]) {
+
+            // from https://github.com/LIJI32/SameBoy/blob/master/Core/display.c
             CGBColorCurves.SameboyCurve -> {
-                ((curve[redIntensity] shl 16) or
-                        (curve[greenIntensity] shl 8) or
-                        curve[blueIntensity]).toLong()
+                ((SameBoyCurve[redIntensity] shl 16) or
+                        (SameBoyCurve[greenIntensity] shl 8) or
+                        SameBoyCurve[blueIntensity]).toLong()
             }
 
             CGBColorCurves.Linear -> {
@@ -39,6 +43,16 @@ class PaletteMemory(name: String): MemoryComponent {
                 (red shl 16) or
                         (green shl 8) or
                         blue
+            }
+
+            // from https://github.com/TASVideos/BizHawk/blob/master/BizHawk.Emulation.Cores/Consoles/Nintendo/Gameboy/GBColors.cs (MIT License)
+            CGBColorCurves.Gambatte -> {
+                val red = (redIntensity * 13 + greenIntensity * 2 + blueIntensity) shr 1
+                val green = (greenIntensity * 3 + blueIntensity) shl 1
+                val blue = (redIntensity * 3 + greenIntensity * 2 + blueIntensity * 11) shr 1
+                ((red shl 16) or
+                        (green shl 8) or
+                        blue).toLong()
             }
         }
         return rgb
@@ -53,6 +67,6 @@ class PaletteMemory(name: String): MemoryComponent {
     }
 
     enum class CGBColorCurves {
-        Linear, SameboyCurve
+        Linear, SameboyCurve, Gambatte
     }
 }
