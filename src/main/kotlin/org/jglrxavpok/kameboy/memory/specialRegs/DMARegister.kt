@@ -5,18 +5,18 @@ import org.jglrxavpok.kameboy.memory.Register
 
 class DMARegister(val memoryMapper: MemoryMapper): Register("DMA") {
 
-    override fun setValue(value: Int) {
+    override fun write(address: Int, value: Int) {
         // DMA Transfer
-        val address = value * 0x100
+        val startAddress = value * 0x100
         val length = 0xA0
         for(index in 0 until length) {
-            val data = memoryMapper.read(address + index)
+            val data = memoryMapper.read(startAddress + index)
             memoryMapper.write(0xFE00 + index, data)
         }
-    //    println("transfer from $address")
+    //    println("transfer from $startAddress")
     }
 
-    override fun getValue(): Int {
+    override fun read(address: Int): Int {
         return 0xFF // read only
     }
 }

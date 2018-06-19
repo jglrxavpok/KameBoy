@@ -22,6 +22,8 @@ class SaveState internal constructor(val gameboy: Gameboy) {
     val cartControllerData: Any
     val currentSpeed: Int
     val internalRamData: Array<ByteArray>
+    val divCycle: Int
+    val timerCycle: Int
 
     init {
         for(address in 0x0..0xFFFF) {
@@ -43,6 +45,10 @@ class SaveState internal constructor(val gameboy: Gameboy) {
         videoMode = ppu.mode
         videoCycle = ppu.currentClockCycles
 
+        val timer = gameboy.timer
+        divCycle = timer.currentDivCycle
+        timerCycle = timer.currentTimerCycle
+
         val memory = gameboy.mapper
         val wramMemoryBanks = memory.wramBanks
         internalRamData = copyRam(*wramMemoryBanks, memory.internalRAM, memory.vram0, memory.vram1, memory.highRAM,
@@ -57,6 +63,7 @@ class SaveState internal constructor(val gameboy: Gameboy) {
         val cpu = gameboy.cpu
         val ppu = gameboy.video
         val memory = gameboy.mapper
+        val timer = gameboy.timer
         cpu.AF.setValue(registerAF)
         cpu.BC.setValue(registerBC)
         cpu.DE.setValue(registerDE)
@@ -85,6 +92,9 @@ class SaveState internal constructor(val gameboy: Gameboy) {
         ppu.mode = videoMode
         ppu.currentClockCycles = videoCycle
 
+        timer.currentDivCycle = divCycle
+        timer.currentTimerCycle = timerCycle
+
         gameboy.mapper.currentSpeedFactor = currentSpeed
 
         loadRam(*wramMemoryBanks, memory.internalRAM, memory.vram0, memory.vram1, memory.highRAM,
@@ -92,7 +102,7 @@ class SaveState internal constructor(val gameboy: Gameboy) {
 
         gameboy.cartridge.cartrigeType.loadSaveStateData(cartControllerData)
 
-        // TODO: TIMERS
+        // TODO: SOUND/SERIAL + HDMA5 + Speed Switch + IE + Interrupt CPU flags + CPU halted ? +
 
         memory.spriteAttributeTable.reloadSprites()
     }
