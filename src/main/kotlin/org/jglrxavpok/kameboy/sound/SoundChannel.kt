@@ -34,11 +34,10 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     private val volumeDirection get()= if(increaseVolume) 1 else -1
     private var frameSequencerStep = 0
     val frameSequencer = Timer(512.toClockCycles()) {
-        when {
-            frameSequencerStep % 2 == 0 -> clockLength()
-            frameSequencerStep == 7 -> clockVolume()
-            frameSequencerStep % 4 == 2 -> clockSweep()
-        }
+        if(frameSequencerStep % 2 == 0) clockLength()
+        if(frameSequencerStep == 7) clockVolume()
+        if(frameSequencerStep % 4 == 2) clockSweep()
+
         frameSequencerStep++
         frameSequencerStep %= 8
     }
@@ -62,8 +61,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     fun clockLength() {
         if(shouldClockLength) {
             if(lengthCounter > 0) {
-                lengthCounter--
-                if(lengthCounter == 0) {
+                if(--lengthCounter == 0) {
                     channelEnabled = false
                     //      println("LENGTH 0 in $channelNumber")
                 }

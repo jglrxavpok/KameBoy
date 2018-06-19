@@ -21,7 +21,7 @@ class InterruptManager(val memory: MemoryComponent) {
         fireInterrupt(3)
     }
 
-    fun firePinReleased() {
+    fun firePinPressed() {
         fireInterrupt(4)
     }
 

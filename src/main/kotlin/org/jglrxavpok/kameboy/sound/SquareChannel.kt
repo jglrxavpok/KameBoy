@@ -5,8 +5,9 @@ import org.jglrxavpok.kameboy.memory.MemoryMapper
 open class SquareChannel(memory: MemoryMapper, channelNumber: Int): SoundChannel(channelNumber, 64, memory) {
 
     companion object {
+        @JvmStatic
         val Duty = arrayOf(0b00001000, 0b00001100, 0b00111100, 0b11110111)//arrayOf(0b00000001, 0b10000001, 0b10000111, 0b01111110)
-        val High = 0b1111
+        @JvmStatic
         val Low = 0b0000
     }
     val dutySelect get()= (nr1.getValue() shr 6) and 0b11

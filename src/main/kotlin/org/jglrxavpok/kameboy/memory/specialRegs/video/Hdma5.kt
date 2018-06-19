@@ -1,21 +1,15 @@
 package org.jglrxavpok.kameboy.memory.specialRegs.video
 
-import org.jglrxavpok.kameboy.helpful.toBit
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.processing.video.Video
 
-/**
- * TODO: H-Blank DMA
- */
 class Hdma5(val memory: MemoryMapper) : Register("HDMA 5") {
 
     private var source = 0
     private var destination = 0
     private var length = 0
-    private var active = false
     private var index = 0
-    private var currentCycles = 0
     private var inHBlank = false
     private var hBlankTransfer = false
 

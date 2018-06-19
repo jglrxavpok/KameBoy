@@ -34,8 +34,7 @@ fun Int.setBits(bitfield: Int, location: IntRange): Int {
         val mask = (1 shl index)
         val currentBitSet = result and mask
         when {
-            currentBitSet != 0 && bit != 0 -> Unit // already correct
-            currentBitSet == 0 && bit == 0 -> Unit
+            currentBitSet == bit -> Unit // already correct
             currentBitSet != 0 && bit == 0 -> { result = result and (mask).inv() } // unset
             currentBitSet == 0 && bit != 0 -> { result = result or mask } // set
         }
