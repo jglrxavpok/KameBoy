@@ -9,7 +9,7 @@ import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.memory.specialRegs.DHCounterRegister
 import org.jglrxavpok.kameboy.memory.specialRegs.DLCounterRegister
 
-class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
+class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType<MBC3.SaveStateData>() {
     override val name = "MBC3"
     private var enabled = true
     private var latchStart = false
@@ -186,4 +186,27 @@ class MBC3(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     override fun toString(): String {
         return "MBC3(CurrentBank=$currentBank, Battery=$battery)"
     }
+
+    override fun createSaveStateData() =
+            SaveStateData(currentBank, enabled, latchStart, mode, milliseconds, selectedClockRegister,
+                    seconds.getValue(), minutes.getValue(), hours.getValue(),
+                    upperDayCounter.getValue(), lowerDayCounter.getValue())
+
+    override fun internalLoadSaveStateData(data: SaveStateData) {
+        currentBank = data.currentBank
+        enabled = data.enabled
+        latchStart = data.latchStart
+        mode = data.mode
+        milliseconds = data.milliseconds
+        selectedClockRegister = data.selectedClockRegister
+        seconds.setValue(data.seconds)
+        minutes.setValue(data.minutes)
+        hours.setValue(data.hours)
+        upperDayCounter.setValue(data.upperDayCounter)
+        lowerDayCounter.setValue(data.lowerDayCounter)
+    }
+
+    data class SaveStateData(val currentBank: Int, val enabled: Boolean, val latchStart: Boolean, val mode: MBC3.Mode,
+                             val milliseconds: Int, val selectedClockRegister: Int, val seconds: Int, val minutes: Int,
+                             val hours: Int, val upperDayCounter: Int, val lowerDayCounter: Int)
 }

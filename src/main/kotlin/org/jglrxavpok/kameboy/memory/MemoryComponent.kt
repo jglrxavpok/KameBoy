@@ -13,9 +13,13 @@ interface MemoryComponent {
 }
 
 abstract class RAM(val size: Int): MemoryComponent {
-    private val data = ByteArray(size)
+    internal val data = ByteArray(size)
 
     override fun write(address: Int, value: Int) {
+        data[correctAddress(address)] = value.toByte()
+    }
+
+    fun writeNoSideEffects(address: Int, value: Int) {
         data[correctAddress(address)] = value.toByte()
     }
 

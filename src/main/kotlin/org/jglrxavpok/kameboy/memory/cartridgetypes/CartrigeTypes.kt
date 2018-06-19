@@ -5,16 +5,25 @@ import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 
-abstract class CartridgeType: MemoryComponent {
+abstract class CartridgeType<SaveStateData: Any>: MemoryComponent {
     abstract fun accepts(address: Int): Boolean
 
     open fun tick(cycles: Int) { }
+
+    abstract fun createSaveStateData(): SaveStateData
+    abstract fun internalLoadSaveStateData(data: SaveStateData)
+
+    fun loadSaveStateData(data: Any) = internalLoadSaveStateData(data as SaveStateData)
 }
 
-class ROMOnly(val cartridge: Cartridge): CartridgeType() {
+class ROMOnly(val cartridge: Cartridge): CartridgeType<Any>() {
     private val data = cartridge.rawData
 
     override val name = "ROM Only"
+
+    override fun createSaveStateData() = Unit
+
+    override fun internalLoadSaveStateData(data: Any) { }
 
     override fun write(address: Int, value: Int) { }
 

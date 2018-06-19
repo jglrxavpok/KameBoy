@@ -10,6 +10,7 @@ import org.jglrxavpok.kameboy.network.guest.GuestSession
 import org.jglrxavpok.kameboy.network.host.Server
 import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.processing.video.Palettes
+import org.jglrxavpok.kameboy.time.CreateSaveState
 import org.jglrxavpok.kameboy.ui.*
 import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
 import org.jglrxavpok.kameboy.ui.options.OptionsWindow
@@ -50,7 +51,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         CoreInstance = this
         Config.load()
         val scale = 6
-        window = glfwCreateWindow(160*scale, 144*scale, "Kameboy - ${cartridge.title}", nullptr, nullptr)
+        window = glfwCreateWindow(160*scale, 144*scale, "Kameboy (${cartridge.title})", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
         initInput()
         positionWindows()
@@ -166,6 +167,24 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     GLFW_KEY_F1 -> core.dumpInfos()
                     GLFW_KEY_F2 -> core.showBGMap()
                     GLFW_KEY_F3 -> showMemoryContents()
+
+                    in GLFW_KEY_1..GLFW_KEY_9 -> {
+                        val shiftPressed = mods and GLFW_MOD_SHIFT != 0
+                        val index = (key-GLFW_KEY_1)+1
+                        if(shiftPressed) {
+                            core.loadSaveState(index)
+                        } else {
+                            core.createSaveState(index)
+                        }
+                    }
+                    GLFW_KEY_0 -> {
+                        val shiftPressed = mods and GLFW_MOD_SHIFT != 0
+                        if(shiftPressed) {
+                            core.loadSaveState(0)
+                        } else {
+                            core.createSaveState(0)
+                        }
+                    }
                     GLFW_KEY_PAGE_UP -> {
                         changePalette(paletteIndex-1)
                     }

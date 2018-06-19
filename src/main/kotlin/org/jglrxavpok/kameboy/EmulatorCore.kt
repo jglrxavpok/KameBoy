@@ -8,6 +8,8 @@ import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
 import org.jglrxavpok.kameboy.processing.CPU
 import org.jglrxavpok.kameboy.processing.GameBoyTimer
 import org.jglrxavpok.kameboy.processing.video.Video
+import org.jglrxavpok.kameboy.time.CreateSaveState
+import org.jglrxavpok.kameboy.time.SaveState
 import java.awt.image.BufferedImage
 import java.util.*
 import javax.swing.ImageIcon
@@ -27,6 +29,9 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
     @JvmField
     val clockCyclesPerFrame = CpuClockSpeed / (if(cartridge.isForColorGB) CGBVideoVSync else DMGVideoVSync)
 
+    private var saveStateToLoad: SaveState? = null
+    private val saveStates = Array<SaveState?>(11) { null }
+
     fun frame(catchupSpeed: Double = 1.0) {
         var totalClockCycles = 0
         while(totalClockCycles < clockCyclesPerFrame*catchupSpeed) {
@@ -34,6 +39,11 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
             totalClockCycles += clockCycles
         }
         renderRoutine(gameboy.video.pixelData)
+
+        if(saveStateToLoad != null) {
+            saveStateToLoad!!.load()
+            saveStateToLoad = null
+        }
     }
 
     fun step(): Int {
@@ -120,6 +130,19 @@ class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputS
         frame.setLocationRelativeTo(null)
         frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
         frame.isVisible = true
+    }
+
+    fun createSaveState(index: Int) {
+        saveStates[index] = CreateSaveState(gameboy)
+        println("Save SaveState #$index")
+        // TODO: Show message
+    }
+
+    fun loadSaveState(index: Int) {
+        val state = saveStates[index] ?: return
+        println("Loading SaveState #$index")
+        // TODO: show message
+        saveStateToLoad = state
     }
 
 }

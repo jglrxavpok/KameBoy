@@ -1,17 +1,23 @@
 package org.jglrxavpok.kameboy.processing.video
 
 import org.jglrxavpok.kameboy.memory.MemoryComponent
+import org.jglrxavpok.kameboy.memory.RAM
 import org.jglrxavpok.kameboy.ui.Config
 import org.jglrxavpok.kameboy.ui.Rendering
 
-class PaletteMemory(name: String): MemoryComponent {
+class PaletteMemory(name: String): RAM(64) {
 
     companion object {
         val SameBoyCurve = intArrayOf(
                 0,2,4,7,12,18,25,34,42,52,62,73,85,97,109,121,134,146,158,170,182,193,203,213,221,230,237,243,248,251,253,255
         )
     }
-    private val internalData = IntArray(64) { 0 }
+
+    init {
+        data.fill(0)
+    }
+
+    override fun correctAddress(address: Int) = address
 
     override val name = "$name Palette Memory"
 
@@ -56,14 +62,6 @@ class PaletteMemory(name: String): MemoryComponent {
             }
         }
         return rgb
-    }
-
-    override fun write(address: Int, value: Int) {
-        internalData[address] = value
-    }
-
-    override fun read(address: Int): Int {
-        return internalData[address]
     }
 
     enum class CGBColorCurves {

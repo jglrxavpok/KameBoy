@@ -3,32 +3,25 @@ package org.jglrxavpok.kameboy.processing.video
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.memory.MemoryComponent
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import org.jglrxavpok.kameboy.memory.RAM
 
-class SpriteAttributeTable: MemoryComponent {
+class SpriteAttributeTable: RAM(0xFEA0-0xFE00) {
 
     val startAddress = 0xFE00
-    val data = ByteArray(0xFEA0-0xFE00)
+
     var sprites = Array(40) { index ->
         Sprite(index)
     }
         private set
-
     override val name = "OAM"
 
-    override fun write(address: Int, value: Int) {
-        data[address - startAddress] = value.toByte()
-    }
-
-    override fun read(address: Int): Int {
-        return data[address - startAddress].asUnsigned()
-    }
+    override fun correctAddress(address: Int) = address-startAddress
 
     fun reloadSprites() {
         sprites = Array(40) { index ->
             Sprite(index)
         }
     }
-
 
     inner class Sprite(index: Int): Comparable<Sprite> {
         val startAddress = this@SpriteAttributeTable.startAddress + index * 4

@@ -5,7 +5,7 @@ import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.Battery
 import org.jglrxavpok.kameboy.memory.Cartridge
 
-class MBC2(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
+class MBC2(val cartridge: Cartridge, val battery: Battery): CartridgeType<MBC2.SaveStateData>() {
     override val name = "MBC2"
     var currentBank = 1
     val BankSize = 0x4000
@@ -72,4 +72,13 @@ class MBC2(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     override fun toString(): String {
         return "MBC2(CurrentBank=$currentBank, Battery=$battery)"
     }
+
+    override fun createSaveStateData() = SaveStateData(currentBank, ramWriteEnabled)
+
+    override fun internalLoadSaveStateData(data: SaveStateData) {
+        currentBank = data.currentBank
+        ramWriteEnabled = data.ramWriteEnabled
+    }
+
+    data class SaveStateData(val currentBank: Int, val ramWriteEnabled: Boolean)
 }

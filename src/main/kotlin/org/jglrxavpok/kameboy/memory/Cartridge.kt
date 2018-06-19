@@ -65,7 +65,7 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
 
     override val name = "Cartridge (${cartrigeType.name})"
 
-    fun cartrigeTypeFromIndex(index: Byte): CartridgeType = when(index.asUnsigned()) {
+    fun cartrigeTypeFromIndex(index: Byte): CartridgeType<*> = when(index.asUnsigned()) {
         0 -> ROMOnly(this)
         1, 2 -> MBC1(this, NoBattery)
         3 -> MBC1(this, getSaveFileBattery())

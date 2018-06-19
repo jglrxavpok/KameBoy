@@ -7,7 +7,7 @@ import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.NoRumble
 import org.jglrxavpok.kameboy.memory.Rumble
 
-class MBC5(val cartridge: Cartridge, val battery: Battery, val rumble: Rumble): CartridgeType() {
+class MBC5(val cartridge: Cartridge, val battery: Battery, val rumble: Rumble): CartridgeType<MBC5.SaveStateData>() {
     override val name = "MBC5"
     var mode = Mode.Rom16Ram8
     var currentBank = 1
@@ -96,4 +96,14 @@ class MBC5(val cartridge: Cartridge, val battery: Battery, val rumble: Rumble): 
     override fun toString(): String {
         return "MBC5(CurrentBank=$currentBank, Battery=$battery)"
     }
+
+    override fun createSaveStateData() = SaveStateData(currentBank, ramWriteEnabled, mode)
+
+    override fun internalLoadSaveStateData(data: SaveStateData) {
+        currentBank = data.currentBank
+        ramWriteEnabled = data.ramWriteEnabled
+        mode = data.mode
+    }
+
+    data class SaveStateData(val currentBank: Int, val ramWriteEnabled: Boolean, val mode: MBC5.Mode)
 }
