@@ -20,6 +20,8 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
 
     override val name = "Memory mapper (internal)"
 
+    private var booting = gameboy.cartridge.hasBootRom
+
     val interruptManager = InterruptManager(this)
     val sound = Sound(this)
 
@@ -157,7 +159,18 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0x8000
         }
     }
-    val bootRegister = OrOnReadRegister("BOOT register", 0xFF)
+    val bootRegister = object : MemoryComponent {
+        override val name = "Boot register"
+
+        override fun write(address: Int, value: Int) {
+            if(value and 0x1 == 0x1)
+                booting = false
+        }
+
+        override fun read(address: Int): Int {
+            return 0xFF
+        }
+    }
     val wavePatternRam = WavePatternRam(sound)
     val wramBanks = Array<RAM>(8) { index ->
         object: RAM(0x4000) {
@@ -227,14 +240,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
         return when(address.asAddress()) {
         // DMG registers
             in 0 until 0x8000 -> {
-                if(gameboy.cartridge.hasBootRom && address in 0 until gameboy.cartridge.bootROM!!.size && address !in 0x100..0x1FF && read(0xFF50) and 0xF != 0x1) {
+                if(gameboy.cartridge.hasBootRom && address in 0 until gameboy.cartridge.bootROM!!.size && address !in 0x100..0x1FF && booting) {
                     gameboy.cartridge.bootRomComponent
                 } else {
-                    if(address == 0xFF50) {
-                        bootRegister
-                    } else {
-                        gameboy.cartridge
-                    }
+                    gameboy.cartridge
                 }
             }
             in 0x8000 until 0xA000 -> {
@@ -259,10 +268,9 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
                 }
             }
             in 0xD000..0xDFFF, in 0xF000..0xFDFF -> {
-                if(gameboy.inCGBMode) {
-                    wramBanks[wramBankSelect.getValue()]
-                } else {
-                    internalRAM
+                when {
+                    gameboy.inCGBMode -> wramBanks[wramBankSelect.getValue()]
+                    else -> internalRAM
                 }
             }
             in 0xFE00 until 0xFEA0 -> when(gameboy.video.mode) {
@@ -272,7 +280,12 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             in 0xFEA0 until 0xFF00 -> empty0
             in 0xFF30..0xFF3F -> wavePatternRam
             in 0xFF00 until 0xFF4C -> ioPorts[address-0xFF00]
-            in 0xFF4C until 0xFF80 -> empty1
+            in 0xFF4C until 0xFF80 -> {
+                when {
+                    booting && address == 0xFF50 -> bootRegister
+                    else -> empty1
+                }
+            }
             in 0xFF80 until 0xFFFF -> highRAM
             0xFFFF -> interruptEnableRegister
 
@@ -285,4 +298,3 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     }
     override fun read(address: Int) = map(address).read(address)
 }
-
