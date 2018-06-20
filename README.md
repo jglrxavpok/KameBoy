@@ -5,6 +5,20 @@ Original GameBoy and GameBoy Color emulator written in Kotlin
 
 Summary
 =======
+* [x] Sound emulation (not perfect but works)
+* [x] CPU emulation
+* [x] Serial port emulation
+* [x] Save states
+* [x] Game saves
+* [x] RTC emulation
+* [x] Playable with gamepad
+* [ ] Rumble emulation: only need interfacing with controllers
+* [ ] Easy to use UI
+* [ ] Netplay: Work in Progress
+* [ ] Bug free
+
+Infos
+-----
 * CPU instructions have been tested thanks to gblargg's tests and all tests pass
 * Instruction timings have been tested thanks to gblargg's tests and all tests pass
 * Supports playing with a gamepad! Mappings are provided for XBox360 controllers only ATM.
