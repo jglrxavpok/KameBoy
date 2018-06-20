@@ -4,10 +4,13 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.Battery
 import org.jglrxavpok.kameboy.memory.Cartridge
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
-class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType<MBC1.SaveStateData>() {
+class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     override val name = "MBC1"
+    @SaveStateElement
     var mode = Mode.Rom16Ram8
+    @SaveStateElement
     var currentBank = 1
     val BankSize = 0x4000
     val banks = Array(cartridge.romBankCount) { index ->
@@ -15,6 +18,8 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType<MBC1.S
         val end = start+BankSize
         cartridge.rawData.sliceArray(start until end)
     }
+
+    @SaveStateElement
     private var ramWriteEnabled = true
     init {
         battery.loadRAM(cartridge)
@@ -92,13 +97,4 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType<MBC1.S
         return "MBC1(CurrentBank=$currentBank, Battery=$battery)"
     }
 
-    override fun createSaveStateData() = SaveStateData(currentBank, ramWriteEnabled, mode)
-
-    override fun internalLoadSaveStateData(data: SaveStateData) {
-        currentBank = data.currentBank
-        ramWriteEnabled = data.ramWriteEnabled
-        mode = data.mode
-    }
-
-    data class SaveStateData(val currentBank: Int, val ramWriteEnabled: Boolean, val mode: Mode)
 }

@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryMapper
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMapper) {
 
@@ -12,7 +13,8 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
     }
 
     private val patternMemory = IntArray(16)
-    private var sampleIndex = 0
+    @SaveStateElement
+    internal var sampleIndex = 0
 
     override val frequencyMultiplier = 2
     val volumeControl get()= Volumes[(nr2.getValue() shr 5) and 0b11]

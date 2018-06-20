@@ -6,6 +6,7 @@ import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.processing.CPU
 import org.jglrxavpok.kameboy.processing.GameBoyTimer
 import org.jglrxavpok.kameboy.processing.video.Video
+import org.jglrxavpok.kameboy.time.GetSaveStateElements
 
 class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false) {
 
@@ -16,6 +17,8 @@ class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial
     val cpu = CPU(this)
     val video = Video(this)
     val timer = GameBoyTimer(mapper)
+
+    val saveStateElements = GetSaveStateElements(this)
 
     fun step(): Int {
         val clockCycles = cpu.step()

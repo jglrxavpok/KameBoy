@@ -12,6 +12,7 @@ import org.jglrxavpok.kameboy.processing.video.PaletteMemory
 import org.jglrxavpok.kameboy.sound.Sound
 import org.jglrxavpok.kameboy.processing.video.SpriteAttributeTable
 import org.jglrxavpok.kameboy.processing.video.Video
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 /**
  * TODO: Decouple sound/interrupts/gbc registers from MMU
@@ -25,15 +26,24 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     val interruptManager = InterruptManager(this)
     val sound = Sound(this)
 
+    @SaveStateElement
     val interruptEnableRegister = Register("Interrupt Enable Register")
+    @SaveStateElement
     val lyRegister = LYRegister(this)
+    @SaveStateElement
     val divRegister = DivRegister()
+    @SaveStateElement
     val timerRegister = TimerRegister(this)
+
     val serialIO = SerialIO(interruptManager, this, gameboy.outputSerial)
+    @SaveStateElement
     val serialControlReg = SerialControllerRegister(serialIO)
+    @SaveStateElement
     val serialDataReg = SerialDataRegister(serialIO, serialControlReg)
 
+    @SaveStateElement
     var currentSpeedFactor: Int = 1
+    @SaveStateElement
     val speedRegister = SpeedRegister(this)
     val ioPorts = arrayOf(
             P1Register(gameboy.input),
@@ -114,7 +124,9 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             Register("WX")
     )
 
+    @SaveStateElement
     val spriteAttributeTable = SpriteAttributeTable()
+    @SaveStateElement
     val empty0 = object: RAM(0xFF00-0xFEA0) {
         override val name = "Empty0"
 
@@ -122,6 +134,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0xFEA0
         }
     }
+    @SaveStateElement
     val empty1 = object: RAM(0xFF80-0xFF4C) {
         override val name = "Empty1"
 
@@ -129,6 +142,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0xFF4C
         }
     }
+    @SaveStateElement
     val internalRAM = object: RAM(8*1024) {
         override val name = "Internal RAM"
 
@@ -138,6 +152,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0xC000
         }
     }
+    @SaveStateElement
     val highRAM = object: RAM(0xFFFE-0xFF80 +1) {
         override val name = "High RAM"
 
@@ -145,6 +160,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0xFF80
         }
     }
+    @SaveStateElement
     val vram0 = object: RAM(8*1024) {
         override val name = "Video RAM #0"
 
@@ -152,6 +168,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return address-0x8000
         }
     }
+    @SaveStateElement
     val vram1 = object: RAM(8*1024) {
         override val name = "Video RAM #1"
 
@@ -171,7 +188,9 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             return 0xFF
         }
     }
+    @SaveStateElement
     val wavePatternRam = WavePatternRam(sound)
+    @SaveStateElement
     val wramBanks = Array<RAM>(8) { index ->
         object: RAM(0x4000) {
             override val name: String
@@ -187,12 +206,19 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     val wramBankSelect = WramBankSelectRegister()
     val infraredRegister = InfraredRegister()
 
+    @SaveStateElement
     val backgroundPaletteMemory = PaletteMemory("Background")
+    @SaveStateElement
     val spritePaletteMemory = PaletteMemory("Sprite")
+
     val backgroundPaletteIndex = CgbPaletteIndex("Background Palette Index")
+    @SaveStateElement
     val backgroundPaletteData = CgbPaletteData("Background Palette Data", backgroundPaletteIndex, backgroundPaletteMemory)
+
     val spritePaletteIndex = CgbPaletteIndex("Sprite Palette Index")
+    @SaveStateElement
     val spritePaletteData = CgbPaletteData("Sprite Palette Data", spritePaletteIndex, spritePaletteMemory)
+
     val vramSelect = VramSelect()
 
     val hdma1 = Register("HDMA 1")

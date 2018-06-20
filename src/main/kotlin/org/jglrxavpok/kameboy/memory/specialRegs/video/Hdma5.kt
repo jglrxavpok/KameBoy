@@ -3,15 +3,22 @@ package org.jglrxavpok.kameboy.memory.specialRegs.video
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.Register
 import org.jglrxavpok.kameboy.processing.video.Video
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class Hdma5(val memory: MemoryMapper) : Register("HDMA 5") {
 
-    private var source = 0
-    private var destination = 0
-    private var length = 0
-    private var index = 0
-    private var inHBlank = false
-    private var hBlankTransfer = false
+    @SaveStateElement
+    internal var source = 0
+    @SaveStateElement
+    internal var destination = 0
+    @SaveStateElement
+    internal var length = 0
+    @SaveStateElement
+    internal var index = 0
+    @SaveStateElement
+    internal var inHBlank = false
+    @SaveStateElement
+    internal var hBlankTransfer = false
 
     override fun write(address: Int, value: Int) {
         val immediate = value and (1 shl 7) == 0

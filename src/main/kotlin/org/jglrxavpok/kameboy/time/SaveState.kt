@@ -3,124 +3,131 @@ package org.jglrxavpok.kameboy.time
 import org.jglrxavpok.kameboy.Gameboy
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.memory.RAM
+import org.jglrxavpok.kameboy.memory.RamBank
 import org.jglrxavpok.kameboy.memory.SingleValueMemoryComponent
-import org.jglrxavpok.kameboy.processing.video.Video
+import org.jglrxavpok.kameboy.sound.Timer
+import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
+import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.isSuperclassOf
 
 class SaveState internal constructor(val gameboy: Gameboy) {
 
-    val registerAF: Int = gameboy.cpu.AF.getValue()
-    val registerBC: Int = gameboy.cpu.BC.getValue()
-    val registerDE: Int = gameboy.cpu.DE.getValue()
-    val registerHL: Int = gameboy.cpu.HL.getValue()
-    val registerSP: Int = gameboy.cpu.stackPointer.getValue()
-    val registerPC: Int = gameboy.cpu.programCounter.getValue()
     val memoryContents = ByteArray(0xFFFF+1)
-    val ramBanks: Array<ByteArray>
-    val videoMode: Video.VideoMode
-    val videoCycle: Int
-    val ramIndex: Int
-    val cartControllerData: Any
-    val currentSpeed: Int
-    val internalRamData: Array<ByteArray>
-    val divCycle: Int
-    val timerCycle: Int
+    val saveData = mutableMapOf<Pair<KProperty<*>, Any>, Any>()
 
     init {
+        val elements = gameboy.saveStateElements
+        for(pair in elements) {
+            val elem = pair.first
+            val owner = pair.second
+            val value = elem.call(owner)!!
+            saveData[pair] = saveData(elem, owner, value)
+        }
         for(address in 0x0..0xFFFF) {
             val component = gameboy.mapper.map(address)
             if(component is SingleValueMemoryComponent) {
                 memoryContents[address] = component.getValue().toByte()
-            } else {
-            //    memoryContents[address] = component.read(address).toByte()
             }
         }
-        val cartRamBanks = gameboy.cartridge.ramBanks
-        ramIndex = gameboy.cartridge.selectedRAMBankIndex
-        ramBanks = Array(cartRamBanks.size) { index ->
-            val bank = cartRamBanks[index]
-            bank.data.copyOf()
+    }
+
+    private fun saveData(property: KProperty<*>, owner: Any, value: Any): Any {
+        val type = property.returnType.classifier as? KClass<*> ?: error("Unknown type for $property")
+        return when {
+            SingleValueMemoryComponent::class.isSuperclassOf(type) -> {
+                (value as SingleValueMemoryComponent).getValue()
+            }
+            RAM::class.isSuperclassOf(type) -> {
+                val ram = value as RAM
+                ram.data.copyOf()
+            }
+            Array<RAM>::class.isSuperclassOf(type) -> {
+                val array = value as Array<RAM>
+                array.map { it.data.copyOf() }
+            }
+            Array<RamBank>::class.isSuperclassOf(type) -> {
+                val array = value as Array<RamBank>
+                array.map { it.data.copyOf() }
+            }
+            Timer::class.isSubclassOf(type) -> {
+                val timer = value as Timer
+                Pair(timer.period, timer.counter)
+            }
+            else -> {
+                if(property is KMutableProperty) {
+                    value
+                } else {
+                    error("Could not handle given property: $property (Is it immutable?)")
+                }
+            }
+
         }
+    }
 
-        val ppu = gameboy.video
-        videoMode = ppu.mode
-        videoCycle = ppu.currentClockCycles
-
-        val timer = gameboy.timer
-        divCycle = timer.currentDivCycle
-        timerCycle = timer.currentTimerCycle
-
-        val memory = gameboy.mapper
-        val wramMemoryBanks = memory.wramBanks
-        internalRamData = copyRam(*wramMemoryBanks, memory.internalRAM, memory.vram0, memory.vram1, memory.highRAM,
-                memory.wavePatternRam, memory.backgroundPaletteMemory, memory.spritePaletteMemory, memory.spriteAttributeTable)
-
-        currentSpeed = gameboy.mapper.currentSpeedFactor
-
-        cartControllerData = gameboy.cartridge.cartrigeType.createSaveStateData()
+    private fun loadData(property: KProperty<*>, owner: Any, value: Any, propertyValue: Any) {
+        val type = property.returnType.classifier as? KClass<*> ?: error("Unknown type for $property")
+        when {
+            SingleValueMemoryComponent::class.isSuperclassOf(type) -> {
+                (propertyValue as SingleValueMemoryComponent).setValue(value as Int)
+            }
+            RAM::class.isSuperclassOf(type) -> {
+                val ram = propertyValue as RAM
+                val data = value as ByteArray
+                data.forEachIndexed(ram.data::set)
+            }
+            Array<RAM>::class.isSuperclassOf(type) -> {
+                val array = propertyValue as Array<RAM>
+                val data = value as List<ByteArray>
+                data.forEachIndexed { index, bytes ->
+                    bytes.forEachIndexed(array[index].data::set)
+                }
+            }
+            Array<RamBank>::class.isSuperclassOf(type) -> {
+                val array = propertyValue as Array<RamBank>
+                val data = value as List<ByteArray>
+                data.forEachIndexed { index, bytes ->
+                    bytes.forEachIndexed(array[index].data::set)
+                }
+            }
+            Timer::class.isSubclassOf(type) -> {
+                val timer = propertyValue as Timer
+                val (period, counter) = value as Pair<Int, Int>
+                timer.period = period
+                timer.counter = counter
+            }
+            else -> {
+                if(property is KMutableProperty) {
+                    property.setter.call(owner, value)
+                } else {
+                    error("Could not handle given property: $property (Is it immutable?)")
+                }
+            }
+        }
     }
 
     fun load() {
-        val cpu = gameboy.cpu
-        val ppu = gameboy.video
-        val memory = gameboy.mapper
-        val timer = gameboy.timer
-        cpu.AF.setValue(registerAF)
-        cpu.BC.setValue(registerBC)
-        cpu.DE.setValue(registerDE)
-        cpu.HL.setValue(registerHL)
-        cpu.stackPointer.setValue(registerSP)
-        cpu.programCounter.setValue(registerPC)
+        val elements = gameboy.saveStateElements
+        for(pair in elements) {
+            val elem = pair.first
+            val owner = pair.second
+            val value = saveData[pair]!!
+            val propValue = elem.call(owner)!!
+            loadData(elem, owner, value, propValue)
+        }
 
         for(address in 0x0000..0xFFFF) {
             val component = gameboy.mapper.map(address)
             if(component is SingleValueMemoryComponent) {
                 component.setValue(memoryContents[address].asUnsigned())
-            } else {
-               // component.write(address, memoryContents[address].asUnsigned())
             }
         }
-
-        val cartRamBanks = gameboy.cartridge.ramBanks
-
-        ramBanks.forEachIndexed { bankIndex, bytes ->
-            for(index in bytes.indices) {
-                cartRamBanks[bankIndex].data[index] = bytes[index]
-            }
-        }
-        gameboy.cartridge.selectedRAMBankIndex = ramIndex
-        val wramMemoryBanks = gameboy.mapper.wramBanks
-        ppu.mode = videoMode
-        ppu.currentClockCycles = videoCycle
-
-        timer.currentDivCycle = divCycle
-        timer.currentTimerCycle = timerCycle
-
-        gameboy.mapper.currentSpeedFactor = currentSpeed
-
-        loadRam(*wramMemoryBanks, memory.internalRAM, memory.vram0, memory.vram1, memory.highRAM,
-                memory.wavePatternRam, memory.backgroundPaletteMemory, memory.spritePaletteMemory, memory.spriteAttributeTable)
-
-        gameboy.cartridge.cartrigeType.loadSaveStateData(cartControllerData)
 
         // TODO: SOUND/SERIAL + HDMA5 + Speed Switch + IE + Interrupt CPU flags + CPU halted ? +
 
+        val memory = gameboy.mapper
         memory.spriteAttributeTable.reloadSprites()
-    }
-
-    fun copyRam(vararg banks: RAM): Array<ByteArray> {
-        val count = banks.size
-        return Array(count) { index ->
-            val bank = banks[index]
-            bank.data.copyOf()
-        }
-    }
-
-    fun loadRam(vararg banks: RAM) {
-        banks.forEachIndexed { ramIndex, ram ->
-            for(index in ram.data.indices) {
-                ram.data[index] = internalRamData[ramIndex][index]
-            }
-        }
     }
 
 }

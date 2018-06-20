@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryMapper
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
 
@@ -8,9 +9,12 @@ class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
     val sweepShift get()= nr0.getValue() and 0b111
     val decreaseSweep by nr0.bitVar(3)
     val sweepDirection get()= if(decreaseSweep) -1 else 1
-    private var shadowRegister = 0
-    private var sweepFlag = false
-    private var internalTimer = 8
+    @SaveStateElement
+    internal var shadowRegister = 0
+    @SaveStateElement
+    internal var sweepFlag = false
+    @SaveStateElement
+    internal var internalTimer = 8
 
     override fun trigger() {
         super.trigger()

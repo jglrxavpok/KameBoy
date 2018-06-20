@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryMapper: MemoryMapper) {
 
@@ -15,9 +16,11 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
 
     var shouldClockLength by nr4.bitVar(6)
 
+    @SaveStateElement
     var channelEnabled = false
     open val dacEnabled get()= (nr2.getValue() shr 3) != 0
     protected abstract val frequencyMultiplier: Int
+    @SaveStateElement
     open var frequency: Int = 0
         set(value) {
             field = value
@@ -25,14 +28,23 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
             if(channelNumber == 3)
                 timer.period /= 2
         }
-    private var lengthCounter = length
-    private var output: Int = 0
-    protected var volume: Int = 0
+    @SaveStateElement
+    internal var lengthCounter = length
+    @SaveStateElement
+    internal var output: Int = 0
+    @SaveStateElement
+    internal var volume: Int = 0
     private val initialVolume get() = (nr2.getValue() shr 4) and 0xF
     private val increaseVolume by nr2.bitVar(3)
     private val enveloppePeriod get()= nr2.getValue() and 0b111
     private val volumeDirection get()= if(increaseVolume) 1 else -1
-    private var frameSequencerStep = 0
+    @SaveStateElement
+    internal var frameSequencerStep = 0
+
+    @SaveStateElement
+    internal var volumeCounter = 0
+
+    @SaveStateElement
     val frameSequencer = Timer(512.toClockCycles()) {
         if(frameSequencerStep % 2 == 0) clockLength()
         if(frameSequencerStep == 7) clockVolume()
@@ -42,6 +54,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
         frameSequencerStep %= 8
     }
 
+    @SaveStateElement
     val timer = Timer(2048) {
         onOutputClock(this)
     }
@@ -70,8 +83,6 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
             lengthCounter = 0
         }
     }
-
-    private var volumeCounter = 0
 
     fun clockVolume() {
         if(volumeCounter++ >= enveloppePeriod) {

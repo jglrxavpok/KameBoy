@@ -7,6 +7,7 @@ import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.InterruptManager
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
+import org.jglrxavpok.kameboy.time.SaveStateElement
 import java.util.*
 
 class Video(val gameboy: Gameboy) {
@@ -52,11 +53,14 @@ class Video(val gameboy: Gameboy) {
     var coincidenceFlag by lcdStatus.bitVar(2)
     val modeFlag get() = lcdStatus.getValue() and 0b11
 
+    @SaveStateElement
     var currentClockCycles = 0
+    @SaveStateElement
     var mode: VideoMode = VideoMode.VBlank
 
     var dmgPalette: ColorPalette = DefaultPalette
-    private var displayWasEnabled = false
+    @SaveStateElement
+    internal var displayWasEnabled = false
 
     val cgbBgPalettes = Array<ColorPalette>(8) { paletteIndex ->
         object: ColorPalette() {

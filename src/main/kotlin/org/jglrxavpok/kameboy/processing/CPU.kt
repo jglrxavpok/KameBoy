@@ -7,18 +7,26 @@ import org.jglrxavpok.kameboy.helpful.asUnsigned16
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.memory.*
 import org.jglrxavpok.kameboy.memory.specialRegs.FRegister
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class CPU(val gameboy: Gameboy) {
 
     val memory: MemoryMapper = gameboy.mapper
     val interruptManager: InterruptManager = gameboy.interruptManager
     val cartridge: Cartridge = gameboy.cartridge
+    @SaveStateElement
     var halted = false
+    @SaveStateElement
     var stopped = false
-    private var stopPC = false // used by HALT instruction
-    private var requestedInterruptChange = false
-    private var desiredInterruptState = false
+    @SaveStateElement
+    internal var stopPC = false // used by HALT instruction
+    @SaveStateElement
+    internal var requestedInterruptChange = false
+    @SaveStateElement
+    internal var desiredInterruptState = false
+    @SaveStateElement
     var stackPointer = Register("Stack Pointer", 0, sizeInBits = 16)
+    @SaveStateElement
     var programCounter = Register("Program Counter", 0, sizeInBits = 16)
     var A = Register("A", 0, sizeInBits = 8)
     var B = Register("B", 0, sizeInBits = 8)
@@ -28,9 +36,14 @@ class CPU(val gameboy: Gameboy) {
     var F = FRegister()
     var H = Register("H", 0, sizeInBits = 8)
     var L = Register("L", 0, sizeInBits = 8)
+
+    @SaveStateElement
     var AF = PairedRegisters(A, F)
+    @SaveStateElement
     var BC = PairedRegisters(B, C)
+    @SaveStateElement
     var DE = PairedRegisters(D, E)
+    @SaveStateElement
     var HL = PairedRegisters(H, L)
     var atHL = object: MemoryRegister("(HL)", memory) {
         override val address get()= HL.getValue()

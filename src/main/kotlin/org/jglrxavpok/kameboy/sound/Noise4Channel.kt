@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
 import org.jglrxavpok.kameboy.helpful.setBits
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.sound.SquareChannel.Companion.Low
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMapper) {
 
@@ -13,7 +14,8 @@ class Noise4Channel(memoryMapper: MemoryMapper): SoundChannel(4, 64, memoryMappe
     }
 
     val widthMode7 by nr4.bitVar(3)
-    private var lfsr = 0x7FFF
+    @SaveStateElement
+    internal var lfsr = 0x7FFF
 
     override val frequencyMultiplier = 0
     override var frequency: Int

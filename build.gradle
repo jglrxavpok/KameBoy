@@ -1,7 +1,7 @@
 import org.gradle.internal.os.OperatingSystem
 
 buildscript {
-    ext.kotlin_version = '1.2.31'
+    ext.kotlin_version = '1.2.50'
 
     repositories {
         mavenCentral()
@@ -52,6 +52,7 @@ dependencies {
     compile group: 'io.netty', name: 'netty-all', version: '4.1.24.Final'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     testCompile 'junit:junit:4.12'
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 }
 
 compileKotlin {

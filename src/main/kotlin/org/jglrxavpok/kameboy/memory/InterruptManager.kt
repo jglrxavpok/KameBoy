@@ -1,8 +1,11 @@
 package org.jglrxavpok.kameboy.memory
 
+import org.jglrxavpok.kameboy.time.SaveStateElement
+
 class InterruptManager(val memory: MemoryComponent) {
 
     val IF = MemoryRegister("IF", memory, 0xFF0F)
+    @SaveStateElement
     var interruptsEnabled = false
 
     fun fireVBlank() {

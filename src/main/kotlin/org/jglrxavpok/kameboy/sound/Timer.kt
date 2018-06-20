@@ -5,7 +5,7 @@ import org.jglrxavpok.kameboy.helpful.toClockCycles
 
 class Timer(var period: Int, val outputClock: Timer.() -> Unit) {
 
-    private var counter = 0
+    internal var counter = 0
 
     fun step(cycles: Int) {
         counter -= cycles

@@ -4,6 +4,7 @@ import org.jglrxavpok.kameboy.helpful.AsciiString
 import org.jglrxavpok.kameboy.helpful.asUnsigned
 import org.jglrxavpok.kameboy.helpful.fromNibbles
 import org.jglrxavpok.kameboy.memory.cartridgetypes.*
+import org.jglrxavpok.kameboy.time.SaveStateElement
 import java.io.File
 
 class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val saveFile: File? = null): MemoryComponent {
@@ -55,9 +56,12 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
         4 -> 16
         else -> error("Unknown ram size index $ramSizeIndex")
     }
+
+    @SaveStateElement
     val ramBanks = Array(ramBankCount) { index ->
         RamBank("Switchable Ram Bank #$index")
     }
+    @SaveStateElement
     var selectedRAMBankIndex = 0
     val currentRAMBank get()= ramBanks[selectedRAMBankIndex]
 
@@ -65,7 +69,7 @@ class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val save
 
     override val name = "Cartridge (${cartrigeType.name})"
 
-    fun cartrigeTypeFromIndex(index: Byte): CartridgeType<*> = when(index.asUnsigned()) {
+    fun cartrigeTypeFromIndex(index: Byte): CartridgeType = when(index.asUnsigned()) {
         0 -> ROMOnly(this)
         1, 2 -> MBC1(this, NoBattery)
         3 -> MBC1(this, getSaveFileBattery())

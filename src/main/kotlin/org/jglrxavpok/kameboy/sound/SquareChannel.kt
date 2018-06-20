@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryMapper
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 open class SquareChannel(memory: MemoryMapper, channelNumber: Int): SoundChannel(channelNumber, 64, memory) {
 
@@ -11,7 +12,8 @@ open class SquareChannel(memory: MemoryMapper, channelNumber: Int): SoundChannel
         val Low = 0b0000
     }
     val dutySelect get()= (nr1.getValue() shr 6) and 0b11
-    private var dutyBitSelect = 0
+    @SaveStateElement
+    internal var dutyBitSelect = 0
     override val frequencyMultiplier = 4
 
     override fun onOutputClock(timer: Timer) {
