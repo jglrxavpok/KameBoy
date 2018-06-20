@@ -38,6 +38,7 @@ Import the Gradle project into your IDE, open 'org.jglrxavpok.kameboy.KameboyCor
 ```kotlin
 val cartridge = _DEV_cart("<Your file name here>", useBootRom = <do you want to provide a bootrom?>)
 ```
+Then, run the main method from `org.jglrxavpok.kameboy.KameboyMain`
 Roms are fetched from `/roms/` in the classpath for the moment.
 
 Is it accurate ?
