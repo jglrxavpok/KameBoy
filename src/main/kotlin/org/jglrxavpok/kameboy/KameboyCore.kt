@@ -34,7 +34,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
     val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
-    val core = EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+    val core = NoGameCore
+    //EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
@@ -306,6 +307,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     private fun runEmulator() {
         core.init()
+        // TODO: audioSystem.switchGBSound(core.gameboy.mapper.sound)
         audioSystem.start()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
@@ -337,7 +339,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
 
             val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
-            core.frame(catchupSpeed)
+            if(core === NoGameCore) {
+                // render
+            } else { // render actual emulator
+                core.frame(catchupSpeed)
+            }
             glfwSwapBuffers(window)
 
             val newTime = glfwGetTime()

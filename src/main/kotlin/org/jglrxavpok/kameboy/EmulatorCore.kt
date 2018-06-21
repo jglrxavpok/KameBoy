@@ -17,6 +17,11 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import kotlin.concurrent.scheduleAtFixedRate
 
+object NoGameCore: EmulatorCore(Cartridge(byteArrayOf()), object: PlayerInput {
+    override val buttonState = 0xF
+    override val directionState = 0xF
+}, false, renderRoutine = { _ -> })
+
 open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
     companion object {
         val CpuClockSpeed = 4194304 // Clock cycles / second
