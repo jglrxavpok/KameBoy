@@ -1,6 +1,8 @@
 package org.jglrxavpok.kameboy.network
 
 import io.netty.channel.*
+import org.jglrxavpok.kameboy.EmulatorCore
+import org.jglrxavpok.kameboy.KameboyCore
 
 class ChannelHandler(protected val netHandler: INetworkHandler): ChannelInboundHandlerAdapter() {
 
@@ -31,6 +33,7 @@ class ChannelHandler(protected val netHandler: INetworkHandler): ChannelInboundH
 interface INetworkHandler {
 
     val side: NetworkSide
+    val core: EmulatorCore
 
     fun handlePacket(ctx: ChannelHandlerContext, packet: AbstractPacket)
 

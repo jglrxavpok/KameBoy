@@ -1,12 +1,13 @@
 package org.jglrxavpok.kameboy.network.host
 
 import io.netty.channel.ChannelHandlerContext
+import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.network.AbstractPacket
 import org.jglrxavpok.kameboy.network.INetworkHandler
 import org.jglrxavpok.kameboy.network.NetworkSide
 
 
-class ServerNetHandler : INetworkHandler {
+class ServerNetHandler(override val core: EmulatorCore) : INetworkHandler {
     override fun exception(cause: Throwable) { }
 
     override val side = NetworkSide.Host

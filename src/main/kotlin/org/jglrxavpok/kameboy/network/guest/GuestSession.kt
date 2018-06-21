@@ -8,8 +8,7 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
-import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
-import org.jglrxavpok.kameboy.KameboyMain
+import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.memory.SerialPeripheral
 import org.jglrxavpok.kameboy.network.*
 import org.jglrxavpok.kameboy.network.guest.packets.GuestInfos
@@ -21,7 +20,7 @@ import java.net.ConnectException
 
 object GuestSession: INetworkHandler, SerialPeripheral {
     override val side = NetworkSide.Guest
-
+    override lateinit var core: EmulatorCore
     private var channel: Channel? = null
 
     private var listener: (Server.ConnectionStatus) -> Unit = {}
@@ -76,7 +75,6 @@ object GuestSession: INetworkHandler, SerialPeripheral {
     override fun onConnexionEstablished(ctx: ChannelHandlerContext) {
         channel = ctx.channel()
         state = Server.ConnectionStatus.Running
-        val core = CoreInstance.core
         ctx.writeAndFlushPacket(GuestInfos(core.cartridge.title))
         val serial = core.gameboy.mapper.serialIO
         if(this !in serial.connectedPeripherals)

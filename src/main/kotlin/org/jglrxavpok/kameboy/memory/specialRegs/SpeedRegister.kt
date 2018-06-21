@@ -2,10 +2,12 @@ package org.jglrxavpok.kameboy.memory.specialRegs
 
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.Register
+import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class SpeedRegister(val memoryMapper: MemoryMapper): Register("GBC Speed") {
 
-    private var prepareSpeedSwitch = 0
+    @SaveStateElement
+    internal var prepareSpeedSwitch = 0
     val shouldPrepareSwitch get()= prepareSpeedSwitch == 1
 
     override fun read(address: Int): Int {

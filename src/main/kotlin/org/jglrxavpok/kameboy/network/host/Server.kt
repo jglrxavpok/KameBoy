@@ -1,18 +1,17 @@
 package org.jglrxavpok.kameboy.network.host
 
-import io.netty.channel.ChannelOption
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
+import io.netty.channel.ChannelInitializer
+import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
-import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
+import io.netty.channel.socket.nio.NioServerSocketChannel
+import org.jglrxavpok.kameboy.EmulatorCore
 import org.jglrxavpok.kameboy.memory.SerialPeripheral
 import org.jglrxavpok.kameboy.network.ChannelHandler
 import org.jglrxavpok.kameboy.network.PacketDecoder
 import org.jglrxavpok.kameboy.network.PacketEncoder
-import org.jglrxavpok.kameboy.network.guest.GuestSession
 import org.jglrxavpok.kameboy.network.packets.SerialConfirmation
 import org.jglrxavpok.kameboy.network.packets.SerialPacket
 import org.jglrxavpok.kameboy.network.writeAndFlushPacket
@@ -30,7 +29,7 @@ object Server: SerialPeripheral {
             field = value
             listener(value)
         }
-    fun start(port: Int, stateLister: (ConnectionStatus) -> Unit) {
+    fun start(port: Int, core: EmulatorCore, stateLister: (ConnectionStatus) -> Unit) {
         val bossGroup = NioEventLoopGroup() // (1)
         val workerGroup = NioEventLoopGroup()
         listener = stateLister
@@ -42,7 +41,7 @@ object Server: SerialPeripheral {
                     .childHandler(object : ChannelInitializer<SocketChannel>() { // (4)
                         @Throws(Exception::class)
                         public override fun initChannel(ch: SocketChannel) {
-                            ch.pipeline().addLast(PacketDecoder()).addLast(PacketEncoder()).addLast(ChannelHandler(ServerNetHandler()))
+                            ch.pipeline().addLast(PacketDecoder()).addLast(PacketEncoder()).addLast(ChannelHandler(ServerNetHandler(core)))
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)
@@ -55,7 +54,7 @@ object Server: SerialPeripheral {
                 }
             }.sync() // (7)
 
-            val serial = CoreInstance.core.gameboy.mapper.serialIO
+            val serial = core.gameboy.mapper.serialIO
             if(this !in serial.connectedPeripherals)
                 serial.connectedPeripherals += this
 

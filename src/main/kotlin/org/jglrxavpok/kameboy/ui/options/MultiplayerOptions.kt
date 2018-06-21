@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy.ui.options
 
+import org.jglrxavpok.kameboy.KameboyCore.Companion.CoreInstance
 import org.jglrxavpok.kameboy.network.guest.GuestSession
 import org.jglrxavpok.kameboy.network.host.Server
 import java.awt.FlowLayout
@@ -64,6 +65,7 @@ object MultiplayerOptions : JPanel() {
                 val port = addressParts[1].toInt()
                 pane.add(disconnectButton)
                 thread(name = "Netty Guest Thread") {
+                    GuestSession.core = CoreInstance.core
                     GuestSession.connect(ip, port) { state ->
                         when(state) {
                             Server.ConnectionStatus.Shutdown -> resetConnectPanel(hostPanel, connectPanel, watchPanel)
@@ -124,7 +126,7 @@ object MultiplayerOptions : JPanel() {
                 add(shutdownButton)
             }
             thread(name = "Netty Server Thread") {
-                Server.start(portSelection.value as Int) { state: Server.ConnectionStatus ->
+                Server.start(portSelection.value as Int, CoreInstance.core) { state: Server.ConnectionStatus ->
                     when(state) {
                         Server.ConnectionStatus.Shutdown -> resetHostPanel(hostPanel, connectPanel, watchPanel)
                         Server.ConnectionStatus.Running -> statusLabel.text = "Running"

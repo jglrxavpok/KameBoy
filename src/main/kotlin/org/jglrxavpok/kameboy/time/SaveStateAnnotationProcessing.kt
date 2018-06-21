@@ -15,6 +15,7 @@ fun GetSaveStateElements(gameboy: Gameboy): List<Pair<KProperty<*>, Any>> {
     AddElements(result, gameboy.timer)
     AddElements(result, gameboy.video)
     AddElements(result, gameboy.mapper)
+    AddElements(result, gameboy.mapper.speedRegister)
     AddElements(result, gameboy.mapper.sound)
     AddElements(result, gameboy.mapper.hdma5)
     AddElements(result, gameboy.mapper.interruptManager)

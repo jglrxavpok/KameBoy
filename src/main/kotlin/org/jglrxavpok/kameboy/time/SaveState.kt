@@ -124,8 +124,6 @@ class SaveState internal constructor(val gameboy: Gameboy) {
             }
         }
 
-        // TODO: SOUND/SERIAL + HDMA5 + Speed Switch + IE + Interrupt CPU flags + CPU halted ? +
-
         val memory = gameboy.mapper
         memory.spriteAttributeTable.reloadSprites()
     }
