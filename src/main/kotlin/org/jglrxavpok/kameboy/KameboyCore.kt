@@ -503,7 +503,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun updateTitle() {
-        glfwSetWindowTitle(window, core.title)
+        glfwSetWindowTitle(window, "KameBoy (${core.title})")
     }
 
     fun ejectCartridge() {

@@ -3,6 +3,8 @@ KameBoy
 
 Original GameBoy and GameBoy Color emulator written in Kotlin
 
+![](images/PokemonOr.png)
+
 Summary
 =======
 * [x] Sound emulation (not perfect but works)
@@ -37,6 +39,7 @@ How to run from sources
 ***WARNING***: **Press all direction (arrows) and button (Q,W on qwerty, Enter and Backspace) keys when launching a game: the emulator thinks they are all pressed (known issue).**
 
 Import the Gradle project into your IDE. Then, run the main method from `org.jglrxavpok.kameboy.KameboyMain`
+
 Click on 'Insert cartridge' and select your ROM file!
 
 Is it accurate ?
