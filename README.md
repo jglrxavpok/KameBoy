@@ -3,7 +3,7 @@ KameBoy
 
 Original GameBoy and GameBoy Color emulator written in Kotlin
 
-![](https://github.com/jglrxavpok/Kameboy/master/images/PokemonOr.png)
+![](images/PokemonOr.png)
 
 Summary
 =======
