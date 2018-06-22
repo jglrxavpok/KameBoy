@@ -7,26 +7,26 @@ import org.jglrxavpok.kameboy.memory.cartridgetypes.*
 import org.jglrxavpok.kameboy.time.SaveStateElement
 import java.io.File
 
-class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val saveFile: File? = null): MemoryComponent {
+open class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val saveFile: File? = null): MemoryComponent {
     val hasBootRom = bootROM != null
     val bootRomComponent = RomWrapper(bootROM ?: ByteArray(0))
-    val scrollingLogo = rawData.sliceArray(0x0104..0x0133)
-    val title = AsciiString(rawData.sliceArray(0x0134..0x0142))
-    val isOnlyForColorGB = rawData[0x0143].asUnsigned() == 0xC0
-    val isForColorGB = rawData[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
-    val licenseCode = fromNibbles(rawData[0x0144], rawData[0x0145])
-    val superGameBoyIndicator = rawData[0x0146]
-    val cartridgeTypeIndex = rawData[0x0147]
-    val romSizeIndex = rawData[0x0148]
-    val ramSizeIndex = rawData[0x0149]
-    val isJapanese = rawData[0x014A].asUnsigned() == 0
-    val oldLicenseCode = rawData[0x14B]
+    open val scrollingLogo = rawData.sliceArray(0x0104..0x0133)
+    open val title = AsciiString(rawData.sliceArray(0x0134..0x0142))
+    open val isOnlyForColorGB = rawData[0x0143].asUnsigned() == 0xC0
+    open val isForColorGB = rawData[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
+    open val licenseCode = fromNibbles(rawData[0x0144], rawData[0x0145])
+    open val superGameBoyIndicator = rawData[0x0146]
+    open val cartridgeTypeIndex = rawData[0x0147]
+    open val romSizeIndex = rawData[0x0148]
+    open val ramSizeIndex = rawData[0x0149]
+    open val isJapanese = rawData[0x014A].asUnsigned() == 0
+    open val oldLicenseCode = rawData[0x14B]
 
-    val usesSGBFunctions = oldLicenseCode.asUnsigned() == 0x33 && superGameBoyIndicator.asUnsigned() == 0x03
+    open val usesSGBFunctions = oldLicenseCode.asUnsigned() == 0x33 && superGameBoyIndicator.asUnsigned() == 0x03
 
-    val maskROMVersion = rawData[0x14C]
-    val complementCheck = rawData[0x14D]
-    val checksum = fromNibbles(rawData[0x14E], rawData[0x14F])
+    open val maskROMVersion = rawData[0x14C]
+    open val complementCheck = rawData[0x14D]
+    open val checksum = fromNibbles(rawData[0x14E], rawData[0x14F])
     val romBankCount get()= when(romSizeIndex.asUnsigned()) {
      /*   0 -> 0
         1 -> 1

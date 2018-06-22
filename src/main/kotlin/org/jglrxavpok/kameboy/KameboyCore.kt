@@ -28,6 +28,7 @@ import org.lwjgl.opengl.GL30.glGenVertexArrays
 import java.awt.Toolkit
 import java.io.File
 import java.nio.ByteBuffer
+import javax.imageio.ImageIO
 import javax.swing.*
 
 class KameboyCore(val args: Array<String>): PlayerInput {
@@ -43,6 +44,17 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     val audioSystem: KameboyAudio
     private var paletteIndex = 0
     private val joysticks = Array(10, ::Joystick)
+    private val noGameImage =
+            ImageIO.read(javaClass.getResourceAsStream("/images/no_game.png"))
+                    .getRGB(0,0,256,256,null,0, 256).apply {
+                        for(index in 0 until size) {
+                            val color = this[index]
+                            val red = (color shr 16) and 0xFF
+                            val green = (color shr 8) and 0xFF
+                            val blue = color and 0xFF
+                            this[index] = (blue shl 16) or (green shl 8) or red
+                        }
+                    }
 
     companion object {
         lateinit var CoreInstance: KameboyCore
@@ -52,7 +64,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         CoreInstance = this
         Config.load()
         val scale = 6
-        window = glfwCreateWindow(160*scale, 144*scale, "Kameboy (${cartridge.title})", nullptr, nullptr)
+        window = glfwCreateWindow(160*scale, 144*scale, "Kameboy (${core.title})", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
         initInput()
         positionWindows()
@@ -340,7 +352,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
             val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
             if(core === NoGameCore) {
-                // render
+                updateTexture(core, noGameImage)
             } else { // render actual emulator
                 core.frame(catchupSpeed)
             }

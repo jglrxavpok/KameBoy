@@ -17,10 +17,29 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import kotlin.concurrent.scheduleAtFixedRate
 
-object NoGameCore: EmulatorCore(Cartridge(byteArrayOf()), object: PlayerInput {
+object NoCartridge: Cartridge(ByteArray(0x200)) {
+    override val title = "No game :("
+    override val isOnlyForColorGB = false
+    override val isForColorGB = true
+    override val licenseCode = 0
+    override val superGameBoyIndicator = 0.toByte()
+    override val cartridgeTypeIndex = 0.toByte()
+    override val romSizeIndex = 0.toByte()
+    override val ramSizeIndex = 0.toByte()
+    override val isJapanese = false
+    override val oldLicenseCode = 0.toByte()
+    override val usesSGBFunctions = false
+    override val maskROMVersion = 0.toByte()
+    override val complementCheck = 0.toByte()
+    override val checksum = 0
+    override val name = "NoCart"
+}
+object NoGameCore: EmulatorCore(NoCartridge, object: PlayerInput {
     override val buttonState = 0xF
     override val directionState = 0xF
-}, false, renderRoutine = { _ -> })
+}, false, renderRoutine = { _ -> }) {
+    override val title = "No game :("
+}
 
 open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
     companion object {
@@ -31,13 +50,15 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
 
     val gameboy = Gameboy(cartridge, input, outputSerial)
 
+    open val title = cartridge.title
+
     @JvmField
     val clockCyclesPerFrame = CpuClockSpeed / (if(cartridge.isForColorGB) CGBVideoVSync else DMGVideoVSync)
 
     private var saveStateToLoad: SaveState? = null
     private val saveStates = Array<SaveState?>(11) { null }
 
-    fun frame(catchupSpeed: Double = 1.0) {
+    open fun frame(catchupSpeed: Double = 1.0) {
         var totalClockCycles = 0
         while(totalClockCycles < clockCyclesPerFrame*catchupSpeed) {
             val clockCycles = step()
@@ -51,7 +72,7 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
         }
     }
 
-    fun step(): Int {
+    open fun step(): Int {
         return gameboy.step()
     }
 
