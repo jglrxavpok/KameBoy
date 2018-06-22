@@ -15,7 +15,7 @@ import java.lang.Thread.sleep
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
 
-class KameboyAudio(val sound: Sound) {
+class KameboyAudio(var sound: Sound) {
 
     companion object {
         val nullstr: String? = null
@@ -158,6 +158,13 @@ class KameboyAudio(val sound: Sound) {
 
     fun cleanup() {
         soundThread.interrupt()
+    }
+
+    fun reloadGBSound(sound: Sound) {
+        this.sound.play = {_,_->}
+
+        this.sound = sound
+        sound.play = ::playSample
     }
 
 }

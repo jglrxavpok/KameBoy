@@ -35,8 +35,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var window: Long
     val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
-    val core = NoGameCore
-    //EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+    var core: EmulatorCore = NoGameCore
     private var shaderID: Int
     private var textureID: Int
     private var meshID: Int
@@ -93,14 +92,16 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         val height = IntArray(1)
         glfwGetWindowSize(window, width, height)
         val spacing = 5
-        val totalWidth = width[0] + OptionsWindow.width + spacing
         val videoMode = Toolkit.getDefaultToolkit().screenSize
-        val x = videoMode.width/2-totalWidth/2
-        val y = videoMode.height/2- maxOf(height[0], OptionsWindow.height)/2
+        val x = videoMode.width/2-width[0]/2
+        val y = videoMode.height/2-height[0]/2
 
         glfwSetWindowPos(window, x, y)
         OptionsWindow.setLocation(x+width[0]+spacing, y)
         OptionsWindow.isVisible = true
+
+        EmulatorControlWindow.setLocation(x-EmulatorControlWindow.width-spacing, y)
+        EmulatorControlWindow.isVisible = true
     }
 
     private fun prepareRenderMesh(): Int {
@@ -311,6 +312,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         GuestSession.disconnect()
         Server.stop()
         OptionsWindow.dispose()
+        EmulatorControlWindow.dispose()
         audioSystem.cleanup()
         glDeleteProgram(shaderID)
         glfwDestroyWindow(window)
@@ -474,5 +476,50 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             data[index] = correctFormatColor // or 0xFF
         }
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, data)
+    }
+
+    fun loadROM(file: File) {
+        val romContents = file.readBytes()
+        val useBootRom = true // TODO: config
+        val bootRom = if(useBootRom) {
+            val isOnlyForColorGB = romContents[0x0143].asUnsigned() == 0xC0
+            val isForColorGB = romContents[0x0143].asUnsigned() == 0x80 || isOnlyForColorGB
+            _DEV_BOOT_ROM(isForColorGB)
+        } else {
+            null
+        }
+        val saveFolder = File("./saves/")
+        if(!saveFolder.exists())
+            saveFolder.mkdirs()
+        val saveFile = File(saveFolder, file.name.takeWhile { it != '.' }+".sav")
+        val cart = Cartridge(romContents, bootRom, saveFile)
+        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+        core.init()
+        audioSystem.reloadGBSound(core.gameboy.mapper.sound)
+        updateTitle()
+
+        EmulatorControlWindow.ejectCartridge.isEnabled = true
+        EmulatorControlWindow.resetGame.isEnabled = true
+    }
+
+    private fun updateTitle() {
+        glfwSetWindowTitle(window, core.title)
+    }
+
+    fun ejectCartridge() {
+        core = NoGameCore
+        audioSystem.reloadGBSound(core.gameboy.mapper.sound)
+        updateTitle()
+
+        EmulatorControlWindow.ejectCartridge.isEnabled = false
+        EmulatorControlWindow.resetGame.isEnabled = false
+    }
+
+    fun hardReset() {
+        val cart = Cartridge(core.cartridge.rawData, core.cartridge.bootROM, core.cartridge.saveFile)
+        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+        core.init()
+        audioSystem.reloadGBSound(core.gameboy.mapper.sound)
+        updateTitle()
     }
 }
