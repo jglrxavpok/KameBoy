@@ -34,13 +34,10 @@ Import the Gradle project into your favorite IDE and launch `gradle build`
 
 How to run from sources
 -----------------------
-Import the Gradle project into your IDE, open 'org.jglrxavpok.kameboy.KameboyCore' and change:
-```kotlin
-val cartridge = _DEV_cart("<Your file name here>", useBootRom = <do you want to provide a bootrom?>)
-```
-Then, run the main method from `org.jglrxavpok.kameboy.KameboyMain`
+***WARNING***: **Press all direction (arrows) and button (Q,W on qwerty, Enter and Backspace) keys when launching a game: the emulator thinks they are all pressed (known issue).**
 
-Roms are fetched from `/roms/` in the classpath for the moment.
+Import the Gradle project into your IDE. Then, run the main method from `org.jglrxavpok.kameboy.KameboyMain`
+Click on 'Insert cartridge' and select your ROM file!
 
 Is it accurate ?
 ----------------
@@ -56,4 +53,6 @@ Does it support netplay?
 ------------------------
 Kind of, it is still experimental and may very well crash the emulator!
 
-
+Does it support saves?
+----------------------
+Yes, games are saved to a `<rom name>.sav` file in a folder named 'saves' located inside the run directory of the emulator.

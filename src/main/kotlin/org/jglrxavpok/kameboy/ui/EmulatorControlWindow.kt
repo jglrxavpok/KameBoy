@@ -13,7 +13,7 @@ object EmulatorControlWindow: JFrame("Control") {
     val ejectCartridge = JButton("Eject cartridge")
 
     init {
-        defaultCloseOperation = WindowConstants.HIDE_ON_CLOSE
+        defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
         val content = JPanel()
         content.layout = BoxLayout(content, BoxLayout.Y_AXIS)
 

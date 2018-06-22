@@ -9,7 +9,7 @@ import javax.swing.WindowConstants
 object OptionsWindow: JFrame("Kameboy Options") {
 
     init {
-        defaultCloseOperation = WindowConstants.HIDE_ON_CLOSE
+        defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
         val tabs = JTabbedPane()
         tabs.addTab("Graphics", GraphicsOptions)
         tabs.addTab("Input", InputOptions)
