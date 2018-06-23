@@ -20,7 +20,7 @@ class MBC5(val cartridge: Cartridge, val battery: Battery, val rumble: Rumble): 
         cartridge.rawData.sliceArray(start until end)
     }
     @SaveStateElement
-    private var ramWriteEnabled = true
+    var ramWriteEnabled = true
     init {
         battery.loadRAM(cartridge)
     }

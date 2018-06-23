@@ -20,7 +20,7 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
     }
 
     @SaveStateElement
-    private var ramWriteEnabled = true
+    var ramWriteEnabled = true
     init {
         battery.loadRAM(cartridge)
     }

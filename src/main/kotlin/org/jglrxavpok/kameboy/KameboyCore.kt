@@ -43,6 +43,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     val audioSystem: KameboyAudio
     private var paletteIndex = 0
     private val joysticks = Array(10, ::Joystick)
+    private val messageSystem = MessageSystem()
     private val noGameImage =
             ImageIO.read(javaClass.getResourceAsStream("/images/no_game.png"))
                     .getRGB(0,0,256,256,null,0, 256).apply {
@@ -71,9 +72,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
-        shaderID = loadShader()
+        shaderID = LoadShader("blit")
         glUseProgram(shaderID)
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
+        glUniform1i(diffuseTextureUniform, 0)
+        FontRenderer.init()
         textureID = prepareTexture()
         meshID = prepareRenderMesh()
         audioSystem = KameboyAudio(core.gameboy.mapper.sound)
@@ -102,6 +105,13 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
         EmulatorControlWindow.setLocation(x-EmulatorControlWindow.width-spacing, y)
         EmulatorControlWindow.isVisible = true
+    }
+
+    fun getScreenSize(): Pair<Int, Int> {
+        val width = IntArray(1)
+        val height = IntArray(1)
+        glfwGetWindowSize(window, width, height)
+        return Pair(width[0], height[0])
     }
 
     private fun prepareRenderMesh(): Int {
@@ -144,33 +154,6 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, null as ByteBuffer?)
-        return id
-    }
-
-    private fun loadShader(): Int {
-        val id = glCreateProgram()
-        val vertID = glCreateShader(GL_VERTEX_SHADER)
-        val fragID = glCreateShader(GL_FRAGMENT_SHADER)
-        fun loadShaderPart(shaderID: Int, sourceID: String) {
-            val source = KameboyMain.javaClass.getResourceAsStream("/shaders/$sourceID.glsl").bufferedReader().use { it.readText() }
-            glShaderSource(shaderID, source)
-            if(glGetShaderi(shaderID, GL_LINK_STATUS) == 0) {
-                println(glGetShaderInfoLog(shaderID))
-            }
-            glCompileShader(shaderID)
-        }
-
-        loadShaderPart(vertID, "blit.vert")
-        loadShaderPart(fragID, "blit.frag")
-
-        glAttachShader(id, vertID)
-        glAttachShader(id, fragID)
-        glLinkProgram(id)
-        if(glGetProgrami(id, GL_LINK_STATUS) == 0) {
-            println(glGetProgramInfoLog(id))
-        }
-        glDeleteShader(vertID)
-        glDeleteShader(fragID)
         return id
     }
 
@@ -321,7 +304,6 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     private fun runEmulator() {
         core.init()
-        // TODO: audioSystem.switchGBSound(core.gameboy.mapper.sound)
         audioSystem.start()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
@@ -336,11 +318,6 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         glClearColor(0f, .8f, 0f, 1f)
 
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, textureID)
-        glUseProgram(shaderID)
-        glUniform1i(diffuseTextureUniform, 0)
-
-        glBindVertexArray(meshID)
 
         while(!glfwWindowShouldClose(window)) {
             val delta = glfwGetTime()-lastTime
@@ -350,14 +327,22 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             glClear(GL_COLOR_BUFFER_BIT)
             glViewport(0, 0, windowWPointer[0], windowHPointer[0])
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
-
+            messageSystem.step(delta.toFloat())
             val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
             if(core === NoGameCore) {
                 updateTexture(core, noGameImage)
             } else { // render actual emulator
                 core.frame(catchupSpeed)
             }
+
+            glBindTexture(GL_TEXTURE_2D, textureID)
+            glUseProgram(shaderID)
+
+            glBindVertexArray(meshID)
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
+
+            messageSystem.drawMessages()
+
             glfwSwapBuffers(window)
 
             val newTime = glfwGetTime()
@@ -493,10 +478,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             saveFolder.mkdirs()
         val saveFile = File(saveFolder, file.name.takeWhile { it != '.' }+".sav")
         val cart = Cartridge(romContents, bootRom, saveFile)
-        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem)
         core.init()
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
+        messageSystem.message("Started ${core.title}")
 
         EmulatorControlWindow.ejectCartridge.isEnabled = true
         EmulatorControlWindow.resetGame.isEnabled = true
@@ -507,6 +493,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     fun ejectCartridge() {
+        messageSystem.message("Ejected ${core.title}")
+
         core = NoGameCore
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
@@ -517,9 +505,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     fun hardReset() {
         val cart = Cartridge(core.cartridge.rawData, core.cartridge.bootROM, core.cartridge.saveFile)
-        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) })
+        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem)
         core.init()
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
+
+        messageSystem.message("Hard reset ${core.title}")
     }
 }

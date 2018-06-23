@@ -283,7 +283,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
                 if(gameboy.cartridge.cartrigeType.accepts(address)) {
                     gameboy.cartridge.cartrigeType
                 } else {
-                    gameboy.cartridge.currentRAMBank
+                    if(gameboy.cartridge.ramBankCount != 0)
+                        gameboy.cartridge.currentRAMBank
+                    else
+                        UnaccessibleMemory
                 }
             }
             in 0xC000..0xCFFF, in 0xE000..0xEFFF -> {

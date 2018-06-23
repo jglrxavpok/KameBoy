@@ -37,11 +37,12 @@ object NoCartridge: Cartridge(ByteArray(0x200)) {
 object NoGameCore: EmulatorCore(NoCartridge, object: PlayerInput {
     override val buttonState = 0xF
     override val directionState = 0xF
-}, false, renderRoutine = { _ -> }) {
+}, false, renderRoutine = { _ -> }, messageSystem = MessageSystem()) {
     override val title = "No game :("
 }
 
-open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false, val renderRoutine: EmulatorCore.(IntArray) -> Unit) {
+open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false,
+                        val renderRoutine: EmulatorCore.(IntArray) -> Unit, val messageSystem: MessageSystem) {
     companion object {
         val CpuClockSpeed = 4194304 // Clock cycles / second
         val DMGVideoVSync = 59.73 // updates per second
@@ -160,14 +161,12 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
 
     fun createSaveState(index: Int) {
         saveStates[index] = CreateSaveState(gameboy)
-        println("Save SaveState #$index")
-        // TODO: Show message
+        messageSystem.message("Save SaveState #$index")
     }
 
     fun loadSaveState(index: Int) {
         val state = saveStates[index] ?: return
-        println("Loading SaveState #$index")
-        // TODO: show message
+        messageSystem.message("Loading SaveState #$index")
         saveStateToLoad = state
     }
 
