@@ -44,6 +44,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private var paletteIndex = 0
     private val joysticks = Array(10, ::Joystick)
     private val messageSystem = MessageSystem()
+    private var fastForward = false
     private val noGameImage =
             ImageIO.read(javaClass.getResourceAsStream("/images/no_game.png"))
                     .getRGB(0,0,256,256,null,0, 256).apply {
@@ -164,6 +165,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     GLFW_KEY_F1 -> core.dumpInfos()
                     GLFW_KEY_F2 -> core.showBGMap()
                     GLFW_KEY_F3 -> showMemoryContents()
+                    GLFW_KEY_F -> { fastForward = false }
 
                     in GLFW_KEY_1..GLFW_KEY_9 -> {
                         val shiftPressed = mods and GLFW_MOD_SHIFT != 0
@@ -189,6 +191,10 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     GLFW_KEY_PAGE_DOWN -> {
                         changePalette(paletteIndex+1)
                     }
+                }
+            } else {
+                when(key) {
+                    GLFW_KEY_F -> { fastForward = true }
                 }
             }
             val bit = when(key) {
@@ -332,7 +338,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
             if(core === NoGameCore) {
                 updateTexture(core, noGameImage)
             } else { // render actual emulator
-                core.frame(catchupSpeed)
+                if(fastForward) {
+                    core.frame(5.0)
+                } else {
+                    core.frame(catchupSpeed)
+                }
             }
 
             glBindTexture(GL_TEXTURE_2D, textureID)

@@ -61,7 +61,8 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
 
     open fun frame(catchupSpeed: Double = 1.0) {
         var totalClockCycles = 0
-        while(totalClockCycles < clockCyclesPerFrame*catchupSpeed) {
+        val total = clockCyclesPerFrame*catchupSpeed
+        while(totalClockCycles < total) {
             val clockCycles = step()
             totalClockCycles += clockCycles
         }
