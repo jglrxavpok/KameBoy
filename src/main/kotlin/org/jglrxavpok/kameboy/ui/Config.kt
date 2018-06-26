@@ -10,7 +10,7 @@ object Config {
     private val settingsFile = File("./settings.cfg")
     internal val properties = Properties()
 
-    private val groups = listOf(Audio, Rendering)
+    private val groups = listOf(Audio, Rendering, System)
 
     fun load() {
         if(!settingsFile.exists()) {
@@ -56,4 +56,8 @@ object Audio: KeyGroup() {
 object Rendering: KeyGroup() {
     val paletteIndex = IntKey()
     val CGBColorCurve = EnumKey(PaletteMemory.CGBColorCurves.values())
+}
+
+object System: KeyGroup() {
+    val lastRomFolder = StringKey(defaultValue = ".")
 }

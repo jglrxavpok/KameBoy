@@ -269,8 +269,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     private fun isButtonKey(key: Int) = key in arrayOf(GLFW_KEY_Q, GLFW_KEY_W, GLFW_KEY_ENTER, GLFW_KEY_BACKSPACE)
     private fun isDirectionKey(key: Int) = key in arrayOf(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT)
 
-    override var buttonState = 0x0F
-    override var directionState = 0x0F
+    override var buttonState = 0b1111
+    override var directionState = 0b1111
 
     private fun _DEV_cart(name: String, useBootRom: Boolean = false): Cartridge {
         val saveFolder = File("./saves/")

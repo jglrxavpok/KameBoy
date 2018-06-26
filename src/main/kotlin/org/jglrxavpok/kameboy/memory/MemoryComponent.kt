@@ -15,6 +15,10 @@ interface MemoryComponent {
 abstract class RAM(val size: Int): MemoryComponent {
     internal val data = ByteArray(size)
 
+    init {
+        data.fill(0xFF.toByte())
+    }
+
     override fun write(address: Int, value: Int) {
         data[correctAddress(address)] = value.toByte()
     }

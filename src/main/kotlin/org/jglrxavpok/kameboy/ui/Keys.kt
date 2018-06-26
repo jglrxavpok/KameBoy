@@ -24,6 +24,23 @@ class IntKey: Key<Int>() {
     }
 }
 
+class StringKey(val defaultValue: String = "."): Key<String>() {
+    override var currentValue = defaultValue
+
+    override fun convertToString(): String {
+        return currentValue
+    }
+
+    override fun convertFromString(value: String) {
+        currentValue = value
+    }
+
+    override fun setToDefault() {
+        currentValue = defaultValue
+    }
+
+}
+
 
 class FloatKey: Key<Float>() {
     override var currentValue = 0f
