@@ -19,6 +19,8 @@ import java.net.ConnectException
 
 
 object GuestSession: INetworkHandler, SerialPeripheral {
+    override val isConnected get()= isRunning()
+
     override val side = NetworkSide.Guest
     override lateinit var core: EmulatorCore
     private var channel: Channel? = null
@@ -68,6 +70,7 @@ object GuestSession: INetworkHandler, SerialPeripheral {
     fun disconnect() {
         channel?.close()
         channel = null
+        state = Server.ConnectionStatus.Shutdown
     }
 
     override fun handlePacket(ctx: ChannelHandlerContext, packet: AbstractPacket) { }

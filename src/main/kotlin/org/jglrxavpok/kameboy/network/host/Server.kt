@@ -18,6 +18,7 @@ import org.jglrxavpok.kameboy.network.writeAndFlushPacket
 
 
 object Server: SerialPeripheral {
+    override val isConnected get()= clientChannel != null
     private var listener: (ConnectionStatus) -> Unit = {}
 
     private var serverChannel: Channel? = null
@@ -73,6 +74,7 @@ object Server: SerialPeripheral {
     fun stop() {
         serverChannel?.close()
         serverChannel = null
+        state = ConnectionStatus.Shutdown
     }
 
     override fun transfer(byte: Int) {

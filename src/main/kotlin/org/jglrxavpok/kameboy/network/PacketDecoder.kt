@@ -42,6 +42,8 @@ class PacketDecoder : ByteToMessageDecoder() {
                     val payload = buffer.readBytes(payloadSize)
                     packet!!.payload = payload
                     out.add(packet!!)
+
+                    println("got $packet") // TODO: remove
                     waitingPayloadSize = -1
                 }
             }

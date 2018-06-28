@@ -19,7 +19,8 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     private val fastClock by controlRegister.bitVar(1)
 
     // for synchronisation
-    private var newlyReceived = 0
+    private var newlyReceived = 0xFF
+    private var byteToTransfer = 0xFF
 
     init {
         if(outputToConsole)
@@ -38,8 +39,8 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
             else -> 1
         }
         val period = (frequency * speedMultiplier /8).toClockCycles()
-        while(currentCycle >= period) {
-            currentCycle -= period
+        if(currentCycle >= period) {
+            currentCycle %= period
 
             actualTransfer()
 
@@ -49,12 +50,18 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
 
     private fun actualTransfer() {
         val type = if(hasInternalClock) "Master" else "Slave"
-        println(">> ($type) Sent $data")
-        connectedPeripherals.forEach { it.transfer(data) }
+        println(">> ($type) Sent $byteToTransfer")
+        connectedPeripherals.forEach { it.transfer(byteToTransfer) }
+
+        val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral || !it.isConnected }.isNotEmpty()
+        if(!isConnected) {
+            receive(0xFF)
+        }
     }
 
     fun transfer(value: Int) {
         data = value
+        byteToTransfer = value
     }
 
     fun startTransfer() {
@@ -95,9 +102,9 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     }
 
     fun readFromTransfer(): Int {
-        val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral }.isNotEmpty()
+        val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral || !it.isConnected }.isNotEmpty()
         return when {
-            isConnected -> data
+            isConnected -> newlyReceived
             hasInternalClock -> 0xFF
             else -> 0x0
         }
@@ -105,10 +112,13 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
 }
 
 interface SerialPeripheral {
+    val isConnected: Boolean
     fun transfer(byte: Int)
 }
 
 object ConsoleOutputPeripheral: SerialPeripheral {
+    override val isConnected = true
+
     override fun transfer(byte: Int) {
         print(byte.toChar())
     }
