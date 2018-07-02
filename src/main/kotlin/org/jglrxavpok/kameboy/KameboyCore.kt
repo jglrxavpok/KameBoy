@@ -10,7 +10,6 @@ import org.jglrxavpok.kameboy.network.guest.GuestSession
 import org.jglrxavpok.kameboy.network.host.Server
 import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.processing.video.Palettes
-import org.jglrxavpok.kameboy.time.CreateSaveState
 import org.jglrxavpok.kameboy.ui.*
 import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
 import org.jglrxavpok.kameboy.ui.options.OptionsWindow
@@ -31,8 +30,9 @@ import java.nio.ByteBuffer
 import javax.imageio.ImageIO
 import javax.swing.*
 
-class KameboyCore(val args: Array<String>): PlayerInput {
+class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     private var window: Long
+
     val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
     var core: EmulatorCore = NoGameCore
@@ -56,11 +56,10 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                             this[index] = (blue shl 16) or (green shl 8) or red
                         }
                     }
-
     companion object {
+
         lateinit var CoreInstance: KameboyCore
     }
-
     init {
         CoreInstance = this
         Config.load()
@@ -267,11 +266,11 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     }
 
     private fun isButtonKey(key: Int) = key in arrayOf(GLFW_KEY_Q, GLFW_KEY_W, GLFW_KEY_ENTER, GLFW_KEY_BACKSPACE)
+
     private fun isDirectionKey(key: Int) = key in arrayOf(GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_LEFT, GLFW_KEY_RIGHT)
-
     override var buttonState = 0b1111
-    override var directionState = 0b1111
 
+    override var directionState = 0b1111
     private fun _DEV_cart(name: String, useBootRom: Boolean = false): Cartridge {
         val saveFolder = File("./saves/")
         if(!saveFolder.exists())
@@ -286,8 +285,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         }
         return Cartridge(romContents, bootRom, File(saveFolder, name.takeWhile { it != '.' }+".sav"))
     }
-    private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
 
+    private fun _DEV_rom(name: String) = KameboyCore::class.java.getResourceAsStream("/roms/$name").buffered().use { it.readBytes() }
     private fun _DEV_BOOT_ROM(cgb: Boolean): ByteArray? {
         val filename = if(cgb) "CGB_ROM.bin" else "DMG_ROM.bin"
         val bootRomFile = File(filename)
@@ -369,66 +368,6 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         }
     }
 
-    private fun handleButtonChange(button: Int, pressed: Boolean) {
-        when(button) {
-            XBoxA, XBoxX -> {
-                buttonState = buttonState.setBits(1-pressed.toBit(), 0..0)
-            }
-            XBoxB, XBoxY -> {
-                buttonState = buttonState.setBits(1-pressed.toBit(), 1..1)
-            }
-            XBoxSelect -> {
-                buttonState = buttonState.setBits(1-pressed.toBit(), 2..2)
-            }
-            XBoxStart -> {
-                buttonState = buttonState.setBits(1-pressed.toBit(), 3..3)
-            }
-        }
-
-        if(pressed)
-            core.gameboy.interruptManager.firePinPressed()
-    }
-
-    private fun handleAxisChange(axis: Int, axisValue: Float) {
-        // XBOX 360 only for now
-        when(axis) {
-            XBoxLeftX -> {
-                when {
-                    axisValue >= 0.25f -> {
-                        directionState = directionState.setBits(0, 0..0)
-                        directionState = directionState.setBits(1, 1..1)
-                        core.gameboy.interruptManager.firePinPressed()
-                    }
-                    axisValue <= -0.25f -> {
-                        directionState = directionState.setBits(1, 0..0)
-                        directionState = directionState.setBits(0, 1..1)
-                        core.gameboy.interruptManager.firePinPressed()
-                    }
-                    else -> {
-                        directionState = directionState.setBits(0b11, 0..1)
-                    }
-                }
-            }
-            XBoxLeftY -> {
-                when {
-                    axisValue >= 0.25f -> {
-                        directionState = directionState.setBits(1, 2..2)
-                        directionState = directionState.setBits(0, 3..3)
-                        core.gameboy.interruptManager.firePinPressed()
-                    }
-                    axisValue <= -0.25f -> {
-                        directionState = directionState.setBits(0, 2..2)
-                        directionState = directionState.setBits(1, 3..3)
-                        core.gameboy.interruptManager.firePinPressed()
-                    }
-                    else -> {
-                        directionState = directionState.setBits(0b11, 2..3)
-                    }
-                }
-            }
-        }
-    }
-
     private fun pollEvents() {
         glfwPollEvents()
         joysticks.filter { glfwJoystickPresent(it.id) }
@@ -447,13 +386,13 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                                     val axis = change.first
                                     val axisValue = it.axis(axis)
 
-                                    handleAxisChange(axis, axisValue)
+                                    handleAxisChange(axis, axisValue, it)
                                 }
 
                                 Joystick.Component.BUTTON -> {
                                     val button = change.first
                                     val buttonState = it.button(button)
-                                    handleButtonChange(button, buttonState)
+                                    handleButtonChange(button, buttonState, it)
                                 }
                             }
                             checkJoystickChanges()
@@ -461,6 +400,20 @@ class KameboyCore(val args: Array<String>): PlayerInput {
                     }
                     checkJoystickChanges()
                 }
+    }
+
+    private fun handleAxisChange(axis: Int, axisValue: Float, joystick: Joystick) {
+        // TODO: input remapping
+
+        GetControllerMapping(joystick).handleAxisChange(axis, axisValue, this)
+    }
+
+
+
+    private fun handleButtonChange(button: Int, buttonState: Boolean, joystick: Joystick) {
+        // TODO: input remapping
+
+        GetControllerMapping(joystick).handleButtonChange(button, buttonState, this)
     }
 
     fun updateTexture(core: EmulatorCore, videoData: IntArray) {
@@ -521,5 +474,77 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         updateTitle()
 
         messageSystem.message("Hard reset ${core.title}")
+    }
+
+    override fun pressA() {
+        core.gameboy.interruptManager.firePinPressed()
+        buttonState = buttonState.setBits(GbPressBit, 0..0)
+    }
+
+    override fun pressB() {
+        core.gameboy.interruptManager.firePinPressed()
+        buttonState = buttonState.setBits(GbPressBit, 1..1)
+    }
+
+    override fun releaseA() {
+        buttonState = buttonState.setBits(GbReleaseBit, 0..0)
+    }
+
+    override fun releaseB() {
+        buttonState = buttonState.setBits(GbReleaseBit, 1..1)
+    }
+
+    override fun pressStart() {
+        core.gameboy.interruptManager.firePinPressed()
+        buttonState = buttonState.setBits(GbPressBit, 3..3)
+    }
+
+    override fun releaseStart() {
+        buttonState = buttonState.setBits(GbReleaseBit, 3..3)
+    }
+
+    override fun pressSelect() {
+        core.gameboy.interruptManager.firePinPressed()
+        buttonState = buttonState.setBits(GbPressBit, 2..2)
+    }
+
+    override fun releaseSelect() {
+        buttonState = buttonState.setBits(GbReleaseBit, 2..2)
+    }
+
+    override fun pressLeft() {
+        core.gameboy.interruptManager.firePinPressed()
+        directionState = directionState.setBits(GbPressBit, 1..1)
+    }
+
+    override fun releaseLeft() {
+        directionState = directionState.setBits(GbReleaseBit, 1..1)
+    }
+
+    override fun pressUp() {
+        core.gameboy.interruptManager.firePinPressed()
+        directionState = directionState.setBits(GbPressBit, 2..2)
+    }
+
+    override fun releaseUp() {
+        directionState = directionState.setBits(GbReleaseBit, 2..2)
+    }
+
+    override fun pressDown() {
+        core.gameboy.interruptManager.firePinPressed()
+        directionState = directionState.setBits(GbPressBit, 3..3)
+    }
+
+    override fun releaseDown() {
+        directionState = directionState.setBits(GbReleaseBit, 3..3)
+    }
+
+    override fun pressRight() {
+        core.gameboy.interruptManager.firePinPressed()
+        directionState = directionState.setBits(GbPressBit, 0..0)
+    }
+
+    override fun releaseRight() {
+        directionState = directionState.setBits(GbReleaseBit, 0..0)
     }
 }
