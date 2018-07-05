@@ -5,6 +5,7 @@ import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned16
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
+import org.jglrxavpok.kameboy.hooks.InterruptHandlerEvent
 import org.jglrxavpok.kameboy.memory.*
 import org.jglrxavpok.kameboy.memory.specialRegs.FRegister
 import org.jglrxavpok.kameboy.time.SaveStateElement
@@ -161,6 +162,7 @@ class CPU(val gameboy: Gameboy) {
 
         interruptManager.interruptsEnabled = false
         interruptManager.reset(interruptIndex)
+        gameboy.hooks.fireEvent(InterruptHandlerEvent(interruptIndex))
         call(0x40 + interruptIndex * 8)
     }
 

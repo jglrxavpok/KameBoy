@@ -15,6 +15,7 @@ object OptionsWindow: JFrame("Kameboy Options") {
         tabs.addTab("Input", InputOptions)
         tabs.addTab("Multiplayer", MultiplayerOptions)
         tabs.addTab("Sound", SoundOptions)
+        tabs.addTab("Cheats", CheatingOptions)
         add(tabs)
         pack()
     }

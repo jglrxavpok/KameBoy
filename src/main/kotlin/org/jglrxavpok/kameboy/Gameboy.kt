@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy
 
+import org.jglrxavpok.kameboy.hooks.Hooks
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.memory.MemoryMapper
@@ -10,6 +11,7 @@ import org.jglrxavpok.kameboy.time.GetSaveStateElements
 
 class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false) {
 
+    val hooks = Hooks(this)
     val isCGB = cartridge.isForColorGB // TODO maybe add a way to select?
     val inCGBMode = cartridge.isForColorGB
     val mapper = MemoryMapper(this)

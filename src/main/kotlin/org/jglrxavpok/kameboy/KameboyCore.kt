@@ -1,9 +1,7 @@
 package org.jglrxavpok.kameboy
 
-import org.jglrxavpok.kameboy.helpful.asUnsigned
-import org.jglrxavpok.kameboy.helpful.nullptr
-import org.jglrxavpok.kameboy.helpful.setBits
-import org.jglrxavpok.kameboy.helpful.toBit
+import org.jglrxavpok.kameboy.helpful.*
+import org.jglrxavpok.kameboy.hooks.InterruptHandlerEvent
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.jglrxavpok.kameboy.network.guest.GuestSession
@@ -11,6 +9,7 @@ import org.jglrxavpok.kameboy.network.host.Server
 import org.jglrxavpok.kameboy.processing.Instructions
 import org.jglrxavpok.kameboy.processing.video.Palettes
 import org.jglrxavpok.kameboy.ui.*
+import org.jglrxavpok.kameboy.ui.options.CheatingOptions
 import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
 import org.jglrxavpok.kameboy.ui.options.OptionsWindow
 import org.lwjgl.BufferUtils
@@ -56,10 +55,11 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
                             this[index] = (blue shl 16) or (green shl 8) or red
                         }
                     }
-    companion object {
 
+    companion object {
         lateinit var CoreInstance: KameboyCore
     }
+
     init {
         CoreInstance = this
         Config.load()
@@ -441,7 +441,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
             saveFolder.mkdirs()
         val saveFile = File(saveFolder, file.name.takeWhile { it != '.' }+".sav")
         val cart = Cartridge(romContents, bootRom, saveFile)
-        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem)
+        changeCore(EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem))
         core.init()
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
@@ -458,7 +458,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     fun ejectCartridge() {
         messageSystem.message("Ejected ${core.title}")
 
-        core = NoGameCore
+        changeCore(NoGameCore)
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
 
@@ -468,12 +468,35 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
     fun hardReset() {
         val cart = Cartridge(core.cartridge.rawData, core.cartridge.bootROM, core.cartridge.saveFile)
-        core = EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem)
+        changeCore(EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem))
         core.init()
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
 
         messageSystem.message("Hard reset ${core.title}")
+    }
+
+    private fun changeCore(newCore: EmulatorCore) {
+        core = newCore
+        newCore.gameboy.hooks.registerHookHandler(::handleGamesharkCheats)
+    }
+
+    private fun handleGamesharkCheats(event: InterruptHandlerEvent) {
+        if(event.interruptIndex != 0) // V-Blank
+            return
+        val codes = CheatingOptions.gamesharkCodes
+        val cart = core.gameboy.cartridge
+        val ramBanks = cart.ramBanks
+        for(code in codes) {
+            val currentRamBank = cart.selectedRAMBankIndex
+            if(code.externalRamBankNumber < ramBanks.size) {
+                cart.selectedRAMBankIndex = code.externalRamBankNumber
+            }
+            core.gameboy.mapper.write(code.memoryAddress, code.newData)
+            if(code.externalRamBankNumber < ramBanks.size) {
+                cart.selectedRAMBankIndex = currentRamBank
+            }
+        }
     }
 
     override fun pressA() {
