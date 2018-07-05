@@ -488,6 +488,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         val cart = core.gameboy.cartridge
         val ramBanks = cart.ramBanks
         for(code in codes) {
+            if(!code.isValid || !code.isActive)
+                continue
             val currentRamBank = cart.selectedRAMBankIndex
             if(code.externalRamBankNumber < ramBanks.size) {
                 cart.selectedRAMBankIndex = code.externalRamBankNumber

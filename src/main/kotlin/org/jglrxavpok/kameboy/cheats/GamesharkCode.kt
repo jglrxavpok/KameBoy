@@ -2,6 +2,7 @@ package org.jglrxavpok.kameboy.cheats
 
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
+import org.jglrxavpok.kameboy.helpful.toHexStringWithPadding
 
 data class GamesharkCode(val code: String) {
     val isValid: Boolean
@@ -14,6 +15,7 @@ data class GamesharkCode(val code: String) {
     val externalRamBankNumber: Int
     val newData: Int
     val memoryAddress: Int
+    var isActive = true
     init {
         isValid = checkValidity()
         if(isValid) {
@@ -40,5 +42,19 @@ data class GamesharkCode(val code: String) {
 
     override fun toString(): String {
         return code
+    }
+
+    fun withData(newData: Int): GamesharkCode {
+        val dataPart = newData.asUnsigned8().toHexStringWithPadding(2)
+        val newCode = code.take(2) + dataPart + code.drop(4)
+        return GamesharkCode(newCode)
+    }
+
+    fun withAddress(newAddress: Int): GamesharkCode {
+        val dataPart = newAddress.asAddress().toHexStringWithPadding(4)
+        val low = dataPart.drop(2).take(2)
+        val high = dataPart.take(2)
+        val newCode = code.take(4) + low + high
+        return GamesharkCode(newCode)
     }
 }
