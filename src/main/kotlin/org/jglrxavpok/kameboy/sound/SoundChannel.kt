@@ -116,6 +116,10 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
         return output
     }
 
+    fun resetFromDiv() {
+        frameSequencer.reset()
+    }
+
     fun stop() {
         channelEnabled = false
     }

@@ -79,4 +79,10 @@ class Sound(val memory: MemoryMapper) {
     fun isOn(): Boolean {
         return soundToggle.isOn
     }
+
+    fun resetFromDiv() {
+        channels.forEach {
+            it.resetFromDiv()
+        }
+    }
 }

@@ -2,6 +2,7 @@ package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.time.SaveStateElement
+import kotlin.math.abs
 
 class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
 
@@ -27,14 +28,14 @@ class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
     }
 
     private fun checkOverflow(freq: Int) {
-        if(freq > 2047) {
+        if(freq < 0 || freq > 2047) {
             channelEnabled = false
         }
     }
 
     private fun calculateFrequency(): Int {
         val freq = shadowRegister shr sweepShift
-        return shadowRegister + freq * sweepDirection
+        return (shadowRegister + freq * sweepDirection)
     }
 
     override fun clockSweep() {
@@ -45,7 +46,7 @@ class Square1Channel(memory: MemoryMapper): SquareChannel(memory, 1) {
                 val newFreq = calculateFrequency()
                 checkOverflow(newFreq)
 
-                if(newFreq <= 2047) {
+                if(newFreq in 0..2047) {
                     shadowRegister = newFreq
                     frequency = newFreq
 

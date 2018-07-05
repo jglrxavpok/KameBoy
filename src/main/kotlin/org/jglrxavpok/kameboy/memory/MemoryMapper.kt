@@ -31,7 +31,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     @SaveStateElement
     val lyRegister = LYRegister(this)
     @SaveStateElement
-    val divRegister = DivRegister()
+    val divRegister = DivRegister(this)
     @SaveStateElement
     val timerRegister = TimerRegister(this)
 
@@ -298,7 +298,13 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             }
             in 0xD000..0xDFFF, in 0xF000..0xFDFF -> {
                 when {
-                    gameboy.inCGBMode -> wramBanks[wramBankSelect.getValue()]
+                    gameboy.inCGBMode -> {
+                        val bankIndex = wramBankSelect.getValue()
+                        if(bankIndex == 0)
+                            wramBanks[1]
+                        else
+                            wramBanks[bankIndex]
+                    }
                     else -> internalRAM
                 }
             }

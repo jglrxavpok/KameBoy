@@ -9,7 +9,7 @@ class Timer(var period: Int, val outputClock: Timer.() -> Unit) {
 
     fun step(cycles: Int) {
         counter -= cycles
-        if(counter <= 0) {
+        while(counter <= 0) {
             counter = period
             outputClock()
         }

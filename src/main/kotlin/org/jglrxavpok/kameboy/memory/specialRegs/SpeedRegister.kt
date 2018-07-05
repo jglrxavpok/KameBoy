@@ -11,7 +11,7 @@ class SpeedRegister(val memoryMapper: MemoryMapper): Register("GBC Speed") {
     val shouldPrepareSwitch get()= prepareSpeedSwitch == 1
 
     override fun read(address: Int): Int {
-        return ((memoryMapper.currentSpeedFactor-1) shl 7) or prepareSpeedSwitch
+        return (((memoryMapper.currentSpeedFactor-1) shl 7) or prepareSpeedSwitch) or 0b0111_1110
     }
 
     override fun write(address: Int, value: Int) {

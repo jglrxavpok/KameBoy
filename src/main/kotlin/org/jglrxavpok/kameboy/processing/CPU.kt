@@ -114,7 +114,7 @@ class CPU(val gameboy: Gameboy) {
      */
     fun step(): Int {
         val shouldChangeInterruptState = requestedInterruptChange
-        checkInterrupts()
+        var cyclesForInterruptDispatch = checkInterrupts()
         if(halted || stopped)
             return 4
         val position = programCounter.getValue()
@@ -125,7 +125,7 @@ class CPU(val gameboy: Gameboy) {
                 requestedInterruptChange = false
                 interruptManager.interruptsEnabled = desiredInterruptState
             }
-            return clockCycles
+            return clockCycles+cyclesForInterruptDispatch
         } catch (e: Throwable) {
             println("Found error in opcode ${Integer.toHexString(opcode)} at PC ${Integer.toHexString(position)}")
             e.printStackTrace()
@@ -133,15 +133,16 @@ class CPU(val gameboy: Gameboy) {
         return 4
     }
 
-    private tailrec fun checkInterrupts() {
+    private fun checkInterrupts(): Int {
         val interruptFlag = memory.read(0xFF0F)
         val interruptEnable = memory.read(0xFFFF)
-        if(interruptFlag and interruptEnable != 0) {
+        val wasHalted = halted
+        if((interruptFlag and interruptEnable) and 0x1F != 0) {
             halted = false // always wake CPU up
             // https://kotcrab.com/blog/2016/04/22/what-i-learned-from-game-boy-emulator-development/
         }
         if(interruptManager.interruptsEnabled) {
-            if (interruptFlag and interruptEnable != 0) {
+            if ((interruptFlag and interruptEnable) and 0x1F != 0) {
                 when {
                     !stopped && interruptManager.hasVBlank() -> interrupt(0)
                     !stopped && interruptManager.hasLcdStat() -> interrupt(1)
@@ -152,9 +153,12 @@ class CPU(val gameboy: Gameboy) {
                         interrupt(4)
                     }
                 }
-                checkInterrupts()
+                if(wasHalted && !halted)
+                    return 24
+                return 20
             }
         }
+        return if(wasHalted && !halted) 4 else 0
     }
 
     private fun interrupt(interruptIndex: Int) {
@@ -482,18 +486,19 @@ class CPU(val gameboy: Gameboy) {
                         if(cartridge.isForColorGB && memory.speedRegister.shouldPrepareSwitch) {
                             memory.speedRegister.setValue(0x00)
                             memory.currentSpeedFactor = -memory.currentSpeedFactor+3
+                            128*1024 - 76
                         } else {
                             stopped = true
+                            4
                         }
-                        4
                     }
                     else -> error("Invalid opcode 0x10 ${Integer.toHexString(nextPart)}")
                 }
             }
 
             0xF3 -> {
-                requestedInterruptChange = true // need to wait for next instruction to be executed
-                desiredInterruptState = false // no longer accept
+                //requestedInterruptChange = true // need to wait for next instruction to be executed
+                interruptManager.interruptsEnabled = false // DI is immediate
                 4
             }
 
@@ -674,8 +679,9 @@ class CPU(val gameboy: Gameboy) {
             }
 
             0xD9 -> {
-                requestedInterruptChange = true
-                desiredInterruptState = true
+                //requestedInterruptChange = true
+                //desiredInterruptState = true
+                interruptManager.interruptsEnabled = true // RETI enables interrupts directly
                 ret()
                 16
             }

@@ -23,12 +23,12 @@ class KameboyAudio(var sound: Sound) {
 
         val Format = AL_FORMAT_STEREO8
         val SampleRate = 22050
-        const val MaxOpenALBufferCount = 3
+        const val MaxOpenALBufferCount = 6
 
         val tickDivider = SampleRate.toClockCycles()
 
         // From Dolphin
-        const val MAX_SAMPLES = 1024 * 2  // 128 ms
+        const val MAX_SAMPLES = 1024 * 8  // 128 ms
         const val INDEX_MASK = MAX_SAMPLES * 2 - 1
     }
 
@@ -59,7 +59,7 @@ class KameboyAudio(var sound: Sound) {
     }
 
     private fun soundLoop() {
-        val framesPerBuffer = SampleRate / 20 / MaxOpenALBufferCount
+        val framesPerBuffer = MAX_SAMPLES / MaxOpenALBufferCount
         var countQueuedBuffers = 0
         val alSource = alGenSources()
 

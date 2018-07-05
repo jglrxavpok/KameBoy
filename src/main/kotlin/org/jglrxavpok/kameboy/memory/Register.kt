@@ -24,13 +24,13 @@ open class Register(override val name: String, protected var registerValue: Int 
     override fun read(address: Int) = getValue()
 
     operator fun inc(): Register {
-        registerValue++
+        setValue(registerValue+1)
         fitValueInBounds()
         return this
     }
 
     operator fun dec(): Register {
-        registerValue--
+        setValue(registerValue-1)
         fitValueInBounds()
         return this
     }
