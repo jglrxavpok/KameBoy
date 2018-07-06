@@ -1,5 +1,6 @@
 package org.jglrxavpok.kameboy
 
+import org.jglrxavpok.kameboy.helpful.Profiler
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
@@ -44,9 +45,9 @@ object NoGameCore: EmulatorCore(NoCartridge, object: PlayerInput {
 open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val outputSerial: Boolean = false,
                         val renderRoutine: EmulatorCore.(IntArray) -> Unit, val messageSystem: MessageSystem) {
     companion object {
-        val CpuClockSpeed = 4194304 // Clock cycles / second
-        val DMGVideoVSync = 59.73 // updates per second
-        val CGBVideoVSync = 61.1 // updates per second
+        const val CpuClockSpeed = 4194304 // Clock cycles / second
+        const val DMGVideoVSync = 59.73 // updates per second
+        const val CGBVideoVSync = 61.1 // updates per second
     }
 
     val gameboy = Gameboy(cartridge, input, outputSerial)
@@ -60,6 +61,7 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
     private val saveStates = Array<SaveState?>(11) { null }
 
     open fun frame(catchupSpeed: Double = 1.0) {
+        Profiler.beginFrame()
         var totalClockCycles = 0
         val total = clockCyclesPerFrame*catchupSpeed
         while(totalClockCycles < total) {

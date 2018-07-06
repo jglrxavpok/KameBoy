@@ -32,7 +32,6 @@ import javax.swing.*
 class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     private var window: Long
 
-    val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
     var core: EmulatorCore = NoGameCore
     private var shaderID: Int
@@ -164,6 +163,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
                     GLFW_KEY_F1 -> core.dumpInfos()
                     GLFW_KEY_F2 -> core.showBGMap()
                     GLFW_KEY_F3 -> showMemoryContents()
+                    GLFW_KEY_F4 -> Profiler.dump()
                     GLFW_KEY_F -> { fastForward = false }
 
                     in GLFW_KEY_1..GLFW_KEY_9 -> {
@@ -317,7 +317,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         var time = glfwGetTime()
         var frames = 0
         var totalTime = 0.0
-        val videoSyncTime = if(cartridge.isForColorGB) EmulatorCore.CGBVideoVSync else EmulatorCore.DMGVideoVSync
+        val videoSyncTime = EmulatorCore.CGBVideoVSync// TODO: if(cartridge.isForColorGB) EmulatorCore.CGBVideoVSync else EmulatorCore.DMGVideoVSync
         val optimalTime = 1f/videoSyncTime
         var lastTime = glfwGetTime()-optimalTime
         glClearColor(0f, .8f, 0f, 1f)
@@ -338,7 +338,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
                 updateTexture(core, noGameImage)
             } else { // render actual emulator
                 if(fastForward) {
-                    core.frame(5.0)
+                    core.frame(delta/optimalTime * 3.0)
                 } else {
                     core.frame(catchupSpeed)
                 }
@@ -407,8 +407,6 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
         GetControllerMapping(joystick).handleAxisChange(axis, axisValue, this)
     }
-
-
 
     private fun handleButtonChange(button: Int, buttonState: Boolean, joystick: Joystick) {
         // TODO: input remapping
