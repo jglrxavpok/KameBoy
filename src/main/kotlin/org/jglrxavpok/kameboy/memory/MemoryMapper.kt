@@ -21,7 +21,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
 
     override val name = "Memory mapper (internal)"
 
-    private var booting = gameboy.cartridge.hasBootRom
+    var booting = gameboy.cartridge.hasBootRom
 
     val interruptManager = InterruptManager(this)
     val sound = Sound(this)
@@ -231,7 +231,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
         hdma5.step(cycles)
     }
 
-    fun map(address: Int): MemoryComponent {
+    inline fun map(address: Int): MemoryComponent {
         if(gameboy.inCGBMode) {
             val comp = when(address.asAddress()) {
                 // GBC registers

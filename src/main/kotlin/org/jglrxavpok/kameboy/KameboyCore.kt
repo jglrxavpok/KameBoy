@@ -338,7 +338,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
                 updateTexture(core, noGameImage)
             } else { // render actual emulator
                 if(fastForward) {
-                    core.frame(delta/optimalTime * 3.0)
+                    core.frame(10.0)
                 } else {
                     core.frame(catchupSpeed)
                 }

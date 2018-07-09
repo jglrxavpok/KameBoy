@@ -3,11 +3,11 @@ package org.jglrxavpok.kameboy.helpful
 import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
 import org.lwjgl.system.MemoryUtil
 
-fun Byte.asUnsigned() = (this.toInt()) and 0xFF
-fun Int.asUnsigned16() = this and 0xFFFF
-fun Int.asUnsigned8() = this and 0xFF
-fun Int.asAddress() = asUnsigned16()
-fun Int.asSigned8(): Int {
+inline fun Byte.asUnsigned() = (this.toInt()) and 0xFF
+inline fun Int.asUnsigned16() = this and 0xFFFF
+inline fun Int.asUnsigned8() = this and 0xFF
+inline fun Int.asAddress() = asUnsigned16()
+inline fun Int.asSigned8(): Int {
     val sign = this and 0b10000000
     if(sign != 0)
         return (this-1 - 255)

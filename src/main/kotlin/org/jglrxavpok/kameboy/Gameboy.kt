@@ -24,26 +24,19 @@ class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial
     val saveStateElements = GetSaveStateElements(this)
 
     fun step(): Int {
-        Profiler.start("CPU")
         val clockCycles = cpu.step()
         val speedFactor = mapper.currentSpeedFactor
         val adjustedSpeed = clockCycles/speedFactor
-        Profiler.endStart("Timer")
         timer.step(clockCycles)
 
-        Profiler.endStart("Cart controller")
         cartridge.cartrigeType.tick(adjustedSpeed) // external crystals (eg. MBC3)
 
-        Profiler.endStart("Serial IO")
         mapper.serialIO.step(clockCycles)
 
-        Profiler.endStart("Memory stuff")
         mapper.step(clockCycles)
 
         // video & sound are not affected by speed change
-        Profiler.endStart("PPU")
         video.step(adjustedSpeed)
-        Profiler.endStart("APU")
         mapper.sound.step(adjustedSpeed)
         Profiler.end()
 
