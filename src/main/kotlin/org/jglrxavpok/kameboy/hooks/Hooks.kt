@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.hooks
 
 import org.jglrxavpok.kameboy.Gameboy
+import java.util.*
 
 interface HookListener {
     fun handleEvent(event: HookEvent)
@@ -10,7 +11,7 @@ interface HookEvent
 
 class Hooks(val owner: Gameboy) {
 
-    val listeners = mutableListOf<HookListener>()
+    val listeners = LinkedList<HookListener>()
 
     fun fireEvent(event: HookEvent) {
         listeners.forEach { it.handleEvent(event) }

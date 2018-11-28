@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.processing.video
 
 import org.jglrxavpok.kameboy.Gameboy
+import org.jglrxavpok.kameboy.helpful.Profiler
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned8
 import org.jglrxavpok.kameboy.helpful.setBits
@@ -135,7 +136,7 @@ class Video(val gameboy: Gameboy) {
             return
         }
         val effectiveTileRow = if(vMirror) tileHeight-1-tileLocalRow else tileLocalRow
-        val mem = if(inVram1) memory.vram1 else memory
+        val mem = if(inVram1) memory.vram1 else memory.vram0
         val lineDataLS = mem.read(tileAddress + effectiveTileRow*2)
         val lineDataMS = mem.read(tileAddress + effectiveTileRow*2 +1)
         for(i in 0..7) {
@@ -169,10 +170,8 @@ class Video(val gameboy: Gameboy) {
         return index in 1..3
     }
 
-    private tailrec fun wrapInBounds(value: Int): Int {
-        if(value >= 0)
-            return value % 256
-        return wrapInBounds(value+256)
+    private inline fun wrapInBounds(value: Int): Int {
+        return value.asUnsigned8()
     }
 
     private fun pixelColor(index: Int, palette: ColorPalette): Int {
@@ -198,13 +197,15 @@ class Video(val gameboy: Gameboy) {
                     }
                 }
             }
+
             if(shouldDisplayBackground) {
                 val scrolledY = wrapInBounds(line + scrollY.getValue())
                 for(x in 0 until 32) {
                     val scrolledX = wrapInBounds(x * 8 + scrollX.getValue())
                     if(gameboy.inCGBMode) {
-                        val tileNumber = memory.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
-                        val attribs = memory.vram1.read(backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8)
+                        val address = backgroundTileMapAddress + scrolledY/8 *32 + scrolledX/8
+                        val tileNumber = memory.read(address)
+                        val attribs = memory.vram1.read(address)
                         val tileAddress = tileDataAddress
                         val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
                         drawTileRow(x*8-scrolledX%8, line, scrolledY %8, tileAddress + offset,
@@ -222,6 +223,7 @@ class Video(val gameboy: Gameboy) {
                     }
                 }
             }
+
             val overrideWindow = gameboy.isCGB && !gameboy.inCGBMode && bgDisplay
             val windowIsVisible = windowX.getValue() in 0..166 && windowY.getValue() in 0..143
             if((windowDisplayEnable || overrideWindow) && windowIsVisible) {
@@ -230,8 +232,9 @@ class Video(val gameboy: Gameboy) {
                     for(x in 0 until 32) {
                         val effectiveX = x*8-windowX.getValue()+7
                         if(gameboy.inCGBMode) {
-                            val tileNumber = memory.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
-                            val attribs = memory.vram1.read(windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8)
+                            val address = windowTileMapAddress + effectiveLine/8 *32 + effectiveX/8
+                            val tileNumber = memory.read(address)
+                            val attribs = memory.vram1.read(address)
                             val tileAddress = tileDataAddress
                             val offset = (if(dataSelect) tileNumber else tileNumber.asSigned8()) * 0x10
                             drawTileRow(effectiveX, line, effectiveLine %8, tileAddress + offset,

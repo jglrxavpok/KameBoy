@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.EmulatorCore
+import org.jglrxavpok.kameboy.helpful.Profiler
 import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister

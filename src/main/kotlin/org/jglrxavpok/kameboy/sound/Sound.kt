@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.sound
 
 import org.jglrxavpok.kameboy.EmulatorCore.Companion.CpuClockSpeed
+import org.jglrxavpok.kameboy.helpful.Profiler
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
@@ -46,12 +47,13 @@ class Sound(val memory: MemoryMapper) {
         val channelControlValue = channelControl.getValue()
 
         fun stepAudio(cycles: Int) {
-            for(channel in channels) {
+            for(channelIndex in 0..3) {
+                val channel = channels[channelIndex]
                 val waveform = channel.step(cycles)
-                if(outputSelectValue and (1 shl (channel.channelNumber-1)) != 0) {
+                if(outputSelectValue and (1 shl (channelIndex)) != 0) {
                     leftChannel += waveform
                 }
-                if(outputSelectValue and (1 shl (channel.channelNumber-1+4)) != 0) {
+                if(outputSelectValue and (1 shl (channelIndex+4)) != 0) {
                     rightChannel += waveform
                 }
             }
