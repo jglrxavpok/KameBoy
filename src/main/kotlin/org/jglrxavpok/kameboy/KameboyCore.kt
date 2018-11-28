@@ -14,15 +14,13 @@ import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
 import org.jglrxavpok.kameboy.ui.options.OptionsWindow
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.*
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_TEXTURE0
 import org.lwjgl.opengl.GL13.glActiveTexture
-import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL15.*
 import org.lwjgl.opengl.GL20.*
-import org.lwjgl.opengl.GL30.glBindVertexArray
-import org.lwjgl.opengl.GL30.glGenVertexArrays
+import org.lwjgl.opengl.GL30.*
 import java.awt.Toolkit
 import java.io.File
 import java.nio.ByteBuffer
@@ -32,7 +30,7 @@ import javax.swing.*
 class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     private var window: Long
 
-    val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
+    val cartridge = _DEV_cart("dmg_sound/rom_singles/01-registers.gb", useBootRom = true)
     val outputSerial = "-outputserial" in args
     var core: EmulatorCore = NoGameCore
     private var shaderID: Int
@@ -64,6 +62,10 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         CoreInstance = this
         Config.load()
         val scale = 6
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5)
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy (${core.title})", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
         initInput()
@@ -72,14 +74,34 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
+
+        checkGLError("pre info")
+        println("=== OpenGL info ===")
+
+        println("Renderer: ${glGetString(GL_RENDERER)}")
+        println("Vendor: ${glGetString(GL_VENDOR)}")
+        println("Version: ${glGetString(GL_VERSION)}")
+        println("Major: ${glGetInteger(GL_MAJOR_VERSION)}")
+        println("Minor: ${glGetInteger(GL_MINOR_VERSION)}")
+
+        checkGLError("post info")
+
         shaderID = LoadShader("blit")
         glUseProgram(shaderID)
         diffuseTextureUniform = glGetUniformLocation(shaderID, "diffuse")
         glUniform1i(diffuseTextureUniform, 0)
+        checkGLError("post blit shader creation")
         FontRenderer.init()
+        checkGLError("post font renderer")
         textureID = prepareTexture()
+        checkGLError("post texture preparation")
         meshID = prepareRenderMesh()
         audioSystem = KameboyAudio(core.gameboy.mapper.sound)
+
+        checkGLError("post mesh preparation")
+
+        // TODO: debug only, remove
+        changeCore(EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem))
 
         runEmulator()
         cleanup()
@@ -108,8 +130,10 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     }
 
     fun getScreenSize(): Pair<Int, Int> {
-        val width = IntArray(1)
-        val height = IntArray(1)
+        val width by lazy { BufferUtils.createIntBuffer(1) }
+        val height by lazy { BufferUtils.createIntBuffer(1) }
+        width.rewind()
+        height.rewind()
         glfwGetWindowSize(window, width, height)
         return Pair(width[0], height[0])
     }
@@ -153,12 +177,13 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         glBindTexture(GL_TEXTURE_2D, id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, null as ByteBuffer?)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, IntArray(256*256))
         return id
     }
 
     private fun initInput() {
-        glfwSetKeyCallback(window) { window, key, scancode, action, mods ->
+        val callback = glfwSetKeyCallback(window) { window, key, scancode, action, mods ->
+            println("hello $window, $key, $scancode, $action, $mods")
             if(action == GLFW_RELEASE) {
                 when(key) {
                     GLFW_KEY_F1 -> core.dumpInfos()
@@ -215,6 +240,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
             if(released == 0)
                 core.gameboy.interruptManager.firePinPressed()
         }
+
+        println(">> $callback")
 
         glfwSetJoystickCallback { id, event ->
             if(event == GLFW_CONNECTED) {
@@ -309,6 +336,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
     private fun runEmulator() {
         core.init()
+        checkGLError("post init")
         audioSystem.start()
         val windowWPointer = IntArray(1)
         val windowHPointer = IntArray(1)
@@ -323,14 +351,16 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         glClearColor(0f, .8f, 0f, 1f)
 
         glActiveTexture(GL_TEXTURE0)
+        checkGLError("pre loop")
+
+        glfwGetWindowSize(window, windowWPointer, windowHPointer)
+        glViewport(0, 0, windowWPointer[0], windowHPointer[0])
 
         while(!glfwWindowShouldClose(window)) {
             val delta = glfwGetTime()-lastTime
             lastTime = glfwGetTime()
-            glfwGetWindowSize(window, windowWPointer, windowHPointer)
             pollEvents()
             glClear(GL_COLOR_BUFFER_BIT)
-            glViewport(0, 0, windowWPointer[0], windowHPointer[0])
 
             messageSystem.step(delta.toFloat())
             val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
@@ -417,13 +447,22 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     }
 
     fun updateTexture(core: EmulatorCore, videoData: IntArray) {
-        val data by lazy { IntArray(256*256) }
-        glBindTexture(GL_TEXTURE_2D, textureID)
+        val data by lazy { BufferUtils.createIntBuffer(256*256) }
+        data.rewind()
         for((index, color) in videoData.withIndex()) {
             val correctFormatColor = color and 0xFFFFFF
-            data[index] = correctFormatColor // or 0xFF
+            /*data[index]*/data.put(index, correctFormatColor) // or 0xFF
         }
+        checkGLError("updateTexture pre pixelstorei")
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
+        glBindTexture(GL_TEXTURE_2D, textureID)
+        checkGLError("updateTexture pre SubImage")
+
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, data)
+        checkGLError("updateTexture post SubImage")
     }
 
     fun loadROM(file: File) {
@@ -442,7 +481,9 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         val saveFile = File(saveFolder, file.name.takeWhile { it != '.' }+".sav")
         val cart = Cartridge(romContents, bootRom, saveFile)
         changeCore(EmulatorCore(cart, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem))
+        println("Init emulator core")
         core.init()
+        println("Reloading sound")
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
         messageSystem.message("Started ${core.title}")
@@ -571,5 +612,15 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
     override fun releaseRight() {
         directionState = directionState.setBits(GbReleaseBit, 0..0)
+    }
+
+    fun checkGLError(location: String) {
+        val error = glGetError()
+        when(error) {
+            GL_NO_ERROR -> {}
+            else -> {
+                println("ERROR OpenGL error at $location: $error (0x${Integer.toHexString(error)})")
+            }
+        }
     }
 }

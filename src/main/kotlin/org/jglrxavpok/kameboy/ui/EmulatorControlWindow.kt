@@ -33,9 +33,13 @@ object EmulatorControlWindow: JFrame("Control") {
             insert.addActionListener {
                 val filechooser = JFileChooser(File(Config[System.lastRomFolder]))
                 if(filechooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    println("hello1")
                     val file = filechooser.selectedFile
+                    println("hello2")
                     Config[System.lastRomFolder] = file.parent
+                    println("hello3")
                     Config.save()
+                    println("hello4")
                     KameboyCore.CoreInstance.loadROM(file)
                 }
             }

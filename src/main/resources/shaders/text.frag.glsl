@@ -1,5 +1,3 @@
-#version 330
-
 uniform sampler2D diffuse;
 uniform vec2 minUV;
 uniform vec2 maxUV;
