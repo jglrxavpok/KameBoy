@@ -1,4 +1,5 @@
 import org.jglrxavpok.kameboy.EmulatorCore
+import org.jglrxavpok.kameboy.MessageSystem
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import org.junit.Test
@@ -19,7 +20,7 @@ class TestVideo {
                 get() = if(pressedUp) 0x0 else 0xF
             override val directionState = 0xF
         }
-        val core = EmulatorCore(cartridge, input) { rgb ->
+        val core = EmulatorCore(cartridge, input, outputSerial = true, messageSystem = MessageSystem(), renderRoutine = { rgb ->
             frameCount++
             if(frameCount > 60) {
                 val result = BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB)
@@ -38,7 +39,7 @@ class TestVideo {
                     this.stop()
                 }
             }
-        }
+        })
         core.init()
         core.loop()
 

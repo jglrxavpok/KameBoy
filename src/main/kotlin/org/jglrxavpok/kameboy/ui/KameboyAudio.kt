@@ -55,7 +55,7 @@ class KameboyAudio(var sound: Sound) {
         val capa = ALC.createCapabilities(device)
         AL.createCapabilities(capa)
 
-        soundThread = thread(isDaemon = true, name = "OpenAL Audio Thread", block = this::soundLoop)
+        soundThread = thread(isDaemon = true, name = "OpenAL Audio Thread", start = true, block = this::soundLoop)
     }
 
     private fun soundLoop() {

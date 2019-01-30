@@ -30,7 +30,7 @@ import javax.swing.*
 class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     private var window: Long
 
-    val cartridge = _DEV_cart("dmg_sound/rom_singles/01-registers.gb", useBootRom = true)
+    val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
     var core: EmulatorCore = NoGameCore
     private var shaderID: Int
@@ -53,6 +53,9 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
                             this[index] = (blue shl 16) or (green shl 8) or red
                         }
                     }
+    private var waitingForSerialTexID: Int = -1
+    private var serialShaderID: Int = -1
+
 
     companion object {
         lateinit var CoreInstance: KameboyCore
@@ -93,6 +96,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         checkGLError("post blit shader creation")
         FontRenderer.init()
         checkGLError("post font renderer")
+        initOtherTextures()
         textureID = prepareTexture()
         checkGLError("post texture preparation")
         meshID = prepareRenderMesh()
@@ -100,11 +104,37 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
         checkGLError("post mesh preparation")
 
-        // TODO: debug only, remove
-        changeCore(EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem))
+        checkGLError("post alpha ref")
 
+/*        // TODO: debug only, remove
+        changeCore(EmulatorCore(cartridge, this, outputSerial, renderRoutine = { pixels -> updateTexture(this /* emulator core */, pixels) }, messageSystem = messageSystem))
+*/
         runEmulator()
         cleanup()
+    }
+
+    private fun initOtherTextures() {
+        serialShaderID = LoadShader("layer")
+        GL20.glUseProgram(serialShaderID)
+
+        waitingForSerialTexID = GL11.glGenTextures()
+        val rgb = ImageIO.read(javaClass.getResourceAsStream("/images/waiting_serial.png"))
+                .getRGB(0,0,256,256,null,0, 256).apply {
+                    for(index in 0 until size) {
+                        val color = this[index]
+                        val alpha = (color shr 24) and 0xFF
+                        val red = (color shr 16) and 0xFF
+                        val green = (color shr 8) and 0xFF
+                        val blue = color and 0xFF
+                        this[index] = (alpha shl 24) or (blue shl 16) or (green shl 8) or red
+                    }
+                }
+        GL11.glBindTexture(GL_TEXTURE_2D, waitingForSerialTexID)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL11.GL_UNSIGNED_BYTE, rgb)
+
+        checkGLError("waiting_serial.png loading")
     }
 
     private fun positionWindows() {
@@ -183,7 +213,6 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
     private fun initInput() {
         val callback = glfwSetKeyCallback(window) { window, key, scancode, action, mods ->
-            println("hello $window, $key, $scancode, $action, $mods")
             if(action == GLFW_RELEASE) {
                 when(key) {
                     GLFW_KEY_F1 -> core.dumpInfos()
@@ -365,13 +394,17 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
             val catchupSpeed = (delta/optimalTime).coerceIn(1.0/1000.0 .. 6.0) // between 10 fps and 1000fps
             if(core === NoGameCore) {
                 updateTexture(core, noGameImage)
-            } else { // render actual emulator
-                if(fastForward) {
-                    core.frame(10.0)
-                } else {
-                    core.frame(catchupSpeed)
-                }
+            } else { // render&update actual emulator
+               // if( ! core.waitingForSerial()) {
+                    if (fastForward) {
+                        core.frame(10.0)
+                    } else {
+                        core.frame(catchupSpeed)
+                    }
+               // }
             }
+
+            core.executePendingActions()
 
             glBindTexture(GL_TEXTURE_2D, textureID)
             glUseProgram(shaderID)
@@ -381,6 +414,12 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
             messageSystem.drawMessages()
 
+            if(core.waitingForSerial()) {
+                glUseProgram(serialShaderID)
+                glBindTexture(GL_TEXTURE_2D, waitingForSerialTexID)
+                glBindVertexArray(meshID)
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)
+            }
             glfwSwapBuffers(window)
 
             val newTime = glfwGetTime()

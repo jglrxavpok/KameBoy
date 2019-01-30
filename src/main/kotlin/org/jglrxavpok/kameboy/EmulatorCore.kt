@@ -13,6 +13,7 @@ import org.jglrxavpok.kameboy.time.CreateSaveState
 import org.jglrxavpok.kameboy.time.SaveState
 import java.awt.image.BufferedImage
 import java.util.*
+import java.util.concurrent.LinkedBlockingQueue
 import javax.swing.ImageIcon
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -49,6 +50,8 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
         const val DMGVideoVSync = 59.73 // updates per second
         const val CGBVideoVSync = 61.1 // updates per second
     }
+
+    private val actionQueue = LinkedBlockingQueue<() -> Unit>()
 
     val gameboy = Gameboy(cartridge, input, outputSerial)
 
@@ -171,6 +174,25 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
         val state = saveStates[index] ?: return
         messageSystem.message("Loading SaveState #$index")
         saveStateToLoad = state
+    }
+
+    fun waitingForSerial(): Boolean {
+        return gameboy.mapper.serialIO.waitingForConfirmation
+    }
+
+    fun executePendingActions() {
+        synchronized(actionQueue) {
+            while(actionQueue.isNotEmpty()) {
+                val action = actionQueue.poll()
+                action()
+            }
+        }
+    }
+
+    fun later(function: () -> Unit) {
+        synchronized(actionQueue) {
+            actionQueue.add(function)
+        }
     }
 
 }

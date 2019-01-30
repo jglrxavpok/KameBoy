@@ -24,7 +24,7 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
     @SaveStateElement
     open var frequency: Int = 0
         set(value) {
-            field = value
+            field = minOf(value, 2048)
             timer.period = ((2048-value)*frequencyMultiplier)
             if(channelNumber == 3)
                 timer.period /= 2

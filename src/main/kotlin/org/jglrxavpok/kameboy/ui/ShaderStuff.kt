@@ -5,8 +5,8 @@ import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL11.*
 
 fun LoadShader(name: String): Int {
-    val versionString = glGetString(GL20.GL_SHADING_LANGUAGE_VERSION)!!.replace(".", "")
-    println("Attempting to inject version $versionString into shader $name")
+    val versionString = glGetString(GL20.GL_SHADING_LANGUAGE_VERSION)!!.replace(".", "").split(" ")[0] // remove proprietary name after version (eg NVIDIA)
+    println("Attempting to inject version '$versionString' into shader $name")
     val id = GL20.glCreateProgram()
     val vertID = GL20.glCreateShader(GL20.GL_VERTEX_SHADER)
     val fragID = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER)

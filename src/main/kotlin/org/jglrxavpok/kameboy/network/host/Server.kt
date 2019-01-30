@@ -13,6 +13,7 @@ import org.jglrxavpok.kameboy.network.ChannelHandler
 import org.jglrxavpok.kameboy.network.PacketDecoder
 import org.jglrxavpok.kameboy.network.PacketEncoder
 import org.jglrxavpok.kameboy.network.packets.SerialConfirmation
+import org.jglrxavpok.kameboy.network.packets.SerialFinish
 import org.jglrxavpok.kameboy.network.packets.SerialPacket
 import org.jglrxavpok.kameboy.network.writeAndFlushPacket
 
@@ -77,8 +78,12 @@ object Server: SerialPeripheral {
         state = ConnectionStatus.Shutdown
     }
 
-    override fun transfer(byte: Int) {
-        clientChannel?.writeAndFlushPacket(SerialPacket(byte))
+    override fun transferFinish() {
+        clientChannel?.writeAndFlushPacket(SerialFinish())
+    }
+
+    override fun transfer(fromMaster: Boolean, bit: Boolean) {
+        clientChannel?.writeAndFlushPacket(SerialPacket(fromMaster, bit))
     }
 
     fun confirmTransfer() {

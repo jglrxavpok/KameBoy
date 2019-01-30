@@ -15,7 +15,9 @@ class SerialConfirmation: AbstractPacket() {
         override fun handlePacket(packet: SerialConfirmation, ctx: ChannelHandlerContext, netHandler: INetworkHandler) {
             val core = netHandler.core
             val serial = core.gameboy.mapper.serialIO
-            serial.confirmTransfer()
+            core.later {
+                serial.confirmTransfer()
+            }
         }
     }
 

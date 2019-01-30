@@ -1,4 +1,5 @@
 import org.jglrxavpok.kameboy.EmulatorCore
+import org.jglrxavpok.kameboy.MessageSystem
 import org.jglrxavpok.kameboy.input.PlayerInput
 import org.jglrxavpok.kameboy.memory.Cartridge
 import java.awt.image.BufferedImage
@@ -13,7 +14,7 @@ fun main(args: Array<String>) {
         override val buttonState = 0xF
         override val directionState = 0xF
     }
-    val core = EmulatorCore(cartridge, input) {}
+    val core = EmulatorCore(cartridge, input, outputSerial = false, renderRoutine = {}, messageSystem = MessageSystem())
     StepByStepExecution(core).loop()
 }
 
