@@ -46,82 +46,82 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     @SaveStateElement
     val speedRegister = SpeedRegister(this)
     val ioPorts = arrayOf(
-            P1Register(gameboy.input),
-            serialDataReg,
-            serialControlReg,
-            UnknownRegister(0xFF03),
-            divRegister,
-            timerRegister,
-            Register("TMA"),
-            TacRegister(gameboy),
-            UnknownRegister(0xFF08),
-            UnknownRegister(0xFF09),
-            UnknownRegister(0xFF0A),
-            UnknownRegister(0xFF0B),
-            UnknownRegister(0xFF0C),
-            UnknownRegister(0xFF0D),
-            UnknownRegister(0xFF0E),
-            IFRegister(),
-            NRRegister(1,0, 0x80, sound),
-            NRx1(sound.channel1, 0x3F, sound),
-            NRRegister(1, 2, 0x00, sound),
-            NRRegister(1, 3, 0xFF, sound),
-            NRRegister(1, 4, 0xBF, sound),
-            SoundRegister(0xFF15, sound),
-            NRx1(sound.channel2, 0x3F, sound),
-            NRRegister(2, 2, 0x00, sound),
-            NRRegister(2, 3, 0xFF, sound),
-            NRRegister(2, 4, 0xBF, sound),
-            NRRegister(3, 0, 0x7F, sound),
-            NRx1(sound.channel3, 0xFF, sound),
-            NRRegister(3, 2, 0x9F, sound),
-            NRRegister(3, 3, 0xFF, sound),
-            NRRegister(3, 4, 0xBF, sound),
-            SoundRegister(0xFF1F, sound),
-            NRx1(sound.channel4, 0xFF, sound),
-            NRRegister(4, 2, 0x00, sound),
-            NRRegister(4, 3, 0x00, sound),
-            NRRegister(4, 4, 0xBF, sound),
-            sound.channelControl,
-            sound.outputSelect,
-            sound.soundToggle,
-            SoundRegister(0xFF27, sound),
-            SoundRegister(0xFF28, sound),
-            SoundRegister(0xFF29, sound),
-            SoundRegister(0xFF2A, sound),
-            SoundRegister(0xFF2B, sound),
-            SoundRegister(0xFF2C, sound),
-            SoundRegister(0xFF2D, sound),
-            SoundRegister(0xFF2E, sound),
-            SoundRegister(0xFF2F, sound),
-            MemoryRegister("Wave Pattern RAM 0", this, 0xFF30),
-            MemoryRegister("Wave Pattern RAM 1", this, 0xFF31),
-            MemoryRegister("Wave Pattern RAM 2", this, 0xFF32),
-            MemoryRegister("Wave Pattern RAM 3", this, 0xFF33),
-            MemoryRegister("Wave Pattern RAM 4", this, 0xFF34),
-            MemoryRegister("Wave Pattern RAM 5", this, 0xFF35),
-            MemoryRegister("Wave Pattern RAM 6", this, 0xFF36),
-            MemoryRegister("Wave Pattern RAM 7", this, 0xFF37),
-            MemoryRegister("Wave Pattern RAM 8", this, 0xFF38),
-            MemoryRegister("Wave Pattern RAM 9", this, 0xFF39),
-            MemoryRegister("Wave Pattern RAM A", this, 0xFF3A),
-            MemoryRegister("Wave Pattern RAM B", this, 0xFF3B),
-            MemoryRegister("Wave Pattern RAM C", this, 0xFF3C),
-            MemoryRegister("Wave Pattern RAM D", this, 0xFF3D),
-            MemoryRegister("Wave Pattern RAM E", this, 0xFF3E),
-            MemoryRegister("Wave Pattern RAM F", this, 0xFF3F),
-            Register("LCDC"),
-            Register("STAT"),
-            Register("SCY"),
-            Register("SCX"),
-            lyRegister,
-            Register("LYC"),
-            DMARegister(this),
-            Register("BGP"),
-            Register("OBP0"),
-            Register("OBP1"),
-            Register("WY"),
-            Register("WX")
+            P1Register(gameboy.input), // $FF00
+            serialDataReg, // $FF01
+            serialControlReg, // $FF02
+            UnknownRegister(0xFF03), // $FF03
+            divRegister, // $FF04
+            timerRegister, // $FF05
+            Register("TMA"), // $FF06
+            TacRegister(gameboy), // $FF07
+            UnknownRegister(0xFF08), // $FF08
+            UnknownRegister(0xFF09), // $FF09
+            UnknownRegister(0xFF0A), // $FF0A
+            UnknownRegister(0xFF0B), // $FF0B
+            UnknownRegister(0xFF0C), // $FF0C
+            UnknownRegister(0xFF0D), // $FF0D
+            UnknownRegister(0xFF0E), // $FF0E
+            IFRegister(), // $FF0F
+            NRRegister(1,0, 0x80, sound), // $FF10
+            NRx1(sound.channel1, 0x3F, sound), // $FF11
+            NRRegister(1, 2, 0x00, sound), // $FF12
+            NRRegister(1, 3, 0xFF, sound), // $FF13
+            NRRegister(1, 4, 0xBF, sound), // $FF14
+            SoundRegister(0xFF15, sound), // $FF15
+            NRx1(sound.channel2, 0x3F, sound), // $FF16
+            NRRegister(2, 2, 0x00, sound), // $FF17
+            NRRegister(2, 3, 0xFF, sound), // $FF18
+            NRRegister(2, 4, 0xBF, sound), // $FF19
+            NRRegister(3, 0, 0x7F, sound), // $FF1A
+            NRx1(sound.channel3, 0xFF, sound), // $FF1B
+            NRRegister(3, 2, 0x9F, sound), // $FF1C
+            NRRegister(3, 3, 0xFF, sound), // $FF1D
+            NRRegister(3, 4, 0xBF, sound), // $FF1E
+            SoundRegister(0xFF1F, sound), // $FF1F
+            NRx1(sound.channel4, 0xFF, sound), // $FF20
+            NRRegister(4, 2, 0x00, sound), // $FF21
+            NRRegister(4, 3, 0x00, sound), // $FF22
+            NRRegister(4, 4, 0xBF, sound), // $FF23
+            sound.channelControl, // $FF24
+            sound.outputSelect, // $FF25
+            sound.soundToggle, // $FF26
+            SoundRegister(0xFF27, sound), // $FF27
+            SoundRegister(0xFF28, sound), // $FF28
+            SoundRegister(0xFF29, sound), // $FF29
+            SoundRegister(0xFF2A, sound), // $FF2A
+            SoundRegister(0xFF2B, sound), // $FF2B
+            SoundRegister(0xFF2C, sound), // $FF2C
+            SoundRegister(0xFF2D, sound), // $FF2D
+            SoundRegister(0xFF2E, sound), // $FF2E
+            SoundRegister(0xFF2F, sound), // $FF2F
+            MemoryRegister("Wave Pattern RAM 0", this, 0xFF30), // $FF30
+            MemoryRegister("Wave Pattern RAM 1", this, 0xFF31), // $FF31
+            MemoryRegister("Wave Pattern RAM 2", this, 0xFF32), // $FF32
+            MemoryRegister("Wave Pattern RAM 3", this, 0xFF33), // $FF33
+            MemoryRegister("Wave Pattern RAM 4", this, 0xFF34), // $FF34
+            MemoryRegister("Wave Pattern RAM 5", this, 0xFF35), // $FF35
+            MemoryRegister("Wave Pattern RAM 6", this, 0xFF36), // $FF36
+            MemoryRegister("Wave Pattern RAM 7", this, 0xFF37), // $FF37
+            MemoryRegister("Wave Pattern RAM 8", this, 0xFF38), // $FF38
+            MemoryRegister("Wave Pattern RAM 9", this, 0xFF39), // $FF39
+            MemoryRegister("Wave Pattern RAM A", this, 0xFF3A), // $FF3A
+            MemoryRegister("Wave Pattern RAM B", this, 0xFF3B), // $FF3B
+            MemoryRegister("Wave Pattern RAM C", this, 0xFF3C), // $FF3C
+            MemoryRegister("Wave Pattern RAM D", this, 0xFF3D), // $FF3D
+            MemoryRegister("Wave Pattern RAM E", this, 0xFF3E), // $FF3E
+            MemoryRegister("Wave Pattern RAM F", this, 0xFF3F), // $FF3F
+            Register("LCDC"), // $FF40
+            OrOnReadRegister("STAT", 0b1000_0000), // $FF41
+            Register("SCY"), // $FF42
+            Register("SCX"), // $FF43
+            lyRegister, // $FF44
+            Register("LYC"), // $FF45
+            DMARegister(this), // $FF46
+            Register("BGP"), // $FF47
+            Register("OBP0"), // $FF48
+            Register("OBP1"), // $FF49
+            Register("WY"), // $FF4A
+            Register("WX") // $FF4B
     )
 
     @SaveStateElement
@@ -133,6 +133,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
         override fun correctAddress(address: Int): Int {
             return address-0xFEA0
         }
+
+        /*override fun read(address: Int): Int {
+            return 0xFF//super.read(address)
+        }*/
     }
     @SaveStateElement
     val empty1 = object: RAM(0xFF80-0xFF4C) {
@@ -140,6 +144,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
 
         override fun correctAddress(address: Int): Int {
             return address-0xFF4C
+        }
+
+        override fun read(address: Int): Int {
+            return 0xFF//super.read(address)
         }
     }
     @SaveStateElement

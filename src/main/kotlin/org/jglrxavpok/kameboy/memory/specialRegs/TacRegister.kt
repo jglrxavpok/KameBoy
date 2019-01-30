@@ -12,4 +12,8 @@ class TacRegister(val gameboy: Gameboy): Register("TAC") {
         }
         super.write(address, value)
     }
+
+    override fun read(address: Int): Int {
+        return super.read(address) or 0b1111_1000
+    }
 }
