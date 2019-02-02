@@ -12,6 +12,7 @@ class MBC5(val cartridge: Cartridge, val battery: Battery, val rumble: Rumble): 
     override val name = "MBC5"
     @SaveStateElement
     var mode = Mode.Rom16Ram8
+    @SaveStateElement
     var currentBank = 1
     val BankSize = 0x4000
     val banks = Array(cartridge.romBankCount) { index ->
@@ -77,9 +78,7 @@ class MBC5(val cartridge: Cartridge, val battery: Battery, val rumble: Rumble): 
                 banks[0][address].asUnsigned()
             }
             in 0x4000..0x7FFF -> {
-                if(currentBank >= banks.size)
-                    return 0xFF
-                val bank = banks[currentBank]
+                val bank = banks[currentBank % banks.size]
                 bank[address-0x4000].asUnsigned()
             }
             in 0xA000..0xBFFF -> {

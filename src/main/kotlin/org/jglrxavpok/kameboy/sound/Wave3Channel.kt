@@ -9,7 +9,7 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
         val WaveTableStart = 0xFF30
 
         @JvmStatic
-        val Volumes = arrayOf(4, 0, 1, 2)
+        val VolumeShifts = arrayOf(4, 0, 1, 2)
     }
 
     private val patternMemory = IntArray(16)
@@ -17,7 +17,7 @@ class Wave3Channel(memoryMapper: MemoryMapper): SoundChannel(3, 256, memoryMappe
     internal var sampleIndex = 0
 
     override val frequencyMultiplier = 2
-    val volumeControl get()= Volumes[(nr2.getValue() shr 5) and 0b11]
+    val volumeControl get()= VolumeShifts[(nr2.getValue() shr 5) and 0b11]
     override val dacEnabled by nr3.bitVar(7)
 
     override fun onOutputClock(timer: Timer) {

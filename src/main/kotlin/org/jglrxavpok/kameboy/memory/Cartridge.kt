@@ -44,6 +44,7 @@ open class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val
         5 -> 64
         6 -> 128
         7 -> 256
+        8 -> 512
         0x52 -> 72
         0x53 -> 80
         0x54 -> 96
@@ -63,7 +64,7 @@ open class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val
     }
     @SaveStateElement
     var selectedRAMBankIndex = 0
-    val currentRAMBank get()= ramBanks[selectedRAMBankIndex]
+    val currentRAMBank get()= ramBanks[selectedRAMBankIndex % ramBanks.size]
 
     val cartrigeType = cartrigeTypeFromIndex(cartridgeTypeIndex)
 
@@ -109,6 +110,8 @@ open class Cartridge(val rawData: ByteArray, val bootROM: ByteArray? = null, val
         return "Cartridge[\n" +
                 "Title: '$title'\n" +
                 "Cartridge type infos: $cartrigeType\n" +
+                "only for Color: $isOnlyForColorGB\n" +
+                "compatible with Gameboy Color: $isForColorGB\n"+
                 "]"
     }
 }

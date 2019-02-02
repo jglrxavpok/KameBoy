@@ -485,12 +485,6 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     }
 
     fun updateTexture(core: EmulatorCore, videoData: IntArray) {
-        val data by lazy { BufferUtils.createIntBuffer(256*256) }
-        data.rewind()
-        for((index, color) in videoData.withIndex()) {
-            val correctFormatColor = color and 0xFFFFFF
-            /*data[index]*/data.put(index, correctFormatColor) // or 0xFF
-        }
         checkGLError("updateTexture pre pixelstorei")
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
@@ -499,7 +493,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         glBindTexture(GL_TEXTURE_2D, textureID)
         checkGLError("updateTexture pre SubImage")
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, data)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, videoData)
         checkGLError("updateTexture post SubImage")
     }
 

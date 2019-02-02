@@ -10,14 +10,26 @@ class TimerRegister(val memoryMapper: MemoryMapper): Register("TIMA") {
 
     private val timerControl = MemoryRegister("TAC", memoryMapper, 0xFF07)
     private val timerRunning by timerControl.bitVar(2)
+    private var cycles = 0
+    private var resetPending = false
 
-    override fun fitValueInBounds() {
-        if(timerRunning) {
-            if(registerValue.asUnsigned16() > 0xFF) {
+    override fun inc(): Register {
+        if(registerValue.asUnsigned16() == 0xFF) {
+            registerValue = 0
+            resetPending = true
+        }
+        return super.inc()
+    }
+
+    fun step(cycles: Int) {
+        this.cycles += cycles
+        if(this.cycles >= 4) {
+            this.cycles %= 4
+            if(resetPending) {
                 memoryMapper.interruptManager.fireTimerOverflow()
                 registerValue = memoryMapper.read(0xFF06)
+                resetPending = false
             }
         }
-        registerValue = registerValue and 0xFF
     }
 }

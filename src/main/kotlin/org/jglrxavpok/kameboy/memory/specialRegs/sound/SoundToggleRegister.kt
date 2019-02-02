@@ -12,7 +12,7 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
         if(valueToWrite == 0) { // power off APU
             if(isOn) {
                 for(addr in 0xFF10..0xFF25) { // NR10-NR51
-                    if(addr != 0xFF20) // NR41
+                    if(addr != 0xFF20 && addr != 0xFF23) // NR41 & NR43
                         sound.memory.write(addr, 0x00)
                 }
 
@@ -31,6 +31,8 @@ class SoundToggleRegister(val sound: Sound): Register("NR52") {
     }
 
     override fun read(address: Int): Int {
+        if(!isOn)
+            return 0x70 or (1 shl 7)
         val allOf = if(isOn) 1 shl 7 else 0
         var result = allOf
         for(index in 1..4) {

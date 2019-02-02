@@ -16,29 +16,19 @@ class GameBoyTimer(val mapper: MemoryMapper) {
     internal var currentDivCycle = 0
     @SaveStateElement
     internal var currentTimerCycle = 0
-    private val timerControl = MemoryRegister("TAC", mapper, 0xFF07)
-    private val timerRunning by timerControl.bitVar(2)
-    private val clockSelect get()= timerControl.getValue() and 0b11
 
     fun step(cycles: Int) {
+        currentTimerCycle += cycles
         currentDivCycle += cycles
-        while(currentDivCycle >= DivCycleRate) {
-            currentDivCycle -= DivCycleRate
-            mapper.divRegister.inc()
-        }
 
-        if(timerRunning) {
-            currentTimerCycle += cycles
-            val timerRate = TimerCounterRates[clockSelect]
-            while(currentTimerCycle >= timerRate) {
-                currentTimerCycle -= timerRate
-                mapper.timerRegister.inc()
-            }
+        while(currentDivCycle >= 4) {
+            currentDivCycle -= 4
+            mapper.divRegister.inc()
         }
     }
 
-    fun resetTimer() {
-        if(timerRunning)
-            currentTimerCycle = 0
+    fun resetTimerFromDiv() {
+        currentDivCycle = 0
+        currentTimerCycle = 0
     }
 }

@@ -27,7 +27,7 @@ class SerialPacket(var fromMaster: Boolean, var bit: Boolean): AbstractPacket() 
             val serialIO = core.gameboy.mapper.serialIO
             val type = if(serialIO.hasInternalClock) "Master" else "Slave"
             core.later {
-                println(">> ($type) Received ${packet.bit.toBit()}")
+                //println(">> ($type) Received ${packet.bit.toBit()}")
                 serialIO.receive(packet.bit, packet.fromMaster)
             }
         }

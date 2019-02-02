@@ -1,7 +1,5 @@
 package org.jglrxavpok.kameboy.sound
 
-import org.jglrxavpok.kameboy.EmulatorCore
-import org.jglrxavpok.kameboy.helpful.Profiler
 import org.jglrxavpok.kameboy.helpful.toClockCycles
 import org.jglrxavpok.kameboy.memory.MemoryMapper
 import org.jglrxavpok.kameboy.memory.MemoryRegister
@@ -65,8 +63,10 @@ abstract class SoundChannel(val channelNumber: Int, val length: Int, val memoryM
 
     open fun trigger() {
         channelEnabled = dacEnabled
-        if(lengthCounter <= 0)
+        if(lengthCounter <= 0) {
+            channelEnabled = false
             lengthCounter = length
+        }
         timer.reset()
         volume = initialVolume
         output = 0

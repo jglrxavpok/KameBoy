@@ -74,9 +74,10 @@ class MBC1(val cartridge: Cartridge, val battery: Battery): CartridgeType() {
                 banks[0][address].asUnsigned()
             }
             in 0x4000..0x7FFF -> {
-                if(currentBank >= banks.size)
-                    return 0xFF
-                val bank = banks[currentBank]
+                var index = currentBank % banks.size
+                if(index == 0)
+                    index = 1
+                val bank = banks[index]
                 bank[address-0x4000].asUnsigned()
             }
             in 0xA000..0xBFFF -> {

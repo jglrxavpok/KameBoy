@@ -27,6 +27,8 @@ class Gameboy(val cartridge: Cartridge, val input: PlayerInput, val outputSerial
         val clockCycles = cpu.step()
         val speedFactor = mapper.currentSpeedFactor
         val adjustedSpeed = clockCycles/speedFactor
+        mapper.stepBeforeTimer(clockCycles)
+
         timer.step(clockCycles)
 
         cartridge.cartrigeType.tick(adjustedSpeed) // external crystals (eg. MBC3)

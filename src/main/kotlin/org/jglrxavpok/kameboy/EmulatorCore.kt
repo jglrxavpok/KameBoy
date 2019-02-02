@@ -89,6 +89,7 @@ open class EmulatorCore(val cartridge: Cartridge, val input: PlayerInput, val ou
         } else {
             println("Found BOOT Rom, loading it")
         }
+        println(cartridge.toString())
     }
 
     private lateinit var task: TimerTask

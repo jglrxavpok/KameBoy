@@ -15,7 +15,7 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     // repeat...
 
     private var currentCycle = 0
-    private var data = 0xFF
+    private var data = 0x00
     private var transferring = false
     val connectedPeripherals = mutableListOf<SerialPeripheral>()
 
@@ -50,7 +50,7 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
             currentCycle += cycles
 
             val period = (frequency * speedMultiplier/* /8*/).toClockCycles()
-            if(currentCycle >= period) {
+            while(currentCycle >= period) {
                currentCycle -= period
 
                 sendSingleBit()
@@ -60,18 +60,18 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
         }
     }
 
-    private fun sendSingleBit() {
+    private fun sendSingleBit(overridedMasterFlag: Boolean? = null) {
         val type = if(hasInternalClock) "Master" else "Slave"
         val bit = data and 0b1000_0000 != 0
-        println(">> ($type) Sending $bit")
-        connectedPeripherals.forEach { it.transfer(hasInternalClock, bit) }
+        //println(">> ($type) Sending $bit")
+        connectedPeripherals.forEach { it.transfer(overridedMasterFlag ?: hasInternalClock, bit) }
 
         val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral || !it.isConnected }.isNotEmpty()
         waitingForConfirmation = true // wait for slave answer
 
         if(!isConnected) {
             waitingForConfirmation = false
-            println("not connected, not waiting for confirmation")
+       //     println("not connected, not waiting for confirmation")
             data = 0xFF // don't receive anything as we're not connected :c
         }
     }
@@ -93,13 +93,13 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
     }
 
     fun receive(bit: Boolean, fromMaster: Boolean) {
-        if(fromMaster) {
+        /*if(fromMaster) {
             if(hasInternalClock) {
                 println("Forced to switch from Master to Slave")
             }
             val sc = memoryMapper.read(0xFF02)
             memoryMapper.write(0xFF02, sc.setBits(0, 0..0)) // we are now using an external clock
-        }
+        }*/
         if(hasInternalClock) { // if master, send confirmation and end bit transfer
             if(bitsSent >= 8) {
                 sendTransferEnd()
@@ -107,11 +107,12 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
             } else {
                 sendConfirmation()
             }
-        } else {
+        }
+        if(!hasInternalClock || fromMaster) {
             // transfer happening!
             val sc = memoryMapper.read(0xFF02)
             memoryMapper.write(0xFF02, sc.setBits(1, 7..7))
-            sendSingleBit() // send slave bit
+            sendSingleBit(overridedMasterFlag = false) // send slave bit
         }
         data = (data shl 1) or bit.toBit()
         data = data and 0xFF
@@ -129,7 +130,7 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
         confirmTransfer()
 
         val type = if(hasInternalClock) "Master" else "Slave"
-        println(">> ($type) Transfer finished")
+       // println(">> ($type) Transfer finished")
 
         transferring = false
         interruptManager.fireSerialIOTransferComplete()
@@ -140,17 +141,20 @@ class SerialIO(val interruptManager: InterruptManager, val memoryMapper: MemoryM
         memoryMapper.write(0xFF02, hasInternalClock.toBit())
 
         // TODO: test - set to external clock (test)
-     //   memoryMapper.write(0xFF02, sc.setBits(0, 0..0))
+    //    memoryMapper.write(0xFF02, sc.setBits(0, 0..0))
     }
 
     fun confirmTransfer() {
         val type = if(hasInternalClock) "Master" else "Slave"
-        println(">> ($type) Bit transfer confirmed")
+        //println(">> ($type) Bit transfer confirmed")
 
         waitingForConfirmation = false
     }
 
     fun readFromTransfer(): Int {
+        val isConnected = connectedPeripherals.filterNot { it === ConsoleOutputPeripheral || !it.isConnected }.isNotEmpty()
+        if(!isConnected)
+            return 0xFF
         return data
     }
 }

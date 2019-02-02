@@ -288,7 +288,7 @@ class CPU(val gameboy: Gameboy) {
 
             0xF8 -> {{
                 ld(HL, addsp(nextByte()))
-                12
+                16
             }}
 
             0x08 -> {{ write16(nextAddress(), stackPointer.getValue()); 20}}
@@ -408,7 +408,7 @@ class CPU(val gameboy: Gameboy) {
 
             0xE8 -> {{
                 stackPointer.setValue(addsp(nextByte()))
-                16
+                12
             }}
 
             0x03 -> {{ inc16(BC); 8}}
@@ -480,7 +480,7 @@ class CPU(val gameboy: Gameboy) {
                     if(!cartridge.isForColorGB)
                         stopPC = true
                 }
-                4
+                0
             }}
 
         0x10 -> {{
@@ -501,8 +501,12 @@ class CPU(val gameboy: Gameboy) {
             }}
 
             0xF3 -> {{
-                //requestedInterruptChange = true // need to wait for next instruction to be executed
-                interruptManager.interruptsEnabled = false // DI is immediate
+                if(gameboy.isCGB) {
+                    requestedInterruptChange = true // need to wait for next instruction to be executed
+                    desiredInterruptState = false
+                } else {
+                    interruptManager.interruptsEnabled = false // DI is immediate
+                }
                 4
             }}
 

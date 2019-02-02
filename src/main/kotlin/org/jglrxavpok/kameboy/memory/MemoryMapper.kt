@@ -124,6 +124,22 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             Register("WX") // $FF4B
     )
 
+    val undocumented6C = OrOnReadRegister("FF6C", 0xFE)
+    val undocumented72 = Register("FF72")
+    val undocumented73 = Register("FF73")
+    val undocumented74 = Register("FF74")
+    val undocumented75 = OrOnReadRegister("FF75", 0x8F)
+    val undocumented76 = object: Register("FF76") {
+        override fun read(address: Int): Int {
+            return 0x00
+        }
+    }
+    val undocumented77 = object: Register("FF77 ") {
+        override fun read(address: Int): Int {
+            return 0x00
+        }
+    }
+
     @SaveStateElement
     val spriteAttributeTable = SpriteAttributeTable()
     @SaveStateElement
@@ -235,6 +251,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     val hdma4 = Register("HDMA 4")
     val hdma5 = Hdma5(this)
 
+    fun stepBeforeTimer(cycles: Int) {
+        timerRegister.step(cycles) // TIMA contains 00 for 4 cycles after a reset (Mooneye GB)
+    }
+
     fun step(cycles: Int) {
         hdma5.step(cycles)
     }
@@ -326,6 +346,14 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             in 0xFF4C until 0xFF80 -> {
                 when {
                     booting && address == 0xFF50 -> bootRegister
+                    // undocumented but writable adddresses
+                    gameboy.isCGB && address == 0xFF6C && gameboy.inCGBMode -> undocumented6C
+                    gameboy.isCGB && address == 0xFF72 -> undocumented72
+                    gameboy.isCGB && address == 0xFF73 -> undocumented73
+                    gameboy.isCGB && address == 0xFF74 && gameboy.inCGBMode -> undocumented74
+                    gameboy.isCGB && address == 0xFF75 -> undocumented75
+                    gameboy.isCGB && address == 0xFF76 -> undocumented76
+                    gameboy.isCGB && address == 0xFF77 -> undocumented77
                     else -> empty1
                 }
             }
