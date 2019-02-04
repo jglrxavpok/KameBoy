@@ -23,7 +23,9 @@ import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import java.awt.Toolkit
 import java.io.File
+import java.io.FileInputStream
 import java.nio.ByteBuffer
+import java.util.zip.ZipInputStream
 import javax.imageio.ImageIO
 import javax.swing.*
 
@@ -498,7 +500,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     }
 
     fun loadROM(file: File) {
-        val romContents = file.readBytes()
+        val isZipped = file.extension == "zip"
+        val romContents = if(isZipped) ZipInputStream(FileInputStream(file)).apply { nextEntry }.readBytes() else file.readBytes()
         val useBootRom = true // TODO: config
         val bootRom = if(useBootRom) {
             val isOnlyForColorGB = romContents[0x0143].asUnsigned() == 0xC0
