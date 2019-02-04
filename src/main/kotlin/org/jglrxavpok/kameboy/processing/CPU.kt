@@ -60,19 +60,41 @@ class CPU(val gameboy: Gameboy) {
     var flagC by F.bitVar(4)
 
     fun reset() {
-        if(cartridge.isForColorGB) {
-            A.setValue(0x11)
-        } else {
-            A.setValue(0x01)
-        }
-        F.setValue(0xB0)
-        B.setValue(0x00)
-        C.setValue(0x13)
-        DE.setValue(0x00D8)
-        HL.setValue(0x014D)
+        /*
+        From the Cycle Accurate Game Boy Docs
+        DMG mode
+        Reg DMG  MGB   SGB   SGB2  CGB   AGB   AGS
+        AF 01B0h FFB0h 0100h FF??h 1180h 1100h 1100h
+        BC 0013h 0013h 0014h ????h 0000h 0100h 0100h
+        DE 00D8h 00D8h 0000h ????h 0008h 0008h 0008h
+        HL 014Dh 014Dh C060h ????h 007Ch 007Ch 007Ch
+        SP FFFEh FFFEh FFFEh ????h FFFEh FFFEh FFFEh
+        PC 0100h 0100h 0100h 0100h 0100h 0100h 0100h
+        GBC mode
+        Reg CGB  AGB   AGS
+        AF 1180h 1100h 1100h
+        BC 0000h 0100h 0100h
+        DE FF56h FF56h FF56h
+        HL 000Dh 000Dh 000Dh
+        SP FFFEh FFFEh FFFEh
+        PC 0100h 0100h 0100h
 
+         */
+        if(gameboy.isCGB) {
+            AF.setValue(0x1180)
+            BC.setValue(0x0000)
+            DE.setValue(0x0008)
+            HL.setValue(0x007C)
+        } else {
+            AF.setValue(0x01B0)
+            BC.setValue(0x0013)
+            DE.setValue(0x00D8)
+            HL.setValue(0x014D)
+        }
         stackPointer.setValue(0xFFFE)
         programCounter.setValue(0x0100)
+
+        // TODO: check values below
 
         memory.write(0xFF05, 0x00)   // TIMA
         memory.write(0xFF06, 0x00)   // TMA
@@ -480,7 +502,7 @@ class CPU(val gameboy: Gameboy) {
                     if(!cartridge.isForColorGB)
                         stopPC = true
                 }
-                0
+                4
             }}
 
         0x10 -> {{
@@ -488,7 +510,7 @@ class CPU(val gameboy: Gameboy) {
             when(nextPart) {
                 0x00 -> {
                     if (cartridge.isForColorGB && memory.speedRegister.shouldPrepareSwitch) {
-                        memory.speedRegister.setValue(0x00)
+                        memory.speedRegister.setValue(0x00) // reset Prepare Speed Switch bit
                         memory.currentSpeedFactor = -memory.currentSpeedFactor + 3
                         128 * 1024 - 76
                     } else {

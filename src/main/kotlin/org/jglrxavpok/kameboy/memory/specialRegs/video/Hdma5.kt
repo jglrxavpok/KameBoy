@@ -38,6 +38,12 @@ class Hdma5(val memory: MemoryMapper) : Register("HDMA 5") {
         val destinationHigh = memory.hdma3.getValue() and 0b0001_1111
         val destinationLow = memory.hdma4.getValue() and 0b1111_0000
         source = (sourceHigh shl 8) + sourceLow
+        if(source in 0xE000..0xFFFF) {
+            source = 0xA000 + (source - 0xE000)
+        }
+        if(source in 0x8000..0x9FFF) {
+            source = 0xFF4C // send into EMPTY 1
+        }
         destination = (destinationHigh shl 8) + destinationLow + 0x8000
 
         if(immediate) {
@@ -59,6 +65,7 @@ class Hdma5(val memory: MemoryMapper) : Register("HDMA 5") {
     fun step(cycles: Int) {
         if(!hBlankTransfer)
             return
+        // executed only once per H-Blank
         if(memory.gameboy.video.mode == Video.VideoMode.HBlank) {
             if(!inHBlank) {
                 transferBlock()

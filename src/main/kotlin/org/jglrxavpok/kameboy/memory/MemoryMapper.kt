@@ -45,6 +45,9 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     var currentSpeedFactor: Int = 1
     @SaveStateElement
     val speedRegister = SpeedRegister(this)
+
+    @SaveStateElement
+    val dma = DMARegister(this)
     val ioPorts = arrayOf(
             P1Register(gameboy.input), // $FF00
             serialDataReg, // $FF01
@@ -116,7 +119,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
             Register("SCX"), // $FF43
             lyRegister, // $FF44
             Register("LYC"), // $FF45
-            DMARegister(this), // $FF46
+            dma, // $FF46
             Register("BGP"), // $FF47
             Register("OBP0"), // $FF48
             Register("OBP1"), // $FF49
@@ -147,12 +150,40 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
         override val name = "Empty0"
 
         override fun correctAddress(address: Int): Int {
-            return address-0xFEA0
+            if(gameboy.isCGB) {
+
+                /*
+                from The Cycle Accurate Gameboy Docs:
+                "- CGB: There are another 32 bytes at FEA0h – FEBFh. At FEC0h – FECFh there are another 16
+                bytes that are repeated in FED0h – FEDFh, FEE0h – FEEFh and FEF0h – FEFFh. Reading and
+                writing to any of this 4 blocks will change the same 16 bytes.
+                FEA0h 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+                FEB0h 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F
+                FEC0h 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F
+                FED0h 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F
+                FEE0h 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F
+                FEF0h 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F"
+                 */
+
+                val off = address - 0xFEA0
+                if(off > 0x1F) {
+                    return (off % 0x0F) + 0x20
+                }
+                return off
+            }
+            return 0
         }
 
-        /*override fun read(address: Int): Int {
-            return 0xFF//super.read(address)
-        }*/
+        override fun write(address: Int, value: Int) {
+            if(gameboy.isCGB)
+                super.write(address, value)
+        }
+
+        override fun read(address: Int): Int {
+            if( ! gameboy.isCGB)
+                return 0x00 // always 00h on DMG
+            return super.read(address)
+        }
     }
     @SaveStateElement
     val empty1 = object: RAM(0xFF80-0xFF4C) {
@@ -245,10 +276,10 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
 
     val vramSelect = VramSelect()
 
-    val hdma1 = Register("HDMA 1")
-    val hdma2 = Register("HDMA 2")
-    val hdma3 = Register("HDMA 3")
-    val hdma4 = Register("HDMA 4")
+    val hdma1 = OrOnReadRegister("HDMA 1", orValue = 0xFF)
+    val hdma2 = OrOnReadRegister("HDMA 2", orValue = 0xFF)
+    val hdma3 = OrOnReadRegister("HDMA 3", orValue = 0xFF)
+    val hdma4 = OrOnReadRegister("HDMA 4", orValue = 0xFF)
     val hdma5 = Hdma5(this)
 
     fun stepBeforeTimer(cycles: Int) {
@@ -256,6 +287,7 @@ class MemoryMapper(val gameboy: Gameboy): MemoryComponent {
     }
 
     fun step(cycles: Int) {
+        dma.step(cycles)
         hdma5.step(cycles)
     }
 

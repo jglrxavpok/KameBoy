@@ -14,8 +14,8 @@ class GameBoyTimer(val mapper: MemoryMapper) {
         // timer runs at a quarter of the speed of machine ticks (the emulator uses clock cycles ie 4*Machine ticks)
         currentDivCycle += cycles /4 /4
 
-        while(currentDivCycle >= 4) {
-            currentDivCycle -= 4
+        while(currentDivCycle > 1.0) {
+            currentDivCycle -= 1.0
             mapper.divRegister.inc()
         }
     }

@@ -17,11 +17,14 @@ class TimerRegister(val memoryMapper: MemoryMapper): Register("TIMA") {
         if(registerValue.asUnsigned16() == 0xFF) {
             registerValue = 0
             resetPending = true
+            return this
         }
         return super.inc()
     }
 
     fun step(cycles: Int) {
+        if(!timerRunning)
+            return
         this.cycles += cycles
         if(this.cycles >= 4) {
             this.cycles %= 4
