@@ -7,19 +7,12 @@ import org.jglrxavpok.kameboy.time.SaveStateElement
 
 class GameBoyTimer(val mapper: MemoryMapper) {
 
-    companion object {
-        val DivCycleRate = 16384.toClockCycles() // 4194304 (cpu clock speed) /16384 (divider speed)
-        val TimerCounterRates = arrayOf(4096.toClockCycles(), 262144.toClockCycles(), 65536.toClockCycles(), 16384.toClockCycles())// 4194304 (cpu clock speed) /x (timer speed)
-    }
-
     @SaveStateElement
-    internal var currentDivCycle = 0
-    @SaveStateElement
-    internal var currentTimerCycle = 0
+    internal var currentDivCycle = 0.0
 
     fun step(cycles: Int) {
-        currentTimerCycle += cycles
-        currentDivCycle += cycles
+        // timer runs at a quarter of the speed of machine ticks (the emulator uses clock cycles ie 4*Machine ticks)
+        currentDivCycle += cycles /4 /4
 
         while(currentDivCycle >= 4) {
             currentDivCycle -= 4
@@ -28,7 +21,6 @@ class GameBoyTimer(val mapper: MemoryMapper) {
     }
 
     fun resetTimerFromDiv() {
-        currentDivCycle = 0
-        currentTimerCycle = 0
+        currentDivCycle = 0.0
     }
 }
