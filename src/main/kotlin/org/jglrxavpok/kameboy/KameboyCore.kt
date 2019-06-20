@@ -14,22 +14,33 @@ import org.jglrxavpok.kameboy.ui.options.GraphicsOptions
 import org.jglrxavpok.kameboy.ui.options.OptionsWindow
 import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.nuklear.NkAllocator
+import org.lwjgl.nuklear.NkContext
+import org.lwjgl.nuklear.Nuklear
 import org.lwjgl.opengl.*
-import org.lwjgl.opengl.GL11.*
 import org.lwjgl.opengl.GL13.GL_TEXTURE0
 import org.lwjgl.opengl.GL13.glActiveTexture
-import org.lwjgl.opengl.GL15.*
-import org.lwjgl.opengl.GL20.*
 import org.lwjgl.opengl.GL30.*
 import java.awt.Toolkit
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileWriter
 import java.io.PrintStream
-import java.nio.ByteBuffer
 import java.util.zip.ZipInputStream
 import javax.imageio.ImageIO
 import javax.swing.*
+import org.lwjgl.nuklear.Nuklear.*
+import org.lwjgl.nuklear.Nuklear.NK_FORMAT_COUNT
+import org.lwjgl.nuklear.Nuklear.NK_VERTEX_ATTRIBUTE_COUNT
+import org.lwjgl.nuklear.Nuklear.NK_FORMAT_R8G8B8A8
+import org.lwjgl.nuklear.Nuklear.NK_VERTEX_COLOR
+import org.lwjgl.nuklear.Nuklear.NK_FORMAT_FLOAT
+import org.lwjgl.nuklear.Nuklear.NK_VERTEX_TEXCOORD
+import org.lwjgl.nuklear.Nuklear.NK_VERTEX_POSITION
+import org.lwjgl.nuklear.NkDrawVertexLayoutElement
+import org.lwjgl.system.MemoryUtil.nmemFree
+import org.lwjgl.system.MemoryUtil.nmemAllocChecked
+
+
 
 class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     private var window: Long
@@ -83,15 +94,13 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5)
+        EmulatorControlWindow.init()
+        OptionsWindow.init()
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy (${core.title})", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
-        println("setwindowaspect")
         initInput()
-        println("initinput")
         positionWindows()
-        println("position")
         glfwShowWindow(window)
-        println("show")
 
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
@@ -170,11 +179,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         val y = videoMode.height/2-height[0]/2
 
         glfwSetWindowPos(window, x, y)
-        OptionsWindow.setLocation(x+width[0]+spacing, y)
-        OptionsWindow.isVisible = true
-
-        EmulatorControlWindow.setLocation(x-EmulatorControlWindow.width-spacing, y)
-        EmulatorControlWindow.isVisible = true
+        OptionsWindow.setPosition(x+width[0]+spacing, y)
+        EmulatorControlWindow.setPosition(x-EmulatorControlWindow.width-spacing, y)
     }
 
     fun getScreenSize(): Pair<Int, Int> {
@@ -373,8 +379,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         Config.save()
         GuestSession.disconnect()
         Server.stop()
-        OptionsWindow.dispose()
-        EmulatorControlWindow.dispose()
+        //OptionsWindow.dispose()
+// FIXME        EmulatorControlWindow.dispose()
         audioSystem.cleanup()
         glDeleteProgram(shaderID)
         glfwDestroyWindow(window)
@@ -404,6 +410,12 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         glViewport(0, 0, windowWPointer[0], windowHPointer[0])
 
         while(!glfwWindowShouldClose(window)) {
+
+            EmulatorControlWindow.tick()
+            OptionsWindow.tick()
+
+            glfwMakeContextCurrent(window)
+
             val delta = glfwGetTime()-lastTime
             lastTime = glfwGetTime()
             pollEvents()
@@ -453,6 +465,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
                 totalTime %= 1f
             }
         }
+
     }
 
     private fun pollEvents() {
@@ -540,8 +553,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         updateTitle()
         messageSystem.message("Started ${core.title}")
 
-        EmulatorControlWindow.ejectCartridge.isEnabled = true
-        EmulatorControlWindow.resetGame.isEnabled = true
+        EmulatorControlWindow.ejectCartridgeEnabled = true
+        EmulatorControlWindow.resetGameEnabled = true
     }
 
     private fun updateTitle() {
@@ -555,8 +568,8 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         audioSystem.reloadGBSound(core.gameboy.mapper.sound)
         updateTitle()
 
-        EmulatorControlWindow.ejectCartridge.isEnabled = false
-        EmulatorControlWindow.resetGame.isEnabled = false
+        EmulatorControlWindow.ejectCartridgeEnabled = false
+        EmulatorControlWindow.resetGameEnabled = false
     }
 
     fun hardReset() {

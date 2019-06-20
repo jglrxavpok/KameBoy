@@ -1,13 +1,15 @@
 package org.jglrxavpok.kameboy.ui.options
 
-import javax.swing.BoxLayout
-import javax.swing.JLabel
-import javax.swing.JPanel
+import org.lwjgl.nuklear.NkContext
+import org.lwjgl.nuklear.Nuklear.*
+import org.lwjgl.system.MemoryStack
 
-object InputOptions : JPanel() {
+object InputOptions : NuklearTab() {
+    override val title = "Input"
 
-    init {
-        layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        add(JLabel("WIP"))
+    override fun renderTab(context: NkContext, stack: MemoryStack) {
+        nk_label(context, "WIP", NK_TEXT_ALIGN_LEFT)
     }
+
+
 }

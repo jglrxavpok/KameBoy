@@ -65,6 +65,7 @@ class PaletteMemory(name: String): RAM(64) {
     }
 
     enum class CGBColorCurves {
-        Linear, SameboyCurve, Gambatte
+        Linear, SameboyCurve, Gambatte;
+
     }
 }

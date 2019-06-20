@@ -3,10 +3,14 @@ package org.jglrxavpok.kameboy.ui.options
 import org.jglrxavpok.kameboy.ui.Audio
 import org.jglrxavpok.kameboy.ui.Config
 import org.jglrxavpok.kameboy.ui.Rendering
+import org.lwjgl.nuklear.NkContext
+import org.lwjgl.nuklear.Nuklear.*
+import org.lwjgl.system.MemoryStack
 import java.awt.FlowLayout
 import javax.swing.*
 
-object SoundOptions : JPanel() {
+object SoundOptions : NuklearTab() {
+    override val title = "Sound"
 
     val volumeSlider = JSlider()
     val skipAudioButton = JRadioButton("Skip some audio cycles")
@@ -15,7 +19,7 @@ object SoundOptions : JPanel() {
     val skipAudioButtonGroup = ButtonGroup()
     val skipAudioCycles: Boolean
         get() = skipAudioButtonGroup.isSelected(skipAudioButton.model)
-
+/*
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         volumeSlider.value = Config[Audio.volume]
@@ -47,15 +51,34 @@ object SoundOptions : JPanel() {
         skipAudioButton.toolTipText = "Better performance (can drastically improve FPS) but worse sound fidelity"
         dontSkipAudioButton.toolTipText = "Heavily impacts performance but provides a better sound fidelity"
 
-        sub("Volume") {
-            layout = FlowLayout()
-            add(volumeSlider)
+    }
+*/
+    override fun renderTab(context: NkContext, stack: MemoryStack) {
+        if(nk_group_begin(context, "Volume", NK_WINDOW_BORDER or NK_WINDOW_TITLE)) {
+            nk_layout_row_dynamic(context, 30f, 1)
+            val volumeValue = Config[Audio.volume]
+            val newVolumeValue = nk_slide_int(context, 0, volumeValue, 100, 1)
+            if(volumeValue != newVolumeValue) {
+                Config[Audio.volume] = newVolumeValue
+                Config.save()
+            }
+            nk_group_end(context)
         }
 
-        sub("Sound fidelity") {
-            layout = FlowLayout()
-            for(button in skipAudioButtons)
-                add(button)
+        if(nk_group_begin(context, "Sound fidelity", NK_WINDOW_BORDER or NK_WINDOW_TITLE)) {
+            nk_layout_row_dynamic(context, 30f, 1)
+            val active = intArrayOf(if(Config[Audio.skipAudioCycles]) 1 else 0)
+            if(nk_radio_label(context, "Skip some audio cycles", active)) {
+                Config[Audio.skipAudioCycles] = true
+            }
+            active[0] = 1-active[0]
+
+            nk_layout_row_dynamic(context, 30f, 1)
+            if(nk_radio_label(context, "Don't skip any audio cycles", active)) {
+                Config[Audio.skipAudioCycles] = false
+            }
+            // TODO
+            nk_group_end(context)
         }
     }
 }

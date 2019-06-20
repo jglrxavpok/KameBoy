@@ -1,56 +1,44 @@
 package org.jglrxavpok.kameboy.ui
 
-import javafx.stage.FileChooser
 import org.jglrxavpok.kameboy.KameboyCore
-import java.awt.Component
-import java.awt.FlowLayout
+import org.lwjgl.nuklear.NkRect
+import org.lwjgl.nuklear.Nuklear.*
+import org.lwjgl.system.MemoryStack
 import java.io.File
-import javax.swing.*
 
-object EmulatorControlWindow: JFrame("Control") {
+object EmulatorControlWindow: NuklearWindow("Emulator Control") {
 
-    val resetGame = JButton("Hard reset")
-    val insert = JButton("Insert cartridge")
-    val ejectCartridge = JButton("Eject cartridge")
+    var resetGameEnabled: Boolean = false
+    var ejectCartridgeEnabled: Boolean = false
+    override val defaultWidth = 300
+    override val defaultHeight = 300
 
-    init {
-        defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
-        val content = JPanel()
-        content.layout = BoxLayout(content, BoxLayout.Y_AXIS)
+    override fun renderWindow(stack: MemoryStack) {
+        // Add rows here
+        val rowHeight = 50f
+        val itemsPerRow = 1
+        nk_layout_row_dynamic(context, rowHeight, itemsPerRow)
 
-        with(content) {
-            insert.alignmentX = Component.CENTER_ALIGNMENT
-            ejectCartridge.alignmentX = Component.CENTER_ALIGNMENT
-            resetGame.alignmentX = Component.CENTER_ALIGNMENT
-
-            add(insert)
-
-            ejectCartridge.isEnabled = false
-            add(ejectCartridge)
-
-            resetGame.isEnabled = false
-            add(resetGame)
-
-            insert.addActionListener {
-                val filechooser = JFileChooser(File(Config[System.lastRomFolder]))
-                if(filechooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                    val file = filechooser.selectedFile
-                    Config[System.lastRomFolder] = file.parent
-                    Config.save()
-                    KameboyCore.CoreInstance.loadROM(file)
-                }
-            }
-
-            ejectCartridge.addActionListener {
-                KameboyCore.CoreInstance.ejectCartridge()
-            }
-
-            resetGame.addActionListener {
-                KameboyCore.CoreInstance.hardReset()
-            }
+        if(nk_button_label(context, "Hard reset")) {
+            KameboyCore.CoreInstance.hardReset()
         }
 
-        contentPane.add(content)
-        pack()
+        if(nk_button_label(context, "Eject cartridge")) {
+            KameboyCore.CoreInstance.ejectCartridge()
+        }
+
+        if(nk_button_label(context, "Insert cartridge")) {
+            /*val filechooser = JFileChooser(File(Config[System.lastRomFolder]))
+            if(filechooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                val file = filechooser.selectedFile
+                Config[System.lastRomFolder] = file.parent
+                Config.save()
+                KameboyCore.CoreInstance.loadROM(file)
+            }*/
+            val file = File("SOME FILE")
+            Config[System.lastRomFolder] = file.parent
+            Config.save()
+            KameboyCore.CoreInstance.loadROM(file)
+        }
     }
 }
