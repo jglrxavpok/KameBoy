@@ -24,6 +24,8 @@ import org.lwjgl.opengl.GL30.*
 import java.awt.Toolkit
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileWriter
+import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.util.zip.ZipInputStream
 import javax.imageio.ImageIO
@@ -34,6 +36,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
 
     val cartridge = _DEV_cart("Pokemon Cristal.gbc", useBootRom = true)
     val outputSerial = "-outputserial" in args
+    val logInstructions = "-logcpu" in args
     var core: EmulatorCore = NoGameCore
     private var shaderID: Int
     private var textureID: Int
@@ -58,6 +61,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     private var waitingForSerialTexID: Int = -1
     private var serialShaderID: Int = -1
 
+    private var cpuLogFileWriter: PrintStream? = null
 
     companion object {
         lateinit var CoreInstance: KameboyCore
@@ -66,16 +70,28 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     init {
         CoreInstance = this
         Config.load()
+        if(logInstructions) {
+            val logFolder = File(".logs")
+            if(!logFolder.exists()) {
+                logFolder.mkdirs()
+            }
+            cpuLogFileWriter = PrintStream(File(logFolder, "log-${java.lang.System.currentTimeMillis()}.log"))
+        }
         val scale = 6
+        glfwDefaultWindowHints()
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5)
         window = glfwCreateWindow(160*scale, 144*scale, "Kameboy (${core.title})", nullptr, nullptr)
         glfwSetWindowAspectRatio(window, 160, 144)
+        println("setwindowaspect")
         initInput()
+        println("initinput")
         positionWindows()
+        println("position")
         glfwShowWindow(window)
+        println("show")
 
         glfwMakeContextCurrent(window)
         GL.createCapabilities()
@@ -353,6 +369,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
     }
 
     private fun cleanup() {
+        cpuLogFileWriter?.close()
         Config.save()
         GuestSession.disconnect()
         Server.stop()
@@ -375,7 +392,7 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         var time = glfwGetTime()
         var frames = 0
         var totalTime = 0.0
-        val videoSyncTime = EmulatorCore.CGBVideoVSync// TODO: if(cartridge.isForColorGB) EmulatorCore.CGBVideoVSync else EmulatorCore.DMGVideoVSync
+        val videoSyncTime = if(cartridge.isForColorGB) EmulatorCore.CGBVideoVSync else EmulatorCore.DMGVideoVSync
         val optimalTime = 1f/videoSyncTime
         var lastTime = glfwGetTime()-optimalTime
         glClearColor(0f, .8f, 0f, 1f)
@@ -577,6 +594,15 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
         }
     }
 
+    /**
+     * For use with bracoujl
+     */
+    fun cpuLog(pc: Int, opcode: Int, mem1: Int, mem2: Int) {
+        cpuLogFileWriter?.run {
+            this.println("bracoujl PC: ${Integer.toHexString(pc)} | OPCODE: ${Integer.toHexString(opcode)} + MEM: ${Integer.toHexString((mem1 shl 8) or mem2)}")
+        }
+    }
+
     override fun pressA() {
         core.gameboy.interruptManager.firePinPressed()
         buttonState = buttonState.setBits(GbPressBit, 0..0)
@@ -658,4 +684,5 @@ class KameboyCore(val args: Array<String>): PlayerInput, GameboyControls {
             }
         }
     }
+
 }

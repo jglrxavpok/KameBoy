@@ -1,6 +1,7 @@
 package org.jglrxavpok.kameboy.processing
 
 import org.jglrxavpok.kameboy.Gameboy
+import org.jglrxavpok.kameboy.KameboyCore
 import org.jglrxavpok.kameboy.helpful.asAddress
 import org.jglrxavpok.kameboy.helpful.asSigned8
 import org.jglrxavpok.kameboy.helpful.asUnsigned16
@@ -146,6 +147,11 @@ class CPU(val gameboy: Gameboy) {
         val position = programCounter.getValue()
         val opcode = nextByte()
         try {
+            val core = KameboyCore.CoreInstance
+            if(core.logInstructions) {
+                val pc = programCounter.getValue()
+                core.cpuLog(pc, opcode, memory.read(pc).asUnsigned8(), memory.read(pc+1).asUnsigned8())
+            }
             val clockCycles = instructions[opcode]()
             if(shouldChangeInterruptState) {
                 requestedInterruptChange = false
