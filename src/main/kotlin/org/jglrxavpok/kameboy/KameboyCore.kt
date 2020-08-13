@@ -43,7 +43,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
     val audioSystem: KameboyAudio
     private var paletteIndex = 0
     private val joysticks = Array(10, ::Joystick)
-    private val noGameImage =
+    val noGameImage =
             ImageIO.read(javaClass.getResourceAsStream("/images/no_game.png"))
                     .getRGB(0,0,256,256,null,0, 256).apply {
                         for(index in 0 until size) {
@@ -57,6 +57,8 @@ class KameboyCore(val args: Array<String>): PlayerInput {
 
     companion object {
         lateinit var CoreInstance: KameboyCore
+
+        fun isInitialized() = this::CoreInstance.isInitialized
     }
 
     init {
@@ -104,7 +106,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         EmulatorControlWindow.isVisible = true
     }
 
-    private fun prepareRenderMesh(): Int {
+    internal fun prepareRenderMesh(): Int {
         val vaoID = glGenVertexArrays()
         val vertexBufferID = glGenBuffers()
 
@@ -138,7 +140,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         return vaoID
     }
 
-    private fun prepareTexture(): Int {
+    internal fun prepareTexture(): Int {
         val id = glGenTextures()
         glBindTexture(GL_TEXTURE_2D, id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
@@ -147,7 +149,7 @@ class KameboyCore(val args: Array<String>): PlayerInput {
         return id
     }
 
-    private fun loadShader(): Int {
+    internal fun loadShader(): Int {
         val id = glCreateProgram()
         val vertID = glCreateShader(GL_VERTEX_SHADER)
         val fragID = glCreateShader(GL_FRAGMENT_SHADER)

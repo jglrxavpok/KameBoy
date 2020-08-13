@@ -1,6 +1,5 @@
 package org.jglrxavpok.kameboy.ui.options
 
-import javafx.application.Application as FxApplication
 import javax.swing.JFrame
 import javax.swing.JTabbedPane
 import javax.swing.WindowConstants

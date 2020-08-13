@@ -4,7 +4,6 @@ import io.netty.channel.ChannelHandlerContext
 import org.jglrxavpok.kameboy.network.guest.packets.GuestInfos
 import org.jglrxavpok.kameboy.network.packets.SerialConfirmation
 import org.jglrxavpok.kameboy.network.packets.SerialPacket
-import sun.rmi.runtime.Log
 import java.util.HashMap
 
 
